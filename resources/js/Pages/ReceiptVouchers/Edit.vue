@@ -139,7 +139,7 @@
               <button type="submit" class="btn btn-primary" :disabled="form.processing">
                 <i class="fas fa-save mr-1"></i> Lưu
               </button>
-              <Link :href="route('receipt-vouchers.show', receiptVoucher.id)" class="btn btn-secondary ml-2">
+              <Link :href="route('receipt-vouchers.index')" class="btn btn-secondary ml-2">
                 <i class="fas fa-times mr-1"></i> Hủy
               </Link>
             </div>
