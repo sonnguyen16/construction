@@ -85,7 +85,7 @@
           <div class="icon">
             <i class="fas fa-hourglass-half"></i>
           </div>
-          <Link :href="`/receipt-vouchers?status=pending`" class="small-box-footer">
+          <Link :href="`/receipt-vouchers?status=unpaid`" class="small-box-footer">
             Xem chi tiết <i class="fas fa-arrow-circle-right"></i>
           </Link>
         </div>
@@ -99,7 +99,7 @@
           <div class="icon">
             <i class="fas fa-hourglass-half"></i>
           </div>
-          <Link :href="`/payment-vouchers?status=pending`" class="small-box-footer">
+          <Link :href="`/payment-vouchers?status=unpaid`" class="small-box-footer">
             Xem chi tiết <i class="fas fa-arrow-circle-right"></i>
           </Link>
         </div>

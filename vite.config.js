@@ -17,11 +17,6 @@ export default defineConfig({
             },
         }),
     ],
-    resolve: {
-        alias: {
-            '@': '/resources/js',
-        },
-    },
     server: {
         cors: {
             origin: ['http://construction.test'],
