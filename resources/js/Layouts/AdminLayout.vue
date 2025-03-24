@@ -168,27 +168,6 @@
                 <p>Quản lý người dùng</p>
               </Link>
             </li>
-
-            <li class="nav-item">
-              <Link
-                :href="route('reports.payments-by-project')"
-                class="nav-link"
-                :class="{ active: route().current('reports.payments-by-project') }"
-              >
-                <i class="nav-icon fas fa-money-bill-wave"></i>
-                <p>Báo cáo chi</p>
-              </Link>
-            </li>
-            <li class="nav-item">
-              <Link
-                :href="route('reports.receipts-by-project')"
-                class="nav-link"
-                :class="{ active: route().current('reports.receipts-by-project') }"
-              >
-                <i class="nav-icon fas fa-money-bill-wave"></i>
-                <p>Báo cáo thu</p>
-              </Link>
-            </li>
           </ul>
         </nav>
         <!-- /.sidebar-menu -->
@@ -292,9 +271,6 @@ watch(
 </script>
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
-
-/* Đảm bảo chiều cao cố định và cho phép cuộn */
 html,
 body {
   height: 100%;
@@ -335,12 +311,6 @@ body {
 /* Đảm bảo bảng có thanh cuộn ngang khi cần thiết */
 .table-responsive {
   overflow-x: auto;
-}
-
-/* Các style khác giữ nguyên */
-body,
-.wrapper {
-  font-family: 'Montserrat', sans-serif !important;
 }
 
 .main-sidebar .brand-text,

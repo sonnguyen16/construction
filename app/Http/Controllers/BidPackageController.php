@@ -29,6 +29,7 @@ class BidPackageController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'client_price' => 'nullable|numeric|min:0',
+            'estimated_price' => 'nullable|numeric|min:0',
             'status' => 'required|in:open,awarded,completed,cancelled',
         ]);
 
@@ -90,7 +91,6 @@ class BidPackageController extends Controller
         ]);
 
         $bidPackage->update($validated);
-        $bidPackage->profit = $bidPackage->client_price - $bidPackage->estimated_price;
         $bidPackage->save();
 
         return redirect()->route('projects.show', $bidPackage->project_id)
@@ -137,5 +137,30 @@ class BidPackageController extends Controller
 
         return redirect()->route('projects.show', $bidPackage->project_id)
             ->with('success', 'Đã chọn nhà thầu thành công.');
+    }
+
+    public function updateAdditionalPrice(Request $request, BidPackage $bidPackage)
+    {
+        $validated = $request->validate([
+            'additional_price' => 'required|numeric|min:0',
+        ]);
+
+        $bidPackage->additional_price = $validated['additional_price'];
+        $bidPackage->client_price = $bidPackage->client_price + $validated['additional_price'];
+        $bidPackage->save();
+        return redirect()->back()->with('success', 'Giá phát sinh đã được cập nhật thành công.');
+    }
+
+    public function updateProfitPercentage(Request $request, BidPackage $bidPackage)
+    {
+        $validated = $request->validate([
+            'profit_percentage' => 'required|numeric|min:0|max:100',
+        ]);
+
+        $bidPackage->update([
+            'profit_percentage' => $validated['profit_percentage'],
+        ]);
+
+        return redirect()->back()->with('success', 'Phần trăm lợi nhuận đã được cập nhật thành công.');
     }
 }

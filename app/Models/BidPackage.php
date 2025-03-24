@@ -26,7 +26,26 @@ class BidPackage extends Model
         'profit',
         'selected_contractor_id',
         'status',
+        'additional_price',
+        'profit_percentage',
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($project) {
+            if (!$project->created_by && auth()->check()) {
+                $project->created_by = auth()->id();
+            }
+        });
+
+        static::updating(function ($project) {
+            if (auth()->check()) {
+                $project->updated_by = auth()->id();
+            }
+        });
+    }
 
     /**
      * Lấy dự án mà gói thầu thuộc về

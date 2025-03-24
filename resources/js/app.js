@@ -4,9 +4,7 @@ import '../css/app.css';
 import { createApp, h } from 'vue';
 import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
-import { currencyDirective } from './utils';
 import { ZiggyVue } from '../../vendor/tightenco/ziggy';
-
 
 const appName = window.document.getElementsByTagName('title')[0]?.innerText || 'Laravel';
 
@@ -17,9 +15,6 @@ createInertiaApp({
         const app = createApp({ render: () => h(App, props) })
             .use(plugin)
             .use(ZiggyVue);
-
-        // Đăng ký directive v-currency
-        app.directive('currency', currencyDirective);
 
         app.mount(el);
 

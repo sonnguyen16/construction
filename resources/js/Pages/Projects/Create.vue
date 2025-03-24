@@ -40,6 +40,23 @@
                 </div>
               </div>
               <div class="form-group">
+                <label for="customer_id">Khách hàng <span class="text-danger">*</span></label>
+                <select
+                  class="form-control"
+                  id="customer_id"
+                  v-model="form.customer_id"
+                  :class="{ 'is-invalid': form.errors.customer_id }"
+                >
+                  <option value="">Chọn khách hàng</option>
+                  <option v-for="customer in customers" :key="customer.id" :value="customer.id">
+                    {{ customer.name }} {{ customer.phone ? '- ' + customer.phone : '' }}
+                  </option>
+                </select>
+                <div class="invalid-feedback" v-if="form.errors.customer_id">
+                  {{ form.errors.customer_id }}
+                </div>
+              </div>
+              <div class="form-group">
                 <label for="description">Ghi chú</label>
                 <textarea
                   class="form-control"
@@ -93,9 +110,15 @@
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { Link, useForm } from '@inertiajs/vue3'
 import { showSuccess } from '@/utils'
+
+const props = defineProps({
+  customers: Array
+})
+
 const form = useForm({
   code: '',
   name: '',
+  customer_id: '',
   description: '',
   status: 'active'
 })

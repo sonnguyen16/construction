@@ -1,104 +1,7 @@
 <template>
   <AdminLayout>
-    <template #header>Chi tiết dự án</template>
+    <template #header>{{ project.name }}</template>
     <template #breadcrumb>Chi tiết dự án</template>
-
-    <!-- Thông tin dự án -->
-    <div class="row">
-      <div class="col-md-12">
-        <div class="card">
-          <div class="card-header">
-            <h3 class="card-title">Thông tin dự án</h3>
-            <div class="card-tools">
-              <Link :href="`/projects/${project.id}/edit`" class="btn btn-sm btn-primary">
-                <i class="fas fa-edit"></i> Sửa dự án
-              </Link>
-              <button @click="createReceiptVoucher()" class="btn btn-sm btn-success ml-2">
-                <i class="fas fa-money-bill"></i> Tạo phiếu thu
-              </button>
-            </div>
-          </div>
-          <div class="card-body">
-            <div class="row">
-              <div class="col-md-6">
-                <div class="form-group d-flex gap-2">
-                  <label>Mã dự án:</label>
-                  <p>{{ project.code }}</p>
-                </div>
-                <div class="form-group d-flex gap-2">
-                  <label>Tên dự án:</label>
-                  <p>{{ project.name }}</p>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="form-group d-flex gap-2">
-                  <label>Trạng thái:</label>
-                  <p>
-                    <span :class="getStatusClass(project.status)">
-                      {{ getStatusLabel(project.status) }}
-                    </span>
-                  </p>
-                </div>
-                <div class="form-group d-flex gap-2">
-                  <label>Ngày tạo:</label>
-                  <p>{{ formatDate(project.created_at) }}</p>
-                </div>
-              </div>
-              <div class="col-md-12">
-                <div class="form-group d-flex gap-2">
-                  <label>Ghi chú:</label>
-                  <p>
-                    {{ project.description || 'Không có ghi chú' }}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Tổng quan tài chính -->
-    <div class="row">
-      <div class="col-lg-4 col-6">
-        <div class="small-box bg-info">
-          <div class="inner">
-            <h3>
-              {{ formatCurrency(total_client_price || 0) }}
-            </h3>
-            <p>Tổng giá giao thầu</p>
-          </div>
-          <div class="icon">
-            <i class="fas fa-dollar-sign"></i>
-          </div>
-        </div>
-      </div>
-      <div class="col-lg-4 col-6">
-        <div class="small-box bg-warning">
-          <div class="inner">
-            <h3>
-              {{ formatCurrency(total_estimated_price || 0) }}
-            </h3>
-            <p>Tổng giá dự toán</p>
-          </div>
-          <div class="icon">
-            <i class="fas fa-calculator"></i>
-          </div>
-        </div>
-      </div>
-      <div class="col-lg-4 col-6">
-        <div class="small-box bg-success">
-          <div class="inner">
-            <h3>{{ formatCurrency(total_profit || 0) }}</h3>
-            <p>Tổng lợi nhuận</p>
-          </div>
-          <div class="icon">
-            <i class="fas fa-chart-line"></i>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- Danh sách gói thầu -->
     <div class="row">
       <div class="col-md-12">
@@ -106,415 +9,122 @@
           <div class="card-header">
             <h3 class="card-title">Danh sách gói thầu</h3>
             <div class="card-tools">
-              <Link :href="route('bid-packages.create', project.id)" class="btn btn-sm btn-primary">
+              <button @click="openCreateBidPackageModal" class="btn btn-sm btn-primary">
                 <i class="fas fa-plus"></i> Thêm gói thầu
-              </Link>
+              </button>
             </div>
           </div>
           <div class="card-body p-0 table-responsive">
             <table class="table table-hover">
               <thead>
                 <tr>
-                  <th style="width: 40px"></th>
+                  <th>STT</th>
                   <th>Mã</th>
                   <th>Tên gói thầu</th>
-                  <th>Trạng thái</th>
-                  <th>Nhà thầu được chọn</th>
                   <th>Giá dự toán</th>
+                  <th>Phát sinh</th>
                   <th>Giá giao thầu</th>
-                  <th>Lợi nhuận</th>
-                  <th style="width: 350px">Thao tác</th>
+                  <th style="width: 15%">Nhà thầu 1</th>
+                  <th style="width: 15%">Nhà thầu 2</th>
+                  <th style="width: 15%">Nhà thầu 3</th>
+                  <th class="text-center">Thao tác</th>
                 </tr>
               </thead>
               <tbody>
-                <template v-for="bidPackage in project.bid_packages" :key="bidPackage.id">
-                  <!-- Dòng thông tin gói thầu -->
-                  <tr>
-                    <td>
-                      <button @click="toggleBidPackageDetails(bidPackage.id)" class="btn btn-xs btn-default">
-                        <i
-                          :class="
-                            expandedBidPackages.includes(bidPackage.id) ? 'fas fa-chevron-up' : 'fas fa-chevron-down'
-                          "
-                        ></i>
+                <tr v-for="(bidPackage, index) in project.bid_packages" :key="bidPackage.id">
+                  <td>{{ index + 1 }}</td>
+                  <td>{{ bidPackage.code }}</td>
+                  <td>{{ bidPackage.name }}</td>
+                  <td>{{ formatCurrency(bidPackage.estimated_price || 0) }}</td>
+                  <td>
+                    <div class="d-flex justify-between">
+                      {{ formatCurrency(bidPackage.additional_price || 0) }}
+                      <button
+                        @click="openAdditionalPriceModal(bidPackage)"
+                        class="btn btn-sm btn-primary ml-2"
+                        title="Cập nhật giá phát sinh"
+                      >
+                        <i class="fas fa-edit"></i>
                       </button>
-                    </td>
-                    <td>{{ bidPackage.code }}</td>
-                    <td>{{ bidPackage.name }}</td>
-                    <td>
-                      <span :class="getBidPackageStatusClass(bidPackage.status)">
-                        {{ getBidPackageStatusLabel(bidPackage.status) }}
-                      </span>
-                    </td>
-                    <td>
-                      {{ bidPackage.selected_contractor ? bidPackage.selected_contractor.name : '-' }}
-                    </td>
-                    <td>
-                      {{ bidPackage.estimated_price ? formatCurrency(bidPackage.estimated_price) : '-' }}
-                    </td>
-                    <td>
-                      {{ bidPackage.client_price ? formatCurrency(bidPackage.client_price) : '-' }}
-                    </td>
-                    <td>
-                      <span :class="getProfitClass(bidPackage.profit)">
-                        {{ bidPackage.profit ? formatCurrency(bidPackage.profit) : '-' }}
-                      </span>
-                    </td>
-                    <td>
-                      <div class="btn-group">
-                        <button
-                          @click="router.visit(`/bid-packages/${bidPackage.id}/edit`)"
-                          class="btn btn-xs btn-primary"
+                    </div>
+                  </td>
+                  <td>{{ formatCurrency(bidPackage.client_price || 0) }}</td>
+                  <!-- Nhà thầu 1 -->
+                  <td>
+                    <div v-if="getBidderAtIndex(bidPackage, 0)">
+                      <div class="d-flex align-items-center">
+                        <input
+                          type="radio"
+                          :name="`bidder_${bidPackage.id}`"
+                          :checked="isSelectedContractor(bidPackage, getBidderAtIndex(bidPackage, 0))"
+                          @change="selectContractor(getBidderAtIndex(bidPackage, 0))"
+                        />
+                        <span class="ml-2"
+                          >{{ getBidderAtIndex(bidPackage, 0).contractor.name }} -
+                          {{ formatCurrency(getBidderAtIndex(bidPackage, 0).price) }}</span
                         >
-                          <i class="fas fa-edit me-1 mb-1"></i> Sửa
-                        </button>
-                        <button @click="openAddBidModal(bidPackage)" class="btn btn-xs btn-success">
-                          <i class="fas fa-plus me-1 mb-1"></i> Thêm giá thầu
-                        </button>
-                        <button @click="confirmDeleteBidPackage(bidPackage)" class="btn btn-xs btn-danger">
-                          <i class="fas fa-trash me-1 mb-1"></i> Xóa
-                        </button>
                       </div>
-                    </td>
-                  </tr>
-
-                  <!-- Chi tiết gói thầu (hiển thị khi mở rộng) -->
-                  <tr v-if="expandedBidPackages.includes(bidPackage.id)">
-                    <td colspan="9" class="p-0">
-                      <div class="p-3 bg-light">
-                        <div class="row">
-                          <div class="col-md-12">
-                            <h5 class="mb-2 font-bold text-lg">Chi tiết gói thầu</h5>
-                            <p v-if="bidPackage.description">
-                              {{ bidPackage.description }}
-                            </p>
-
-                            <!-- Thêm thông tin chi tiết về giá ở đây -->
-                            <div class="row mt-2">
-                              <div class="col-md-4">
-                                <div class="info-box bg-light">
-                                  <div class="info-box-content">
-                                    <span class="info-box-text">Giá dự toán</span>
-                                    <span class="info-box-number">{{
-                                      bidPackage.estimated_price ? formatCurrency(bidPackage.estimated_price) : '-'
-                                    }}</span>
-                                  </div>
-                                </div>
-                              </div>
-                              <div class="col-md-4">
-                                <div class="info-box bg-light">
-                                  <div class="info-box-content">
-                                    <span class="info-box-text">Giá giao thầu</span>
-                                    <span class="info-box-number">{{
-                                      bidPackage.client_price ? formatCurrency(bidPackage.client_price) : '-'
-                                    }}</span>
-                                  </div>
-                                </div>
-                              </div>
-                              <div class="col-md-4">
-                                <div class="info-box bg-light">
-                                  <div class="info-box-content">
-                                    <span class="info-box-text">Lợi nhuận</span>
-                                    <span class="info-box-number" :class="getProfitClass(bidPackage.profit)">
-                                      {{ bidPackage.profit ? formatCurrency(bidPackage.profit) : '-' }}
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-
-                            <!-- Phiếu chi đã thanh toán -->
-                            <div
-                              class="mt-3"
-                              v-if="bidPackage.payment_vouchers && bidPackage.payment_vouchers.length > 0"
-                            >
-                              <div class="d-flex justify-content-between align-items-center mb-2">
-                                <h6 class="mb-2 font-bold text-lg">Phiếu chi đã thanh toán</h6>
-                                <button @click="createPaymentVoucher(bidPackage)" class="btn btn-xs btn-primary">
-                                  <i class="fas fa-plus"></i> Tạo phiếu chi
-                                </button>
-                              </div>
-                              <div class="table-responsive">
-                                <table class="table table-bordered table-sm">
-                                  <thead>
-                                    <tr>
-                                      <th>Mã phiếu chi</th>
-                                      <th>Nhà thầu</th>
-                                      <th>Số tiền</th>
-                                      <th>Ngày tạo</th>
-                                      <th style="width: 150px">Thao tác</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    <tr v-for="voucher in bidPackage.payment_vouchers" :key="voucher.id">
-                                      <td>{{ voucher.code }}</td>
-                                      <td>{{ voucher.contractor.name }}</td>
-                                      <td>{{ formatCurrency(voucher.amount) }}</td>
-                                      <td>{{ formatDate(voucher.created_at) }}</td>
-                                      <td>
-                                        <div class="btn-group">
-                                          <Link
-                                            :href="route('payment-vouchers.show', voucher.id)"
-                                            class="btn btn-xs btn-info"
-                                          >
-                                            <i class="fas fa-eye"></i> Xem
-                                          </Link>
-                                          <Link
-                                            :href="route('payment-vouchers.edit', voucher.id)"
-                                            class="btn btn-xs btn-primary"
-                                          >
-                                            <i class="fas fa-edit"></i> Sửa
-                                          </Link>
-                                          <button @click="confirmDeleteVoucher(voucher)" class="btn btn-xs btn-danger">
-                                            <i class="fas fa-trash"></i> Xóa
-                                          </button>
-                                        </div>
-                                      </td>
-                                    </tr>
-                                  </tbody>
-                                  <tfoot>
-                                    <tr class="bg-light">
-                                      <td colspan="2" class="text-right"><strong>Tổng cộng:</strong></td>
-                                      <td>
-                                        <strong>{{ formatCurrency(getTotalPaymentAmount(bidPackage)) }}</strong>
-                                      </td>
-                                      <td colspan="2"></td>
-                                    </tr>
-                                  </tfoot>
-                                </table>
-                              </div>
-                            </div>
-
-                            <!-- Thêm phần hiển thị phiếu thu -->
-                            <div
-                              class="mt-3"
-                              v-if="bidPackage.receipt_vouchers && bidPackage.receipt_vouchers.length > 0"
-                            >
-                              <div class="d-flex justify-content-between align-items-center mb-2">
-                                <h6 class="mb-2 font-bold text-lg">Phiếu thu liên quan</h6>
-                                <button @click="createReceiptVoucher(bidPackage)" class="btn btn-xs btn-success">
-                                  <i class="fas fa-plus"></i> Tạo phiếu thu
-                                </button>
-                              </div>
-                              <div class="table-responsive">
-                                <table class="table table-bordered table-sm">
-                                  <thead>
-                                    <tr>
-                                      <th>Mã phiếu thu</th>
-                                      <th>Khách hàng</th>
-                                      <th>Số tiền</th>
-                                      <th>Trạng thái</th>
-                                      <th>Ngày tạo</th>
-                                      <th style="width: 150px">Thao tác</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    <tr v-for="voucher in bidPackage.receipt_vouchers" :key="voucher.id">
-                                      <td>{{ voucher.code }}</td>
-                                      <td>{{ voucher.customer.name }}</td>
-                                      <td>{{ formatCurrency(voucher.amount) }}</td>
-                                      <td>
-                                        <span
-                                          :class="{
-                                            'badge badge-warning': voucher.status === 'pending',
-                                            'badge badge-success': voucher.status === 'completed'
-                                          }"
-                                        >
-                                          {{ voucher.status === 'pending' ? 'Chưa thanh toán' : 'Đã thanh toán' }}
-                                        </span>
-                                      </td>
-                                      <td>{{ formatDate(voucher.created_at) }}</td>
-                                      <td>
-                                        <div class="btn-group">
-                                          <Link
-                                            :href="route('receipt-vouchers.show', voucher.id)"
-                                            class="btn btn-xs btn-info"
-                                          >
-                                            <i class="fas fa-eye"></i> Xem
-                                          </Link>
-                                          <Link
-                                            :href="route('receipt-vouchers.edit', voucher.id)"
-                                            class="btn btn-xs btn-primary"
-                                          >
-                                            <i class="fas fa-edit"></i> Sửa
-                                          </Link>
-                                          <button
-                                            @click="confirmDeleteReceiptVoucher(voucher)"
-                                            class="btn btn-xs btn-danger"
-                                          >
-                                            <i class="fas fa-trash"></i> Xóa
-                                          </button>
-                                        </div>
-                                      </td>
-                                    </tr>
-                                  </tbody>
-                                  <tfoot>
-                                    <tr class="bg-light">
-                                      <td colspan="2" class="text-right"><strong>Tổng cộng:</strong></td>
-                                      <td>
-                                        <strong>{{
-                                          formatCurrency(getTotalReceiptAmountForBidPackage(bidPackage))
-                                        }}</strong>
-                                      </td>
-                                      <td colspan="3"></td>
-                                    </tr>
-                                  </tfoot>
-                                </table>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <!-- Danh sách giá dự thầu -->
-                        <div class="mt-3">
-                          <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h6 class="mb-2 font-bold text-lg">Danh sách giá dự thầu</h6>
-                            <button @click="openAddBidModal(bidPackage)" class="btn btn-xs btn-success">
-                              <i class="fas fa-plus"></i> Thêm giá thầu
-                            </button>
-                          </div>
-                          <div class="table-responsive">
-                            <table class="table table-bordered table-sm">
-                              <thead>
-                                <tr>
-                                  <th>Nhà thầu</th>
-                                  <th>Giá dự thầu</th>
-                                  <th>Ghi chú</th>
-                                  <th style="width: 200px">Thao tác</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                <tr
-                                  v-for="bid in bidPackage.bids"
-                                  :key="bid.id"
-                                  :class="{
-                                    'table-success': bid.is_selected
-                                  }"
-                                >
-                                  <td>
-                                    {{ bid.contractor.name }}
-                                  </td>
-                                  <td>
-                                    {{ formatCurrency(bid.price) }}
-                                  </td>
-                                  <td>
-                                    {{ bid.notes || '-' }}
-                                  </td>
-                                  <td>
-                                    <div class="btn-group">
-                                      <button
-                                        v-if="!bid.is_selected && bidPackage.status === 'open'"
-                                        @click="selectContractor(bid)"
-                                        class="btn btn-xs btn-success"
-                                      >
-                                        <i class="fas fa-check"></i> Chọn
-                                      </button>
-                                      <Link :href="route('bids.edit', bid.id)" class="btn btn-xs btn-primary">
-                                        <i class="fas fa-edit"></i> Sửa
-                                      </Link>
-                                      <button @click="confirmDeleteBid(bid)" class="btn btn-xs btn-danger">
-                                        <i class="fas fa-trash"></i> Xóa
-                                      </button>
-                                    </div>
-                                  </td>
-                                </tr>
-                                <tr v-if="bidPackage.bids.length === 0">
-                                  <td colspan="4" class="text-center">Chưa có giá dự thầu nào</td>
-                                </tr>
-                              </tbody>
-                            </table>
-                          </div>
-                        </div>
-
-                        <!-- Form cập nhật giá giao thầu -->
-                        <div class="mt-3" v-if="bidPackage.status === 'awarded' || bidPackage.status === 'completed'">
-                          <h6 class="mb-2 font-bold text-lg">Cập nhật giá giao thầu</h6>
-                          <form @submit.prevent="updateClientPrice(bidPackage)">
-                            <div class="input-group">
-                              <input
-                                type="text"
-                                class="form-control"
-                                placeholder="Nhập giá giao thầu"
-                                v-model="clientPrices[bidPackage.id]"
-                                :class="{ 'is-invalid': bidFormErrors.price }"
-                              />
-                              <div class="input-group-append">
-                                <button type="submit" class="btn btn-primary">
-                                  <i class="fas fa-save"></i> Cập nhật
-                                </button>
-                              </div>
-                            </div>
-                          </form>
-                        </div>
+                    </div>
+                    <button v-else @click="openAddBidModal(bidPackage)" class="btn btn-sm btn-success">
+                      <i class="fas fa-plus me-1 mb-1"></i> Thêm
+                    </button>
+                  </td>
+                  <!-- Nhà thầu 2 -->
+                  <td>
+                    <div v-if="getBidderAtIndex(bidPackage, 1)">
+                      <div class="d-flex align-items-center">
+                        <input
+                          type="radio"
+                          :name="`bidder_${bidPackage.id}`"
+                          :checked="isSelectedContractor(bidPackage, getBidderAtIndex(bidPackage, 1))"
+                          @change="selectContractor(getBidderAtIndex(bidPackage, 1))"
+                        />
+                        <span class="ml-2"
+                          >{{ getBidderAtIndex(bidPackage, 1).contractor.name }} -
+                          {{ formatCurrency(getBidderAtIndex(bidPackage, 1).price) }}</span
+                        >
                       </div>
-                    </td>
-                  </tr>
-                </template>
+                    </div>
+                    <button v-else @click="openAddBidModal(bidPackage)" class="btn btn-sm btn-success">
+                      <i class="fas fa-plus me-1 mb-1"></i> Thêm
+                    </button>
+                  </td>
+                  <!-- Nhà thầu 3 -->
+                  <td>
+                    <div v-if="getBidderAtIndex(bidPackage, 2)">
+                      <div class="d-flex align-items-center">
+                        <input
+                          type="radio"
+                          :name="`bidder_${bidPackage.id}`"
+                          :checked="isSelectedContractor(bidPackage, getBidderAtIndex(bidPackage, 2))"
+                          @change="selectContractor(getBidderAtIndex(bidPackage, 2))"
+                        />
+                        <span class="ml-2"
+                          >{{ getBidderAtIndex(bidPackage, 2).contractor.name }} -
+                          {{ formatCurrency(getBidderAtIndex(bidPackage, 2).price) }}</span
+                        >
+                      </div>
+                    </div>
+                    <button v-else @click="openAddBidModal(bidPackage)" class="btn btn-sm btn-success">
+                      <i class="fas fa-plus me-1 mb-1"></i> Thêm
+                    </button>
+                  </td>
+                  <td class="text-center">
+                    <div class="btn-group">
+                      <button class="btn btn-xs btn-info" @click="openEditBidPackageModal(bidPackage)">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button class="btn btn-xs btn-danger" @click="confirmDeleteBidPackage(bidPackage)">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
                 <tr v-if="project.bid_packages.length === 0">
-                  <td colspan="9" class="text-center">Chưa có gói thầu nào</td>
+                  <td colspan="10" class="text-center">Chưa có gói thầu nào</td>
                 </tr>
               </tbody>
             </table>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Modal xác nhận xóa gói thầu -->
-    <div
-      class="modal fade"
-      id="deleteBidPackageModal"
-      tabindex="-1"
-      role="dialog"
-      aria-labelledby="deleteBidPackageModalLabel"
-      aria-hidden="true"
-    >
-      <div class="modal-dialog" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="deleteBidPackageModalLabel">Xác nhận xóa</h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-          <div class="modal-body">
-            Bạn có chắc chắn muốn xóa gói thầu
-            <strong>{{ selectedBidPackage?.name }}</strong
-            >?
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
-            <button type="button" class="btn btn-danger" @click="deleteBidPackage">Xóa</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Modal xác nhận xóa giá dự thầu -->
-    <div
-      class="modal fade"
-      id="deleteBidModal"
-      tabindex="-1"
-      role="dialog"
-      aria-labelledby="deleteBidModalLabel"
-      aria-hidden="true"
-    >
-      <div class="modal-dialog" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="deleteBidModalLabel">Xác nhận xóa</h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-          <div class="modal-body">
-            Bạn có chắc chắn muốn xóa giá dự thầu của nhà thầu
-            <strong>{{ selectedBid?.contractor?.name }}</strong
-            >?
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
-            <button type="button" class="btn btn-danger" @click="deleteBid">Xóa</button>
           </div>
         </div>
       </div>
@@ -551,15 +161,20 @@
                 </p>
               </div>
 
-              <!-- InputPicker cho nhà thầu -->
+              <!-- Select cho nhà thầu -->
               <div class="form-group">
-                <label for="contractor_picker">Tìm kiếm nhà thầu:</label>
-                <input
-                  type="text"
+                <label for="contractor_id">Nhà thầu:</label>
+                <select
                   class="form-control"
-                  id="contractor_picker"
+                  id="contractor_id"
+                  v-model="bidForm.contractor_id"
                   :class="{ 'is-invalid': bidFormErrors.contractor_id }"
-                />
+                >
+                  <option value="">Chọn nhà thầu</option>
+                  <option v-for="contractor in availableContractors" :key="contractor.id" :value="contractor.id">
+                    {{ contractor.name }} {{ contractor.phone ? '- ' + contractor.phone : '' }}
+                  </option>
+                </select>
                 <div class="invalid-feedback" v-if="bidFormErrors.contractor_id">
                   {{ bidFormErrors.contractor_id }}
                 </div>
@@ -615,31 +230,299 @@
       </div>
     </div>
 
-    <!-- Thêm Modal xác nhận xóa phiếu thu -->
+    <!-- Modal nhập giá phát sinh -->
     <div
       class="modal fade"
-      id="deleteReceiptVoucherModal"
+      id="additionalPriceModal"
       tabindex="-1"
       role="dialog"
-      aria-labelledby="deleteReceiptVoucherModalLabel"
+      aria-labelledby="additionalPriceModalLabel"
       aria-hidden="true"
     >
       <div class="modal-dialog" role="document">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title" id="deleteReceiptVoucherModalLabel">Xác nhận xóa</h5>
+            <h5 class="modal-title" id="additionalPriceModalLabel">Cập nhật giá phát sinh</h5>
             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
               <span aria-hidden="true">&times;</span>
             </button>
           </div>
           <div class="modal-body">
-            Bạn có chắc chắn muốn xóa phiếu thu
-            <strong>{{ selectedReceiptVoucher?.code }}</strong
-            >?
+            <form @submit.prevent="submitAdditionalPrice">
+              <div class="form-group">
+                <label>Gói thầu:</label>
+                <p>{{ selectedBidPackage?.name }} ({{ selectedBidPackage?.code }})</p>
+              </div>
+              <div class="form-group">
+                <label for="additional_price">Giá phát sinh (VNĐ) <span class="text-danger">*</span></label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="additional_price"
+                  placeholder="Nhập giá phát sinh"
+                  v-model="additionalPriceForm.additional_price"
+                  :class="{ 'is-invalid': additionalPriceFormErrors.additional_price }"
+                />
+                <div class="invalid-feedback" v-if="additionalPriceFormErrors.additional_price">
+                  {{ additionalPriceFormErrors.additional_price }}
+                </div>
+              </div>
+            </form>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
-            <button type="button" class="btn btn-danger" @click="deleteReceiptVoucher">Xóa</button>
+            <button type="button" class="btn btn-primary" @click="submitAdditionalPrice" :disabled="isSubmitting">
+              <i class="fas fa-save mr-1"></i> Lưu
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Thêm Modal tạo gói thầu mới -->
+    <div
+      class="modal fade"
+      id="createBidPackageModal"
+      tabindex="-1"
+      role="dialog"
+      aria-labelledby="createBidPackageModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="createBidPackageModalLabel">Thêm gói thầu mới</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <form @submit.prevent="submitCreateBidPackage">
+              <div class="form-group d-flex gap-2">
+                <label>Dự án:</label>
+                <p>
+                  <strong>{{ project.name }}</strong> ({{ project.code }})
+                </p>
+              </div>
+              <div class="form-group">
+                <label for="code">Mã gói thầu <span class="text-danger">*</span></label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="code"
+                  placeholder="Nhập mã gói thầu"
+                  v-model="bidPackageForm.code"
+                  :class="{ 'is-invalid': bidPackageFormErrors.code }"
+                />
+                <div class="invalid-feedback" v-if="bidPackageFormErrors.code">
+                  {{ bidPackageFormErrors.code }}
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="name">Tên gói thầu <span class="text-danger">*</span></label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="name"
+                  placeholder="Nhập tên gói thầu"
+                  v-model="bidPackageForm.name"
+                  :class="{ 'is-invalid': bidPackageFormErrors.name }"
+                />
+                <div class="invalid-feedback" v-if="bidPackageFormErrors.name">
+                  {{ bidPackageFormErrors.name }}
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="estimated_price">Giá dự toán (VNĐ)</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="estimated_price"
+                  placeholder="Nhập giá dự toán"
+                  v-model="bidPackageForm.estimated_price"
+                  :class="{ 'is-invalid': bidPackageFormErrors.estimated_price }"
+                />
+                <div class="invalid-feedback" v-if="bidPackageFormErrors.estimated_price">
+                  {{ bidPackageFormErrors.estimated_price }}
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="client_price">Giá giao thầu (VNĐ)</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="client_price"
+                  placeholder="Nhập giá giao thầu"
+                  v-model="bidPackageForm.client_price"
+                  :class="{ 'is-invalid': bidPackageFormErrors.client_price }"
+                />
+                <div class="invalid-feedback" v-if="bidPackageFormErrors.client_price">
+                  {{ bidPackageFormErrors.client_price }}
+                </div>
+                <small class="form-text text-muted">Có thể để trống và cập nhật sau.</small>
+              </div>
+              <div class="form-group">
+                <label for="description">Ghi chú</label>
+                <textarea
+                  class="form-control"
+                  id="description"
+                  rows="3"
+                  placeholder="Nhập ghi chú"
+                  v-model="bidPackageForm.description"
+                  :class="{ 'is-invalid': bidPackageFormErrors.description }"
+                ></textarea>
+                <div class="invalid-feedback" v-if="bidPackageFormErrors.description">
+                  {{ bidPackageFormErrors.description }}
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="status">Trạng thái <span class="text-danger">*</span></label>
+                <select
+                  class="form-control"
+                  id="status"
+                  v-model="bidPackageForm.status"
+                  :class="{ 'is-invalid': bidPackageFormErrors.status }"
+                >
+                  <option value="open">Đang mở thầu</option>
+                  <option value="awarded">Đã chọn nhà thầu</option>
+                  <option value="completed">Hoàn thành</option>
+                  <option value="cancelled">Đã hủy</option>
+                </select>
+                <div class="invalid-feedback" v-if="bidPackageFormErrors.status">
+                  {{ bidPackageFormErrors.status }}
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+            <button type="button" class="btn btn-primary" @click="submitCreateBidPackage" :disabled="isSubmitting">
+              <i class="fas fa-save mr-1"></i> Lưu
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal chỉnh sửa gói thầu -->
+    <div
+      class="modal fade"
+      id="editBidPackageModal"
+      tabindex="-1"
+      role="dialog"
+      aria-labelledby="editBidPackageModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="editBidPackageModalLabel">Chỉnh sửa gói thầu</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <form @submit.prevent="submitEditBidPackage" v-if="selectedBidPackage">
+              <div class="form-group d-flex gap-2">
+                <label>Dự án:</label>
+                <p>
+                  <strong>{{ project.name }}</strong> ({{ project.code }})
+                </p>
+              </div>
+              <div class="form-group">
+                <label for="edit_code">Mã gói thầu <span class="text-danger">*</span></label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="edit_code"
+                  placeholder="Nhập mã gói thầu"
+                  v-model="bidPackageForm.code"
+                  :class="{ 'is-invalid': bidPackageFormErrors.code }"
+                />
+                <div class="invalid-feedback" v-if="bidPackageFormErrors.code">
+                  {{ bidPackageFormErrors.code }}
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="edit_name">Tên gói thầu <span class="text-danger">*</span></label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="edit_name"
+                  placeholder="Nhập tên gói thầu"
+                  v-model="bidPackageForm.name"
+                  :class="{ 'is-invalid': bidPackageFormErrors.name }"
+                />
+                <div class="invalid-feedback" v-if="bidPackageFormErrors.name">
+                  {{ bidPackageFormErrors.name }}
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="edit_estimated_price">Giá dự toán (VNĐ)</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="edit_estimated_price"
+                  placeholder="Nhập giá dự toán"
+                  v-model="bidPackageForm.estimated_price"
+                  :class="{ 'is-invalid': bidPackageFormErrors.estimated_price }"
+                />
+                <div class="invalid-feedback" v-if="bidPackageFormErrors.estimated_price">
+                  {{ bidPackageFormErrors.estimated_price }}
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="edit_client_price">Giá giao thầu (VNĐ)</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="edit_client_price"
+                  placeholder="Nhập giá giao thầu"
+                  v-model="bidPackageForm.client_price"
+                  :class="{ 'is-invalid': bidPackageFormErrors.client_price }"
+                />
+                <div class="invalid-feedback" v-if="bidPackageFormErrors.client_price">
+                  {{ bidPackageFormErrors.client_price }}
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="edit_description">Ghi chú</label>
+                <textarea
+                  class="form-control"
+                  id="edit_description"
+                  rows="3"
+                  placeholder="Nhập ghi chú"
+                  v-model="bidPackageForm.description"
+                  :class="{ 'is-invalid': bidPackageFormErrors.description }"
+                ></textarea>
+                <div class="invalid-feedback" v-if="bidPackageFormErrors.description">
+                  {{ bidPackageFormErrors.description }}
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="edit_status">Trạng thái <span class="text-danger">*</span></label>
+                <select
+                  class="form-control"
+                  id="edit_status"
+                  v-model="bidPackageForm.status"
+                  :class="{ 'is-invalid': bidPackageFormErrors.status }"
+                >
+                  <option value="open">Đang mở thầu</option>
+                  <option value="awarded">Đã chọn nhà thầu</option>
+                  <option value="completed">Hoàn thành</option>
+                  <option value="cancelled">Đã hủy</option>
+                </select>
+                <div class="invalid-feedback" v-if="bidPackageFormErrors.status">
+                  {{ bidPackageFormErrors.status }}
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+            <button type="button" class="btn btn-primary" @click="submitEditBidPackage" :disabled="isSubmitting">
+              <i class="fas fa-save mr-1"></i> Lưu
+            </button>
           </div>
         </div>
       </div>
@@ -650,18 +533,16 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { Link, router } from '@inertiajs/vue3'
-import { ref, computed, onMounted, watch, onBeforeUnmount, nextTick } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import axios from 'axios'
-import { formatCurrency, parseCurrency, showConfirm, showSuccess, showError, formatDate, showWarning } from '@/utils'
+import { showConfirm, showSuccess, showError, showWarning, formatCurrency, parseCurrency } from '@/utils'
 
 const props = defineProps({
   project: Object,
   bidPackageStatuses: Object
 })
 
-const expandedBidPackages = ref([])
 const selectedBidPackage = ref(null)
-const selectedBid = ref(null)
 const clientPrices = ref({})
 const bidForm = ref({
   contractor_id: '',
@@ -676,71 +557,25 @@ const filteredContractors = ref([])
 const selectedContractor = ref(null)
 const availableContractors = ref([])
 let inputpickerInstance = null
-const selectedReceiptVoucher = ref(null)
+const additionalPriceForm = ref({
+  additional_price: ''
+})
+const additionalPriceFormErrors = ref({})
+const bidPackageForm = ref({
+  code: '',
+  name: '',
+  description: '',
+  estimated_price: '',
+  client_price: '',
+  status: 'open'
+})
+const bidPackageFormErrors = ref({})
 
 // Khởi tạo giá trị cho clientPrices
 onMounted(() => {
   props.project.bid_packages.forEach((bidPackage) => {
     clientPrices.value[bidPackage.id] = bidPackage.client_price || ''
   })
-})
-
-const getStatusLabel = (status) => {
-  const statusMap = {
-    active: 'Đang hoạt động',
-    completed: 'Hoàn thành',
-    cancelled: 'Đã hủy'
-  }
-  return statusMap[status] || status
-}
-
-const getStatusClass = (status) => {
-  const classMap = {
-    active: 'badge badge-success',
-    completed: 'badge badge-info',
-    cancelled: 'badge badge-danger'
-  }
-  return classMap[status] || 'badge badge-secondary'
-}
-
-const getBidPackageStatusLabel = (status) => {
-  return props.bidPackageStatuses[status] || status
-}
-
-const getBidPackageStatusClass = (status) => {
-  const classMap = {
-    open: 'badge badge-primary',
-    awarded: 'badge badge-warning',
-    completed: 'badge badge-success',
-    cancelled: 'badge badge-danger'
-  }
-  return classMap[status] || 'badge badge-secondary'
-}
-
-const getProfitClass = (profit) => {
-  if (profit === null || profit === undefined) return ''
-  return profit > 0 ? 'text-success' : profit < 0 ? 'text-danger' : ''
-}
-
-const toggleBidPackageDetails = (bidPackageId) => {
-  const index = expandedBidPackages.value.indexOf(bidPackageId)
-  if (index === -1) {
-    expandedBidPackages.value.push(bidPackageId)
-  } else {
-    expandedBidPackages.value.splice(index, 1)
-  }
-}
-
-const total_client_price = computed(() => {
-  return props.project.bid_packages.reduce((total, bidPackage) => total + parseInt(bidPackage.client_price ?? 0), 0)
-})
-
-const total_estimated_price = computed(() => {
-  return props.project.bid_packages.reduce((total, bidPackage) => total + parseInt(bidPackage.estimated_price ?? 0), 0)
-})
-
-const total_profit = computed(() => {
-  return props.project.bid_packages.reduce((total, bidPackage) => total + parseInt(bidPackage.profit ?? 0), 0)
 })
 
 const confirmDeleteBidPackage = (bidPackage) => {
@@ -764,30 +599,6 @@ const deleteBidPackage = (bidPackage) => {
   })
 }
 
-const confirmDeleteBid = (bid) => {
-  showConfirm(
-    'Xác nhận xóa',
-    `Bạn có chắc chắn muốn xóa giá dự thầu của nhà thầu "${bid.contractor.name}" không?`,
-    'Xóa',
-    'Hủy'
-  ).then((result) => {
-    if (result.isConfirmed) {
-      deleteBid(bid)
-    }
-  })
-}
-
-const deleteBid = (bid) => {
-  router.delete(route('bids.destroy', bid.id), {
-    onSuccess: () => {
-      showSuccess('Giá dự thầu đã được xóa thành công.')
-    },
-    onError: (errors) => {
-      showError('Không thể xóa giá dự thầu. Vui lòng thử lại sau.')
-    }
-  })
-}
-
 const selectContractor = (bid) => {
   showConfirm(
     'Xác nhận chọn nhà thầu',
@@ -806,26 +617,6 @@ const selectContractor = (bid) => {
       })
     }
   })
-}
-
-const updateClientPrice = (bidPackage) => {
-  // Chuyển đổi giá trị từ định dạng tiền tệ sang số
-  const clientPrice = parseCurrency(clientPrices.value[bidPackage.id])
-
-  router.patch(
-    route('bid-packages.update-client-price', bidPackage.id),
-    {
-      client_price: clientPrice
-    },
-    {
-      onSuccess: () => {
-        showSuccess('Giá giao thầu đã được cập nhật thành công.')
-      },
-      onError: (errors) => {
-        showError('Không thể cập nhật giá giao thầu. Vui lòng thử lại sau.')
-      }
-    }
-  )
 }
 
 // Lấy danh sách nhà thầu khi component được tạo
@@ -980,74 +771,166 @@ onBeforeUnmount(() => {
   }
 })
 
-// Hàm tạo phiếu chi nhanh
-const createPaymentVoucher = (bidPackage) => {
-  // Nếu gói thầu chưa có nhà thầu được chọn
-  if (!bidPackage.selected_contractor_id) {
-    showWarning('Gói thầu này chưa có nhà thầu được chọn. Vui lòng chọn nhà thầu trước khi tạo phiếu chi.')
-    return
+// Lấy nhà thầu tại vị trí index cho bảng
+const getBidderAtIndex = (bidPackage, index) => {
+  if (!bidPackage.bids || bidPackage.bids.length <= index) {
+    return null
   }
-
-  // Chuyển hướng đến trang tạo phiếu chi với thông tin gói thầu và nhà thầu được chọn
-  router.visit('/payment-vouchers/create', {
-    data: {
-      project_id: props.project.id,
-      bid_package_id: bidPackage.id,
-      contractor_id: bidPackage.selected_contractor_id
-    }
-  })
+  return bidPackage.bids[index]
 }
 
-// Hàm tính tổng tiền đã chi cho một gói thầu
-const getTotalPaymentAmount = (bidPackage) => {
-  if (!bidPackage.payment_vouchers || bidPackage.payment_vouchers.length === 0) return 0
-  return bidPackage.payment_vouchers.reduce((total, voucher) => total + parseInt(voucher.amount || 0), 0)
+// Kiểm tra xem nhà thầu có phải là nhà thầu được chọn không
+const isSelectedContractor = (bidPackage, bid) => {
+  return bid && bid.is_selected
 }
 
-// Thêm hàm tạo phiếu thu
-const createReceiptVoucher = (bidPackage = null) => {
-  // Chuyển hướng đến trang tạo phiếu thu với thông tin dự án và gói thầu nếu có
-  const data = {
-    project_id: props.project.id,
-    customer_id: props.project.customer_id
+// Mở modal giá phát sinh
+const openAdditionalPriceModal = (bidPackage) => {
+  selectedBidPackage.value = bidPackage
+  additionalPriceForm.value = {
+    additional_price: formatCurrency(bidPackage.additional_price || 0)
   }
-
-  // Nếu gọi hàm với một gói thầu cụ thể
-  if (bidPackage) {
-    data.bid_package_id = bidPackage.id
-  }
-
-  router.visit('/receipt-vouchers/create', { data })
+  additionalPriceFormErrors.value = {}
+  window.$('#additionalPriceModal').modal('show')
 }
 
-// Thêm hàm xác nhận xóa phiếu thu
-const confirmDeleteReceiptVoucher = (voucher) => {
-  selectedReceiptVoucher.value = voucher
-  showConfirm('Xác nhận xóa', `Bạn có chắc chắn muốn xóa phiếu thu "${voucher.code}" không?`, 'Xóa', 'Hủy').then(
-    (result) => {
-      if (result.isConfirmed) {
-        deleteReceiptVoucher(voucher)
+// Gửi form cập nhật giá phát sinh
+const submitAdditionalPrice = async () => {
+  if (isSubmitting.value) return
+
+  additionalPriceFormErrors.value = {}
+  isSubmitting.value = true
+
+  // Chuyển đổi giá phát sinh từ định dạng hiển thị sang số
+  const additional_price = parseCurrency(additionalPriceForm.value.additional_price)
+
+  try {
+    await router.patch(
+      route('bid-packages.update-additional-price', selectedBidPackage.value.id),
+      {
+        additional_price: additional_price
+      },
+      {
+        onSuccess: () => {
+          window.$('#additionalPriceModal').modal('hide')
+          selectedBidPackage.value = null
+          additionalPriceForm.value = {
+            additional_price: ''
+          }
+          showSuccess('Giá phát sinh đã được cập nhật thành công.')
+        },
+        onError: (errors) => {
+          additionalPriceFormErrors.value = errors
+        },
+        onFinish: () => {
+          isSubmitting.value = false
+        }
       }
-    }
-  )
+    )
+  } catch (error) {
+    console.error('Lỗi khi cập nhật giá phát sinh:', error)
+    showError('Có lỗi xảy ra khi cập nhật giá phát sinh. Vui lòng thử lại sau.')
+    isSubmitting.value = false
+  }
 }
 
-// Thêm hàm xóa phiếu thu
-const deleteReceiptVoucher = (voucher) => {
-  router.delete(route('receipt-vouchers.destroy', voucher.id), {
-    onSuccess: () => {
-      showSuccess('Phiếu thu đã được xóa thành công.')
-    },
-    onError: (errors) => {
-      showError('Không thể xóa phiếu thu. Vui lòng thử lại sau.')
-    }
-  })
+// Mở modal tạo gói thầu mới
+const openCreateBidPackageModal = () => {
+  bidPackageForm.value = {
+    code: '',
+    name: '',
+    description: '',
+    estimated_price: '',
+    client_price: '',
+    status: 'open'
+  }
+  bidPackageFormErrors.value = {}
+  window.$('#createBidPackageModal').modal('show')
 }
 
-// Thêm hàm tính tổng tiền phiếu thu cho một gói thầu
-const getTotalReceiptAmountForBidPackage = (bidPackage) => {
-  if (!bidPackage.receipt_vouchers || bidPackage.receipt_vouchers.length === 0) return 0
-  return bidPackage.receipt_vouchers.reduce((total, voucher) => total + parseInt(voucher.amount || 0), 0)
+// Gửi form tạo gói thầu mới
+const submitCreateBidPackage = async () => {
+  if (isSubmitting.value) return
+
+  bidPackageFormErrors.value = {}
+  isSubmitting.value = true
+
+  // Parse các giá trị tiền tệ thành số (đã được nhân với 100 trong parseCurrency)
+  const formData = {
+    ...bidPackageForm.value,
+    estimated_price: parseCurrency(bidPackageForm.value.estimated_price),
+    client_price: parseCurrency(bidPackageForm.value.client_price)
+  }
+
+  try {
+    await router.post(route('bid-packages.store', props.project.id), formData, {
+      onSuccess: () => {
+        window.$('#createBidPackageModal').modal('hide')
+        showSuccess('Gói thầu đã được tạo thành công.')
+      },
+      onError: (errors) => {
+        bidPackageFormErrors.value = errors
+      },
+      onFinish: () => {
+        isSubmitting.value = false
+      }
+    })
+  } catch (error) {
+    console.error('Lỗi khi tạo gói thầu:', error)
+    showError('Có lỗi xảy ra khi tạo gói thầu. Vui lòng thử lại sau.')
+    isSubmitting.value = false
+  }
+}
+
+// Mở modal chỉnh sửa gói thầu
+const openEditBidPackageModal = (bidPackage) => {
+  selectedBidPackage.value = bidPackage
+  bidPackageForm.value = {
+    code: bidPackage.code || '',
+    name: bidPackage.name || '',
+    description: bidPackage.description || '',
+    estimated_price: formatCurrency(bidPackage.estimated_price || 0),
+    client_price: formatCurrency(bidPackage.client_price || 0),
+    status: bidPackage.status || 'open'
+  }
+  bidPackageFormErrors.value = {}
+  window.$('#editBidPackageModal').modal('show')
+}
+
+// Gửi form chỉnh sửa gói thầu
+const submitEditBidPackage = async () => {
+  if (isSubmitting.value || !selectedBidPackage.value) return
+
+  bidPackageFormErrors.value = {}
+  isSubmitting.value = true
+
+  // Parse các giá trị tiền tệ thành số
+  const formData = {
+    project_id: props.project.id,
+    ...bidPackageForm.value,
+    estimated_price: parseCurrency(bidPackageForm.value.estimated_price),
+    client_price: parseCurrency(bidPackageForm.value.client_price)
+  }
+
+  try {
+    await router.put(route('bid-packages.update', selectedBidPackage.value.id), formData, {
+      onSuccess: () => {
+        window.$('#editBidPackageModal').modal('hide')
+        selectedBidPackage.value = null
+        showSuccess('Gói thầu đã được cập nhật thành công.')
+      },
+      onError: (errors) => {
+        bidPackageFormErrors.value = errors
+      },
+      onFinish: () => {
+        isSubmitting.value = false
+      }
+    })
+  } catch (error) {
+    console.error('Lỗi khi cập nhật gói thầu:', error)
+    showError('Có lỗi xảy ra khi cập nhật gói thầu. Vui lòng thử lại sau.')
+    isSubmitting.value = false
+  }
 }
 </script>
 

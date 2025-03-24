@@ -33,9 +33,6 @@
             <Link :href="route('receipt-vouchers.index')" class="flex-grow-1">
               Xem chi tiết <i class="fas fa-arrow-circle-right"></i>
             </Link>
-            <Link :href="route('reports.receipts-by-project')" class="flex-grow-1">
-              Xem báo cáo <i class="fas fa-chart-bar"></i>
-            </Link>
           </div>
         </div>
       </div>
@@ -51,9 +48,6 @@
           <div class="small-box-footer d-flex justify-content-between">
             <Link :href="route('payment-vouchers.index')" class="flex-grow-1">
               Xem chi tiết <i class="fas fa-arrow-circle-right"></i>
-            </Link>
-            <Link :href="route('reports.payments-by-project')" class="flex-grow-1">
-              Xem báo cáo <i class="fas fa-chart-bar"></i>
             </Link>
           </div>
         </div>

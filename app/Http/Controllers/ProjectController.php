@@ -6,7 +6,7 @@ use App\Models\Project;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\BidPackage;
-
+use App\Models\Customer;
 class ProjectController extends Controller
 {
     /**
@@ -30,7 +30,7 @@ class ProjectController extends Controller
             $query->where('status', $request->status);
         }
 
-        $projects = $query->latest()->paginate(10)->withQueryString();
+        $projects = $query->with('customer')->latest()->paginate(10)->withQueryString();
 
         return Inertia::render('Projects/Index', [
             'projects' => $projects,
@@ -49,7 +49,10 @@ class ProjectController extends Controller
      */
     public function create()
     {
-        return Inertia::render('Projects/Create');
+        $customers = Customer::all();
+        return Inertia::render('Projects/Create', [
+            'customers' => $customers
+        ]);
     }
 
     /**
@@ -62,6 +65,7 @@ class ProjectController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'status' => 'required|in:active,completed,cancelled',
+            'customer_id' => 'required|exists:customers,id',
         ]);
 
         Project::create($validated);
@@ -111,8 +115,10 @@ class ProjectController extends Controller
      */
     public function edit(Project $project)
     {
+        $customers = Customer::all();
         return Inertia::render('Projects/Edit', [
             'project' => $project,
+            'customers' => $customers
         ]);
     }
 
@@ -126,6 +132,7 @@ class ProjectController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'status' => 'required|in:active,completed,cancelled',
+            'customer_id' => 'required|exists:customers,id',
         ]);
 
         $project->update($validated);
@@ -143,5 +150,30 @@ class ProjectController extends Controller
 
         return redirect()->route('projects.index')
             ->with('success', 'Dự án đã được xóa thành công.');
+    }
+
+    public function expenses(Project $project)
+    {
+        $project->load([
+            'bidPackages.payment_vouchers.contractor',
+            'bidPackages.selectedContractor',
+            'customer'
+        ]);
+
+        return Inertia::render('Projects/Expenses', [
+            'project' => $project
+        ]);
+    }
+
+    public function profit(Project $project)
+    {
+        $project->load([
+            'bidPackages',
+            'customer'
+        ]);
+
+        return Inertia::render('Projects/Profit', [
+            'project' => $project
+        ]);
     }
 }

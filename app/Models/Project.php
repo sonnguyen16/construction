@@ -14,6 +14,7 @@ class Project extends Model
         'name',
         'description',
         'status',
+        'customer_id',
         'created_by',
         'updated_by',
     ];
@@ -89,5 +90,10 @@ class Project extends Model
     public function receipt_vouchers()
     {
         return $this->hasMany(ReceiptVoucher::class);
+    }
+
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
     }
 }

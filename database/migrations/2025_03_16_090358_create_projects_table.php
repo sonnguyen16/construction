@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('code')->unique(); // Mã dự án
             $table->string('name'); // Tên dự án
+            $table->foreignId('customer_id')->nullable()->constrained(); // Khách hàng
             $table->text('description')->nullable(); // Ghi chú
             $table->enum('status', ['active', 'completed', 'cancelled'])->default('active'); // Trạng thái
             $table->timestamps();

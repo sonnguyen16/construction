@@ -21,4 +21,21 @@ class Contractor extends Model
         'email',
         'notes',
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($project) {
+            if (!$project->created_by && auth()->check()) {
+                $project->created_by = auth()->id();
+            }
+        });
+
+        static::updating(function ($project) {
+            if (auth()->check()) {
+                $project->updated_by = auth()->id();
+            }
+        });
+    }
 }

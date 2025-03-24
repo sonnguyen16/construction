@@ -43,9 +43,10 @@
                   <th width="5%">STT</th>
                   <th width="10%">Mã dự án</th>
                   <th>Tên dự án</th>
+                  <th>Khách hàng</th>
                   <th>Trạng thái</th>
                   <th>Ngày tạo</th>
-                  <th width="15%">Thao tác</th>
+                  <th width="25%">Thao tác</th>
                 </tr>
               </thead>
               <tbody>
@@ -53,6 +54,7 @@
                   <td>{{ getSerialNumber(index) }}</td>
                   <td>{{ project.code }}</td>
                   <td>{{ project.name }}</td>
+                  <td>{{ project.customer ? project.customer.name : 'N/A' }}</td>
                   <td>
                     <span :class="getStatusClass(project.status)">
                       {{ getStatusLabel(project.status) }}
@@ -63,20 +65,23 @@
                   </td>
                   <td>
                     <div class="btn-group">
-                      <Link :href="route('projects.show', project.id)" class="btn btn-sm btn-info">
-                        <i class="fas fa-eye"></i> Chi tiết
-                      </Link>
                       <Link :href="route('projects.edit', project.id)" class="btn btn-sm btn-primary">
                         <i class="fas fa-edit"></i> Sửa
                       </Link>
-                      <button @click="confirmDelete(project)" class="btn btn-sm btn-danger">
-                        <i class="fas fa-trash"></i> Xóa
-                      </button>
+                      <Link :href="route('projects.show', project.id)" class="btn btn-sm btn-info">
+                        <i class="fas fa-eye"></i> Chi tiết
+                      </Link>
+                      <Link :href="route('projects.expenses', project.id)" class="btn btn-sm btn-warning">
+                        <i class="fas fa-money-bill"></i> Chi phí
+                      </Link>
+                      <Link :href="route('projects.profit', project.id)" class="btn btn-sm btn-success">
+                        <i class="fas fa-chart-line"></i> Lợi nhuận
+                      </Link>
                     </div>
                   </td>
                 </tr>
                 <tr v-if="projects.data.length === 0">
-                  <td colspan="6" class="text-center">Không có dữ liệu</td>
+                  <td colspan="7" class="text-center">Không có dữ liệu</td>
                 </tr>
               </tbody>
             </table>

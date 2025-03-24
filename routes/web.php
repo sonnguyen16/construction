@@ -3,14 +3,12 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ContractorController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\BidPackageController;
 use App\Http\Controllers\BidController;
 use App\Http\Controllers\PaymentVoucherController;
-use App\Http\Controllers\ReportController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\ReceiptVoucherController;
 
@@ -57,34 +55,30 @@ Route::middleware('auth')->group(function () {
     Route::resource('payment-vouchers', PaymentVoucherController::class);
     // Thêm route cho trang chi tiết gói thầu
     Route::get('/bid-packages/{bidPackage}', [App\Http\Controllers\BidPackageController::class, 'show'])->name('bid-packages.show');
+    // Thêm route cho báo cáo
+    Route::get('/reports/payments-by-project', [ReportController::class, 'paymentsByProject'])->name('reports.payments-by-project');
+
+    // Routes cho quản lý khách hàng
+    Route::resource('customers', CustomerController::class);
+    // Routes cho quản lý phiếu thu
+    Route::resource('receipt-vouchers', ReceiptVoucherController::class);
+    // Route cập nhật trạng thái phiếu thu
+    Route::patch('/receipt-vouchers/{receipt_voucher}/update-status', [ReceiptVoucherController::class, 'updateStatus'])->name('receipt-vouchers.update-status');
+    // Route cập nhật trạng thái phiếu chi
+    Route::patch('/payment-vouchers/{payment_voucher}/update-status', [PaymentVoucherController::class, 'updateStatus'])->name('payment-vouchers.update-status');
+    // Trong phần route của receipt-vouchers
+    Route::get('/receipt-vouchers/create', [ReceiptVoucherController::class, 'create'])->name('receipt-vouchers.create');
+    // Thêm route cho các trang chi phí và lợi nhuận
+    Route::get('/projects/{project}/expenses', [ProjectController::class, 'expenses'])->name('projects.expenses');
+    Route::get('/projects/{project}/profit', [ProjectController::class, 'profit'])->name('projects.profit');
+    // Thêm route cập nhật giá trị phát sinh
+    Route::patch('/bid-packages/{bidPackage}/update-additional-price', [BidPackageController::class, 'updateAdditionalPrice'])
+        ->name('bid-packages.update-additional-price');
+    // Thêm route cập nhật tỷ lệ lợi nhuận
+    Route::patch('/bid-packages/{bidPackage}/update-profit-percentage', [BidPackageController::class, 'updateProfitPercentage'])
+        ->name('bid-packages.update-profit-percentage');
 });
 
-// Thêm route cho báo cáo
-Route::get('/reports/payments-by-project', [ReportController::class, 'paymentsByProject'])->name('reports.payments-by-project');
-
-// Routes cho quản lý khách hàng
-Route::resource('customers', CustomerController::class);
-
-// Routes cho quản lý phiếu thu
-Route::resource('receipt-vouchers', ReceiptVoucherController::class);
-
-// Route cập nhật trạng thái phiếu thu
-Route::patch('/receipt-vouchers/{receipt_voucher}/update-status', [ReceiptVoucherController::class, 'updateStatus'])->name('receipt-vouchers.update-status');
-
-// Route cập nhật trạng thái phiếu chi
-Route::patch('/payment-vouchers/{payment_voucher}/update-status', [PaymentVoucherController::class, 'updateStatus'])->name('payment-vouchers.update-status');
-
-// Trong phần route của receipt-vouchers
-Route::get('/receipt-vouchers/create', [ReceiptVoucherController::class, 'create'])->name('receipt-vouchers.create');
-
-// Báo cáo
-Route::prefix('reports')->name('reports.')->middleware(['auth'])->group(function () {
-    // Báo cáo chi tiết phiếu chi theo dự án
-    Route::get('/payments-by-project', [ReportController::class, 'paymentsByProject'])->name('payments-by-project');
-
-    // Báo cáo chi tiết phiếu thu theo dự án
-    Route::get('/receipts-by-project', [ReportController::class, 'receiptsByProject'])->name('receipts-by-project');
-});
 
 
 
