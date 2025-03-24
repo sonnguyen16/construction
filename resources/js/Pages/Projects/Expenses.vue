@@ -38,7 +38,7 @@
                   <td>{{ bidPackage.code }}</td>
                   <td>{{ bidPackage.name }}</td>
                   <td>{{ bidPackage.selected_contractor ? bidPackage.selected_contractor.name : '-' }}</td>
-                  <td>{{ formatCurrency((bidPackage.estimated_price || 0) + (bidPackage.additional_price || 0)) }}</td>
+                  <td>{{ formatCurrency(bidPackage.client_price || 0) }}</td>
 
                   <!-- Chi lần 1 -->
                   <td>
@@ -270,7 +270,7 @@ const getPaymentVoucherAtIndex = (bidPackage, index) => {
 
 // Tính số tiền còn lại phải chi
 const calculateRemainingAmount = (bidPackage) => {
-  const totalContractAmount = (bidPackage.estimated_price || 0) + (bidPackage.additional_price || 0)
+  const totalContractAmount = bidPackage.client_price
   const totalPaid = bidPackage.payment_vouchers
     ? bidPackage.payment_vouchers.reduce((total, voucher) => total + parseInt(voucher.amount || 0), 0)
     : 0

@@ -83,7 +83,7 @@ class ProjectController extends Controller
             'bidPackages.bids.contractor',
             'bidPackages.selectedContractor',
             'bidPackages.payment_vouchers.contractor',
-            'bidPackages.receipt_vouchers.customer',
+            'receipt_vouchers.customer',
         ]);
 
         // Tính toán profit cho mỗi gói thầu
@@ -146,7 +146,8 @@ class ProjectController extends Controller
      */
     public function destroy(Project $project)
     {
-        $project->delete();
+        $project->deleted_at = now();
+        $project->save();
 
         return redirect()->route('projects.index')
             ->with('success', 'Dự án đã được xóa thành công.');
@@ -156,6 +157,8 @@ class ProjectController extends Controller
     {
         $project->load([
             'bidPackages.payment_vouchers.contractor',
+            'bidPackages.payment_vouchers.project',
+            'bidPackages.payment_vouchers.bidPackage',
             'bidPackages.selectedContractor',
             'customer'
         ]);

@@ -52,9 +52,10 @@
                   <!-- Nhà thầu 1 -->
                   <td>
                     <div v-if="getBidderAtIndex(bidPackage, 0)">
-                      <div class="d-flex align-items-center">
+                      <div class="d-flex align-items-start">
                         <input
                           type="radio"
+                          style="margin-top: 6px"
                           :name="`bidder_${bidPackage.id}`"
                           :checked="isSelectedContractor(bidPackage, getBidderAtIndex(bidPackage, 0))"
                           @change="selectContractor(getBidderAtIndex(bidPackage, 0))"
@@ -72,8 +73,9 @@
                   <!-- Nhà thầu 2 -->
                   <td>
                     <div v-if="getBidderAtIndex(bidPackage, 1)">
-                      <div class="d-flex align-items-center">
+                      <div class="d-flex align-items-start">
                         <input
+                          style="margin-top: 6px"
                           type="radio"
                           :name="`bidder_${bidPackage.id}`"
                           :checked="isSelectedContractor(bidPackage, getBidderAtIndex(bidPackage, 1))"
@@ -92,8 +94,9 @@
                   <!-- Nhà thầu 3 -->
                   <td>
                     <div v-if="getBidderAtIndex(bidPackage, 2)">
-                      <div class="d-flex align-items-center">
+                      <div class="d-flex align-items-start">
                         <input
+                          style="margin-top: 6px"
                           type="radio"
                           :name="`bidder_${bidPackage.id}`"
                           :checked="isSelectedContractor(bidPackage, getBidderAtIndex(bidPackage, 2))"

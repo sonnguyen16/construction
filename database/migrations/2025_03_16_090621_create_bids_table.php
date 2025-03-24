@@ -19,7 +19,7 @@ return new class extends Migration
             $table->text('notes')->nullable(); // Ghi chú
             $table->boolean('is_selected')->default(false); // Đánh dấu nhà thầu được chọn
             $table->timestamps();
-
+            $table->softDeletes();
             // Mỗi nhà thầu chỉ có thể đưa ra một giá dự thầu cho mỗi gói thầu
             $table->unique(['bid_package_id', 'contractor_id']);
         });

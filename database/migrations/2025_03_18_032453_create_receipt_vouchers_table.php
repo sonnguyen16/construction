@@ -17,13 +17,13 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->foreignId('customer_id')->constrained('customers');
             $table->foreignId('project_id')->constrained('projects');
-            $table->foreignId('bid_package_id')->nullable()->constrained('bid_packages');
             $table->unsignedBigInteger('amount');
             $table->enum('status', ['paid', 'unpaid'])->default('unpaid');
             $table->date('payment_date')->nullable();
             $table->foreignId('created_by')->nullable()->constrained('users');
             $table->foreignId('updated_by')->nullable()->constrained('users');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

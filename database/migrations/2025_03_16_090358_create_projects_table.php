@@ -19,6 +19,7 @@ return new class extends Migration
             $table->text('description')->nullable(); // Ghi chú
             $table->enum('status', ['active', 'completed', 'cancelled'])->default('active'); // Trạng thái
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

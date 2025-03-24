@@ -48,7 +48,6 @@
                       id="project_id"
                       v-model="form.project_id"
                       :class="{ 'is-invalid': form.errors.project_id }"
-                      @change="onProjectChange"
                     >
                       <option value="">Chọn dự án</option>
                       <option v-for="project in projects" :key="project.id" :value="project.id">
@@ -56,25 +55,6 @@
                       </option>
                     </select>
                     <div class="invalid-feedback" v-if="form.errors.project_id">{{ form.errors.project_id }}</div>
-                  </div>
-
-                  <div class="form-group" v-if="form.project_id">
-                    <label for="bid_package_id">Gói thầu</label>
-                    <select
-                      class="form-control"
-                      id="bid_package_id"
-                      v-model="form.bid_package_id"
-                      :class="{ 'is-invalid': form.errors.bid_package_id }"
-                      @change="onBidPackageChange"
-                    >
-                      <option value="">Chọn gói thầu</option>
-                      <option v-for="bidPackage in filteredBidPackages" :key="bidPackage.id" :value="bidPackage.id">
-                        {{ bidPackage.code ? bidPackage.code + ' - ' : '' }}{{ bidPackage.name }}
-                      </option>
-                    </select>
-                    <div class="invalid-feedback" v-if="form.errors.bid_package_id">
-                      {{ form.errors.bid_package_id }}
-                    </div>
                   </div>
                 </div>
 
@@ -157,7 +137,6 @@
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { Link, useForm } from '@inertiajs/vue3'
 import { parseCurrency, showSuccess } from '@/utils'
-import { computed, watch, onMounted } from 'vue'
 
 const props = defineProps({
   customers: Array,
@@ -165,40 +144,17 @@ const props = defineProps({
   bidPackages: Array,
   statuses: Object,
   preselectedCustomerId: [String, Number],
-  preselectedProjectId: [String, Number],
-  preselectedBidPackageId: [String, Number]
+  preselectedProjectId: [String, Number]
 })
 
 const form = useForm({
   customer_id: props.preselectedCustomerId || '',
   project_id: props.preselectedProjectId || '',
-  bid_package_id: props.preselectedBidPackageId || '',
   amount: '',
   status: 'unpaid',
   payment_date: '',
   description: ''
 })
-
-const filteredBidPackages = computed(() => {
-  if (!form.project_id) return []
-  return props.bidPackages.filter(
-    (bp) =>
-      bp.project_id == form.project_id || bp.project_name === props.projects.find((p) => p.id == form.project_id)?.name
-  )
-})
-
-const onProjectChange = () => {
-  form.bid_package_id = ''
-}
-
-const onBidPackageChange = () => {
-  if (form.bid_package_id) {
-    const bidPackage = filteredBidPackages.value.find((bp) => bp.id == form.bid_package_id)
-    if (bidPackage) {
-      form.description = `Thanh toán cho gói thầu ${bidPackage.code || ''} - ${bidPackage.name}`
-    }
-  }
-}
 
 const onStatusChange = () => {
   if (form.status === 'paid' && !form.payment_date) {

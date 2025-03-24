@@ -21,20 +21,17 @@ class ReceiptVoucherSeeder extends Seeder
 
         $customers = Customer::all();
         $projects = Project::all();
-        $bidPackages = BidPackage::all();
 
-        // Tạo 50 phiếu thu mẫu
-        for ($i = 0; $i < 50; $i++) {
+        // Tạo 30 phiếu thu mẫu
+        for ($i = 0; $i < 30; $i++) {
             $customer = $customers->random();
             $project = $projects->random();
-            $bidPackage = $bidPackages->where('project_id', $project->id)->random();
             $status = $faker->randomElement(['paid', 'unpaid']);
             $paymentDate = $status === 'completed' ? Carbon::now()->subDays($faker->numberBetween(1, 30)) : null;
 
             ReceiptVoucher::create([
                 'customer_id' => $customer->id,
                 'project_id' => $project->id,
-                'bid_package_id' => $bidPackage->id,
                 'amount' => $faker->numberBetween(10000000, 500000000),
                 'description' => $faker->sentence(10),
                 'status' => $status,

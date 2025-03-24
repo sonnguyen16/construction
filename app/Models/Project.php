@@ -41,7 +41,7 @@ class Project extends Model
      */
     public function bidPackages()
     {
-        return $this->hasMany(BidPackage::class);
+        return $this->hasMany(BidPackage::class)->whereNull('deleted_at');
     }
 
     /**
@@ -73,7 +73,7 @@ class Project extends Model
      */
     public function creator()
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->belongsTo(User::class, 'created_by')->whereNull('deleted_at');
     }
 
     /**
@@ -81,7 +81,7 @@ class Project extends Model
      */
     public function updater()
     {
-        return $this->belongsTo(User::class, 'updated_by');
+        return $this->belongsTo(User::class, 'updated_by')->whereNull('deleted_at');
     }
 
     /**
@@ -89,11 +89,11 @@ class Project extends Model
      */
     public function receipt_vouchers()
     {
-        return $this->hasMany(ReceiptVoucher::class);
+        return $this->hasMany(ReceiptVoucher::class)->whereNull('deleted_at');
     }
 
     public function customer()
     {
-        return $this->belongsTo(Customer::class);
+        return $this->belongsTo(Customer::class)->whereNull('deleted_at');
     }
 }

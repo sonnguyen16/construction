@@ -17,7 +17,7 @@ class ReceiptVoucherController extends Controller
      */
     public function index(Request $request)
     {
-        $query = ReceiptVoucher::query()
+        $query = ReceiptVoucher::query()->whereNull('deleted_at')
             ->with(['customer', 'project', 'bidPackage', 'creator']);
 
         // Tìm kiếm
@@ -234,7 +234,8 @@ class ReceiptVoucherController extends Controller
      */
     public function destroy(ReceiptVoucher $receiptVoucher)
     {
-        $receiptVoucher->delete();
+        $receiptVoucher->deleted_at = now();
+        $receiptVoucher->save();
 
         return redirect()->route('receipt-vouchers.index')
             ->with('success', 'Phiếu thu đã được xóa thành công.');

@@ -68,7 +68,7 @@ class ReceiptVoucher extends Model
      */
     public function customer()
     {
-        return $this->belongsTo(Customer::class);
+        return $this->belongsTo(Customer::class)->whereNull('deleted_at');
     }
 
     /**
@@ -76,7 +76,7 @@ class ReceiptVoucher extends Model
      */
     public function project()
     {
-        return $this->belongsTo(Project::class);
+        return $this->belongsTo(Project::class)->whereNull('deleted_at');
     }
 
     /**
@@ -84,7 +84,7 @@ class ReceiptVoucher extends Model
      */
     public function bidPackage()
     {
-        return $this->belongsTo(BidPackage::class);
+        return $this->belongsTo(BidPackage::class)->whereNull('deleted_at');
     }
 
     /**

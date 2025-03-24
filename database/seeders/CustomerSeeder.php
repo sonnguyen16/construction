@@ -16,7 +16,7 @@ class CustomerSeeder extends Seeder
         $faker = Faker::create('vi_VN');
 
         // Tạo 15 khách hàng mẫu
-        for ($i = 0; $i < 15; $i++) {
+        for ($i = 0; $i < 5; $i++) {
             Customer::create([
                 'name' => $faker->company,
                 'email' => $faker->companyEmail,

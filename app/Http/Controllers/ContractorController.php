@@ -13,7 +13,7 @@ class ContractorController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Contractor::query();
+        $query = Contractor::query()->whereNull('deleted_at');
 
         // Tìm kiếm
         if ($request->has('search')) {
@@ -96,7 +96,8 @@ class ContractorController extends Controller
      */
     public function destroy(Contractor $contractor)
     {
-        $contractor->delete();
+        $contractor->deleted_at = now();
+        $contractor->save();
 
         return redirect()->route('contractors.index')
             ->with('success', 'Nhà thầu đã được xóa thành công.');

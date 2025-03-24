@@ -24,22 +24,6 @@ class PaymentVoucherSeeder extends Seeder
         $bidPackages = BidPackage::all();
         $users = User::all();
 
-        // Kiểm tra nếu không có dữ liệu liên quan
-        if ($contractors->isEmpty()) {
-            $this->command->error('Không tìm thấy dữ liệu nhà thầu. Vui lòng chạy ContractorSeeder trước.');
-            return;
-        }
-
-        if ($bidPackages->isEmpty()) {
-            $this->command->error('Không tìm thấy dữ liệu gói thầu. Vui lòng chạy BidPackageSeeder trước.');
-            return;
-        }
-
-        if ($users->isEmpty()) {
-            $this->command->error('Không tìm thấy dữ liệu người dùng. Vui lòng chạy UserSeeder trước.');
-            return;
-        }
-
         // Mảng trạng thái thanh toán
         $statuses = ['paid', 'unpaid'];
 
@@ -61,6 +45,12 @@ class PaymentVoucherSeeder extends Seeder
             // Xác định trạng thái
             $status = $faker->randomElement(['paid', 'unpaid']);
 
+            if ($status === 'paid') {
+                $paymentDate = $faker->dateTimeBetween('-1 month', 'now');
+            } else {
+                $paymentDate = null;
+            }
+
             // Tạo mô tả phù hợp
             $descriptions = [
                 'Thanh toán đợt 1',
@@ -80,16 +70,16 @@ class PaymentVoucherSeeder extends Seeder
                 'code' => 'PV' . date('Ym') . str_pad($i + 1, 3, '0', STR_PAD_LEFT),
                 'description' => $description . ' cho ' . $bidPackage->name,
                 'contractor_id' => $contractor->id,
+                'project_id' => $bidPackage->project_id,
                 'bid_package_id' => $bidPackage->id,
                 'amount' => $amount,
                 'status' => $status,
+                'payment_date' => $paymentDate,
                 'created_by' => $createdBy,
                 'updated_by' => $updatedBy,
                 'created_at' => $createdAt,
                 'updated_at' => $createdAt->copy()->addHours(rand(1, 48))
             ]);
         }
-
-        $this->command->info('Đã tạo thành công 30 phiếu chi mẫu!');
     }
 }

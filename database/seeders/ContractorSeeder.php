@@ -53,16 +53,5 @@ class ContractorSeeder extends Seeder
         foreach ($contractors as $contractor) {
             Contractor::create($contractor);
         }
-
-        // Tạo thêm 15 nhà thầu ngẫu nhiên
-        for ($i = 1; $i <= 15; $i++) {
-            Contractor::create([
-                'name' => 'Nhà thầu ' . $i,
-                'phone' => '09' . rand(10000000, 99999999),
-                'email' => 'nhathau' . $i . '@example.com',
-                'address' => 'Địa chỉ nhà thầu ' . $i,
-                'notes' => $i % 3 == 0 ? 'Ghi chú cho nhà thầu ' . $i : null,
-            ]);
-        }
     }
 }

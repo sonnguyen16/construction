@@ -41,7 +41,7 @@ class Customer extends Model
      */
     public function receiptVouchers()
     {
-        return $this->hasMany(ReceiptVoucher::class);
+        return $this->hasMany(ReceiptVoucher::class)->whereNull('deleted_at');
     }
 
     /**
@@ -49,7 +49,7 @@ class Customer extends Model
      */
     public function creator()
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->belongsTo(User::class, 'created_by')->whereNull('deleted_at');
     }
 
     /**
@@ -57,6 +57,6 @@ class Customer extends Model
      */
     public function updater()
     {
-        return $this->belongsTo(User::class, 'updated_by');
+        return $this->belongsTo(User::class, 'updated_by')->whereNull('deleted_at');
     }
 }

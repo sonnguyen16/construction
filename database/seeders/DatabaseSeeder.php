@@ -22,11 +22,10 @@ class DatabaseSeeder extends Seeder
         $this->call([
             UserSeeder::class,
             ContractorSeeder::class,
-            ProjectSeeder::class,
             CustomerSeeder::class,
+            ProjectSeeder::class,
             PaymentVoucherSeeder::class,
             ReceiptVoucherSeeder::class,
-            // Các seeder khác nếu có
         ]);
     }
 }

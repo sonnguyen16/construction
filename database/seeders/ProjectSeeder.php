@@ -6,6 +6,7 @@ use App\Models\Project;
 use App\Models\BidPackage;
 use App\Models\Bid;
 use App\Models\Contractor;
+use App\Models\Customer;
 use Illuminate\Database\Seeder;
 
 class ProjectSeeder extends Seeder
@@ -17,9 +18,15 @@ class ProjectSeeder extends Seeder
     {
         // Lấy danh sách nhà thầu
         $contractors = Contractor::all();
+        $customers = Customer::all();
 
         if ($contractors->isEmpty()) {
             $this->command->info('Không có nhà thầu nào. Hãy chạy ContractorSeeder trước.');
+            return;
+        }
+
+        if ($customers->isEmpty()) {
+            $this->command->info('Không có khách hàng nào. Hãy chạy CustomerSeeder trước.');
             return;
         }
 
@@ -28,6 +35,7 @@ class ProjectSeeder extends Seeder
             $project = Project::create([
                 'code' => 'PRJ-' . str_pad($i, 3, '0', STR_PAD_LEFT),
                 'name' => 'Dự án ' . $i,
+                'customer_id' => $customers->random()->id,
                 'description' => 'Mô tả chi tiết cho dự án ' . $i,
                 'status' => $i % 3 == 0 ? 'completed' : ($i % 3 == 1 ? 'active' : 'cancelled'),
             ]);

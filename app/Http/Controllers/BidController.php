@@ -11,25 +11,6 @@ use Inertia\Inertia;
 class BidController extends Controller
 {
     /**
-     * Hiển thị form thêm giá dự thầu mới
-     */
-    public function create(BidPackage $bidPackage)
-    {
-        $bidPackage->load('project');
-        $contractors = Contractor::orderBy('name')->get();
-
-        // Lấy danh sách nhà thầu đã đặt giá
-        $existingBidContractorIds = $bidPackage->bids()->pluck('contractor_id')->toArray();
-
-        return Inertia::render('Bids/Create', [
-            'bidPackage' => $bidPackage,
-            'project' => $bidPackage->project,
-            'contractors' => $contractors,
-            'existingBidContractorIds' => $existingBidContractorIds,
-        ]);
-    }
-
-    /**
      * Lưu giá dự thầu mới vào database
      */
     public function store(Request $request, BidPackage $bidPackage)
@@ -56,21 +37,6 @@ class BidController extends Controller
     }
 
     /**
-     * Hiển thị form chỉnh sửa giá dự thầu
-     */
-    public function edit(Bid $bid)
-    {
-        $bid->load(['bidPackage.project', 'contractor']);
-
-        return Inertia::render('Bids/Edit', [
-            'bid' => $bid,
-            'bidPackage' => $bid->bidPackage,
-            'project' => $bid->bidPackage->project,
-            'contractor' => $bid->contractor,
-        ]);
-    }
-
-    /**
      * Cập nhật thông tin giá dự thầu
      */
     public function update(Request $request, Bid $bid)
@@ -86,7 +52,6 @@ class BidController extends Controller
         if ($bid->is_selected) {
             $bidPackage = $bid->bidPackage;
             $bidPackage->estimated_price = $validated['price'];
-            $bidPackage->calculateProfit()->save();
         }
 
         return redirect()->route('projects.show', $bid->bidPackage->project_id)
@@ -105,10 +70,10 @@ class BidController extends Controller
             $bidPackage = $bid->bidPackage;
             $bidPackage->selected_contractor_id = null;
             $bidPackage->estimated_price = null;
-            $bidPackage->calculateProfit()->save();
         }
 
-        $bid->delete();
+        $bid->deleted_at = now();
+        $bid->save();
 
         return redirect()->route('projects.show', $projectId)
             ->with('success', 'Giá dự thầu đã được xóa thành công.');
@@ -131,8 +96,9 @@ class BidController extends Controller
         // Cập nhật thông tin gói thầu
         $bidPackage->selected_contractor_id = $bid->contractor_id;
         $bidPackage->estimated_price = $bid->price;
+        $bidPackage->client_price = $bid->price + $bidPackage->additional_price;
         $bidPackage->status = 'awarded';
-        $bidPackage->calculateProfit()->save();
+        $bidPackage->save();
 
         return redirect()->route('projects.show', $bidPackage->project_id)
             ->with('success', 'Đã chọn nhà thầu thành công.');

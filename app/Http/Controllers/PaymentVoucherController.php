@@ -16,7 +16,7 @@ class PaymentVoucherController extends Controller
      */
     public function index(Request $request)
     {
-        $query = PaymentVoucher::query()
+        $query = PaymentVoucher::query()->whereNull('deleted_at')
             ->with(['contractor', 'bidPackage.project', 'creator']);
 
         // Tìm kiếm
@@ -175,6 +175,7 @@ class PaymentVoucherController extends Controller
                     'id' => $bidPackage->id,
                     'name' => $bidPackage->name,
                     'code' => $bidPackage->code,
+                    'project_id' => $bidPackage->project_id,
                     'project_name' => $bidPackage->project->name,
                     'display_name' => "[{$bidPackage->code}] {$bidPackage->name} - {$bidPackage->project->name}"
                 ];
@@ -222,7 +223,8 @@ class PaymentVoucherController extends Controller
      */
     public function destroy(PaymentVoucher $paymentVoucher)
     {
-        $paymentVoucher->delete();
+        $paymentVoucher->deleted_at = now();
+        $paymentVoucher->save();
 
         return redirect()->route('payment-vouchers.index')
             ->with('success', 'Phiếu chi đã được xóa thành công.');

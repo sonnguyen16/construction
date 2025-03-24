@@ -72,20 +72,6 @@ class BidPackage extends Model
     }
 
     /**
-     * Tính lợi nhuận khi giá giao thầu hoặc giá dự toán thay đổi
-     */
-    public function calculateProfit()
-    {
-        if ($this->client_price && $this->estimated_price) {
-            $this->profit = $this->client_price - $this->estimated_price;
-        } else {
-            $this->profit = null;
-        }
-
-        return $this;
-    }
-
-    /**
      * Quan hệ với phiếu chi
      */
     public function payment_vouchers()

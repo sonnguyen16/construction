@@ -38,36 +38,24 @@ Route::middleware('auth')->group(function () {
     // Quản lý dự án
     Route::resource('projects', ProjectController::class);
     // Quản lý gói thầu
-    Route::get('projects/{project}/bid-packages/create', [BidPackageController::class, 'create'])->name('bid-packages.create');
     Route::post('projects/{project}/bid-packages', [BidPackageController::class, 'store'])->name('bid-packages.store');
-    Route::get('bid-packages/{bidPackage}/edit', [BidPackageController::class, 'edit'])->name('bid-packages.edit');
     Route::put('bid-packages/{bidPackage}', [BidPackageController::class, 'update'])->name('bid-packages.update');
     Route::delete('bid-packages/{bidPackage}', [BidPackageController::class, 'destroy'])->name('bid-packages.destroy');
-    Route::patch('bid-packages/{bidPackage}/client-price', [BidPackageController::class, 'updateClientPrice'])->name('bid-packages.client-price');
     // Quản lý giá dự thầu
-    Route::get('bid-packages/{bidPackage}/bids/create', [BidController::class, 'create'])->name('bids.create');
     Route::post('bid-packages/{bidPackage}/bids', [BidController::class, 'store'])->name('bids.store');
-    Route::get('bids/{bid}/edit', [BidController::class, 'edit'])->name('bids.edit');
     Route::put('bids/{bid}', [BidController::class, 'update'])->name('bids.update');
     Route::delete('bids/{bid}', [BidController::class, 'destroy'])->name('bids.destroy');
     Route::post('bids/{bid}/select-contractor', [BidController::class, 'selectContractor'])->name('bids.select-contractor');
-    // Quản lý phiếu chi
-    Route::resource('payment-vouchers', PaymentVoucherController::class);
-    // Thêm route cho trang chi tiết gói thầu
-    Route::get('/bid-packages/{bidPackage}', [App\Http\Controllers\BidPackageController::class, 'show'])->name('bid-packages.show');
-    // Thêm route cho báo cáo
-    Route::get('/reports/payments-by-project', [ReportController::class, 'paymentsByProject'])->name('reports.payments-by-project');
-
     // Routes cho quản lý khách hàng
     Route::resource('customers', CustomerController::class);
+    // Quản lý phiếu chi
+    Route::resource('payment-vouchers', PaymentVoucherController::class);
     // Routes cho quản lý phiếu thu
     Route::resource('receipt-vouchers', ReceiptVoucherController::class);
     // Route cập nhật trạng thái phiếu thu
     Route::patch('/receipt-vouchers/{receipt_voucher}/update-status', [ReceiptVoucherController::class, 'updateStatus'])->name('receipt-vouchers.update-status');
     // Route cập nhật trạng thái phiếu chi
     Route::patch('/payment-vouchers/{payment_voucher}/update-status', [PaymentVoucherController::class, 'updateStatus'])->name('payment-vouchers.update-status');
-    // Trong phần route của receipt-vouchers
-    Route::get('/receipt-vouchers/create', [ReceiptVoucherController::class, 'create'])->name('receipt-vouchers.create');
     // Thêm route cho các trang chi phí và lợi nhuận
     Route::get('/projects/{project}/expenses', [ProjectController::class, 'expenses'])->name('projects.expenses');
     Route::get('/projects/{project}/profit', [ProjectController::class, 'profit'])->name('projects.profit');

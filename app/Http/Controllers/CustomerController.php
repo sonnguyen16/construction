@@ -14,7 +14,7 @@ class CustomerController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Customer::query();
+        $query = Customer::query()->whereNull('deleted_at');
 
         // Tìm kiếm
         if ($request->has('search') && $request->search) {
@@ -120,7 +120,8 @@ class CustomerController extends Controller
             return back()->with('error', 'Không thể xóa khách hàng này vì đã có phiếu thu liên quan.');
         }
 
-        $customer->delete();
+        $customer->deleted_at = now();
+        $customer->save();
 
         return redirect()->route('customers.index')
             ->with('success', 'Khách hàng đã được xóa thành công.');

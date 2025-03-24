@@ -151,7 +151,6 @@
                     <th>Mã phiếu thu</th>
                     <th>Khách hàng</th>
                     <th>Dự án</th>
-                    <th>Gói thầu</th>
                     <th>Số tiền</th>
                     <th>Trạng thái</th>
                     <th>Ngày tạo</th>
@@ -165,12 +164,6 @@
                     <td>
                       <span v-if="voucher.project">
                         {{ voucher.project.name }}
-                      </span>
-                      <span v-else>-</span>
-                    </td>
-                    <td>
-                      <span v-if="voucher.bid_package">
-                        {{ voucher.bid_package.code }} - {{ voucher.bid_package.name }}
                       </span>
                       <span v-else>-</span>
                     </td>

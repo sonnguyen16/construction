@@ -43,7 +43,6 @@
                       id="project_id"
                       v-model="form.project_id"
                       :class="{ 'is-invalid': form.errors.project_id }"
-                      @change="onProjectChange"
                     >
                       <option value="">Chọn dự án</option>
                       <option v-for="project in projects" :key="project.id" :value="project.id">
@@ -51,26 +50,6 @@
                       </option>
                     </select>
                     <div class="invalid-feedback" v-if="form.errors.project_id">{{ form.errors.project_id }}</div>
-                  </div>
-
-                  <!-- Select cho gói thầu -->
-                  <div class="form-group">
-                    <label for="bid_package_id">Gói thầu</label>
-                    <select
-                      class="form-control"
-                      id="bid_package_id"
-                      v-model="form.bid_package_id"
-                      :class="{ 'is-invalid': form.errors.bid_package_id }"
-                      @change="onBidPackageChange"
-                    >
-                      <option value="">Chọn gói thầu</option>
-                      <option v-for="bidPackage in filteredBidPackages" :key="bidPackage.id" :value="bidPackage.id">
-                        {{ bidPackage.code ? bidPackage.code + ' - ' : '' }}{{ bidPackage.name }}
-                      </option>
-                    </select>
-                    <div class="invalid-feedback" v-if="form.errors.bid_package_id">
-                      {{ form.errors.bid_package_id }}
-                    </div>
                   </div>
                 </div>
 
@@ -153,8 +132,7 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { Link, useForm } from '@inertiajs/vue3'
-import { parseCurrency, showSuccess, formatCurrency, formatDate } from '@/utils'
-import { computed, watch, onMounted } from 'vue'
+import { parseCurrency, showSuccess, formatCurrency } from '@/utils'
 
 const props = defineProps({
   receiptVoucher: Object,
@@ -167,38 +145,11 @@ const props = defineProps({
 const form = useForm({
   customer_id: props.receiptVoucher.customer_id || '',
   project_id: props.receiptVoucher.project_id || '',
-  bid_package_id: props.receiptVoucher.bid_package_id || '',
-  amount: props.receiptVoucher.amount || '',
+  amount: formatCurrency(props.receiptVoucher.amount || ''),
   status: props.receiptVoucher.status || 'unpaid',
   payment_date: props.receiptVoucher.payment_date || '',
   description: props.receiptVoucher.description || ''
 })
-
-// Lọc gói thầu theo dự án đã chọn
-const filteredBidPackages = computed(() => {
-  if (!form.project_id) return props.bidPackages
-  return props.bidPackages.filter(
-    (bp) =>
-      bp.project_id == form.project_id || bp.project_name === props.projects.find((p) => p.id == form.project_id)?.name
-  )
-})
-
-// Xử lý khi thay đổi dự án
-const onProjectChange = () => {
-  // Reset bid_package_id khi thay đổi dự án
-  form.bid_package_id = ''
-}
-
-// Xử lý khi thay đổi gói thầu
-const onBidPackageChange = () => {
-  // Tự động điền mô tả nếu thay đổi gói thầu
-  if (form.bid_package_id && form.bid_package_id !== props.receiptVoucher.bid_package_id) {
-    const bidPackage = filteredBidPackages.value.find((bp) => bp.id == form.bid_package_id)
-    if (bidPackage) {
-      form.description = `Thanh toán cho gói thầu ${bidPackage.code || ''} - ${bidPackage.name}`
-    }
-  }
-}
 
 // Xử lý khi thay đổi trạng thái
 const onStatusChange = () => {

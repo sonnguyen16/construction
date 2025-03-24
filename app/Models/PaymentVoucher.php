@@ -71,7 +71,7 @@ class PaymentVoucher extends Model
      */
     public function bidPackage()
     {
-        return $this->belongsTo(BidPackage::class, 'bid_package_id');
+        return $this->belongsTo(BidPackage::class, 'bid_package_id')->whereNull('deleted_at');
     }
 
     /**
@@ -79,7 +79,7 @@ class PaymentVoucher extends Model
      */
     public function contractor()
     {
-        return $this->belongsTo(Contractor::class, 'contractor_id');
+        return $this->belongsTo(Contractor::class, 'contractor_id')->whereNull('deleted_at');
     }
 
     /**
@@ -87,7 +87,7 @@ class PaymentVoucher extends Model
      */
     public function project()
     {
-        return $this->belongsTo(Project::class);
+        return $this->belongsTo(Project::class)->whereNull('deleted_at');
     }
 
     /**

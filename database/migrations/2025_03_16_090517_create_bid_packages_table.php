@@ -23,6 +23,7 @@ return new class extends Migration
             $table->foreignId('selected_contractor_id')->nullable()->constrained('contractors'); // Nhà thầu được chọn
             $table->enum('status', ['open', 'awarded', 'completed', 'cancelled'])->default('open'); // Trạng thái
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

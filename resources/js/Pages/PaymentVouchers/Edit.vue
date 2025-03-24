@@ -15,9 +15,7 @@
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Mã phiếu chi:</label>
-                    <p>
-                      <strong>{{ paymentVoucher.code }}</strong>
-                    </p>
+                    <input type="text" class="form-control" :value="paymentVoucher.code" disabled />
                   </div>
 
                   <!-- Select cho nhà thầu -->

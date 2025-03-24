@@ -21,6 +21,7 @@ return new class extends Migration
             $table->foreignId('created_by')->nullable()->constrained('users'); // Người tạo
             $table->foreignId('updated_by')->nullable()->constrained('users'); // Người sửa
             $table->timestamps();
+            $table->softDeletes();
         });
 
         // Cập nhật các bảng khác để thêm người tạo, người sửa

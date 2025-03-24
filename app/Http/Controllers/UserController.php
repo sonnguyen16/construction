@@ -16,7 +16,7 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
-        $query = User::query();
+        $query = User::query()->whereNull('deleted_at');
 
         // Tìm kiếm
         if ($request->has('search')) {
@@ -131,7 +131,8 @@ class UserController extends Controller
             Storage::disk('public')->delete(str_replace('/storage', '', $user->avatar));
         }
 
-        $user->delete();
+        $user->deleted_at = now();
+        $user->save();
 
         return redirect()->route('users.index')
             ->with('success', 'Người dùng đã được xóa thành công.');
