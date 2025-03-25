@@ -28,53 +28,42 @@
                   <!-- Select cho nhà thầu -->
                   <div class="form-group">
                     <label for="contractor_id">Nhà thầu <span class="text-danger">*</span></label>
-                    <select
+                    <input
+                      type="text"
                       class="form-control"
                       id="contractor_id"
-                      v-model="form.contractor_id"
+                      placeholder="Chọn nhà thầu"
+                      data-role="inputpicker"
                       :class="{ 'is-invalid': form.errors.contractor_id }"
-                    >
-                      <option value="">Chọn nhà thầu</option>
-                      <option v-for="contractor in contractors" :key="contractor.id" :value="contractor.id">
-                        {{ contractor.name }} {{ contractor.phone ? '- ' + contractor.phone : '' }}
-                      </option>
-                    </select>
+                    />
                     <div class="invalid-feedback" v-if="form.errors.contractor_id">{{ form.errors.contractor_id }}</div>
                   </div>
 
                   <!-- Select cho dự án -->
                   <div class="form-group">
                     <label for="project_id">Dự án</label>
-                    <select
+                    <input
+                      type="text"
                       class="form-control"
                       id="project_id"
-                      v-model="form.project_id"
+                      placeholder="Chọn dự án"
+                      data-role="inputpicker"
                       :class="{ 'is-invalid': form.errors.project_id }"
-                      @change="onProjectChange"
-                    >
-                      <option value="">Chọn dự án</option>
-                      <option v-for="project in projects" :key="project.id" :value="project.id">
-                        {{ project.name }} {{ project.code ? '- ' + project.code : '' }}
-                      </option>
-                    </select>
+                    />
                     <div class="invalid-feedback" v-if="form.errors.project_id">{{ form.errors.project_id }}</div>
                   </div>
 
                   <!-- Select cho gói thầu -->
                   <div class="form-group" v-if="form.project_id">
                     <label for="bid_package_id">Gói thầu</label>
-                    <select
+                    <input
+                      type="text"
                       class="form-control"
                       id="bid_package_id"
-                      v-model="form.bid_package_id"
+                      placeholder="Chọn gói thầu"
+                      data-role="inputpicker"
                       :class="{ 'is-invalid': form.errors.bid_package_id }"
-                      @change="onBidPackageChange"
-                    >
-                      <option value="">Chọn gói thầu</option>
-                      <option v-for="bidPackage in filteredBidPackages" :key="bidPackage.id" :value="bidPackage.id">
-                        {{ bidPackage.code ? bidPackage.code + ' - ' : '' }}{{ bidPackage.name }}
-                      </option>
-                    </select>
+                    />
                     <div class="invalid-feedback" v-if="form.errors.bid_package_id">
                       {{ form.errors.bid_package_id }}
                     </div>
@@ -90,7 +79,6 @@
                       id="amount"
                       v-model="form.amount"
                       placeholder="Nhập số tiền"
-                      v-currency
                       :class="{ 'is-invalid': form.errors.amount }"
                     />
                     <div class="invalid-feedback" v-if="form.errors.amount">{{ form.errors.amount }}</div>
@@ -161,7 +149,7 @@
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { Link, useForm } from '@inertiajs/vue3'
 import { parseCurrency, showSuccess } from '@/utils'
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 
 const props = defineProps({
   contractors: Array,
@@ -178,7 +166,7 @@ const form = useForm({
   contractor_id: props.preselectedContractorId || '',
   project_id: props.preselectedProjectId || '',
   bid_package_id: props.preselectedBidPackageId || '',
-  amount: '',
+  amount: 0,
   status: 'unpaid',
   payment_date: null,
   description: ''
@@ -225,4 +213,185 @@ const submit = () => {
     }
   })
 }
+
+// InputPicker instances để có thể hủy khi component unmount
+let contractorPicker = null
+let projectPicker = null
+let bidPackagePicker = null
+
+// Khởi tạo InputPicker sau khi component được mount
+onMounted(() => {
+  // Khởi tạo InputPicker cho nhà thầu
+  contractorPicker = window.$('#contractor_id').inputpicker({
+    data: props.contractors.map((contractor) => ({
+      value: contractor.id,
+      text: contractor.name,
+      phone: contractor.phone || '',
+      email: contractor.email || '',
+      address: contractor.address || ''
+    })),
+    fields: [
+      { name: 'text', text: 'Tên nhà thầu' },
+      { name: 'phone', text: 'Số điện thoại' },
+      { name: 'email', text: 'Email' },
+      { name: 'address', text: 'Địa chỉ' }
+    ],
+    fieldText: 'text',
+    fieldValue: 'value',
+    filterOpen: false,
+    headShow: true,
+    autoOpen: true,
+    width: '100%'
+  })
+
+  // Nếu có preselected value
+  if (props.preselectedContractorId) {
+    const selectedContractor = props.contractors.find((c) => c.id == props.preselectedContractorId)
+    if (selectedContractor) {
+      window.$('#contractor_id').inputpicker('val', selectedContractor.name)
+      form.contractor_id = props.preselectedContractorId
+    }
+  }
+
+  // Sự kiện thay đổi nhà thầu
+  window.$('#contractor_id').on('change', function () {
+    form.contractor_id = window.$(this).val()
+  })
+
+  // Khởi tạo InputPicker cho dự án
+  projectPicker = window.$('#project_id').inputpicker({
+    data: props.projects.map((project) => ({
+      value: project.id,
+      text: project.name,
+      code: project.code || ''
+    })),
+    fields: [
+      { name: 'text', text: 'Tên dự án' },
+      { name: 'code', text: 'Mã dự án' }
+    ],
+    fieldText: 'text',
+    fieldValue: 'value',
+    filterOpen: false,
+    headShow: true,
+    autoOpen: true,
+    width: '100%'
+  })
+
+  // Nếu có preselected value
+  if (props.preselectedProjectId) {
+    const selectedProject = props.projects.find((p) => p.id == props.preselectedProjectId)
+    if (selectedProject) {
+      window.$('#project_id').inputpicker('val', selectedProject.name)
+      form.project_id = props.preselectedProjectId
+    }
+  }
+
+  // Sự kiện thay đổi dự án
+  window.$('#project_id').on('change', async function () {
+    const newProjectId = window.$(this).val()
+    form.project_id = newProjectId
+    form.bid_package_id = ''
+
+    onProjectChange()
+
+    await nextTick()
+
+    if (newProjectId) {
+      updateBidPackagePicker()
+    }
+  })
+
+  // Nếu đã có dự án được chọn, khởi tạo InputPicker cho gói thầu
+  if (form.project_id) {
+    updateBidPackagePicker()
+    // Nếu có preselected value cho gói thầu
+    if (props.preselectedBidPackageId) {
+      const selectedBidPackage = filteredBidPackages.value.find((bp) => bp.id == props.preselectedBidPackageId)
+      if (selectedBidPackage) {
+        window.$('#bid_package_id').inputpicker('val', selectedBidPackage.name)
+        form.bid_package_id = props.preselectedBidPackageId
+      }
+    }
+  }
+})
+
+const safeDestroyInputPicker = (selector) => {
+  try {
+    const $el = window.$(selector)
+
+    // Kiểm tra xem phần tử có tồn tại không
+    if ($el.length === 0) return
+
+    // Hủy sự kiện trước
+    $el.off('change')
+
+    // Kiểm tra xem inputpicker đã được khởi tạo chưa
+    const instance = $el.data('inputpicker')
+    if (instance) {
+      // Hủy các dropdown mở
+      window.$('.inputpicker-div').remove()
+
+      // Xóa data
+      $el.removeData('inputpicker')
+
+      // Xóa các thuộc tính liên quan đến inputpicker
+      $el.removeAttr('data-inputpicker-uuid')
+      $el.removeAttr('data-value')
+    }
+  } catch (e) {
+    console.error(`Lỗi khi hủy InputPicker ${selector}:`, e)
+  }
+}
+
+// Hàm cập nhật InputPicker cho gói thầu
+const updateBidPackagePicker = () => {
+  safeDestroyInputPicker('#bid_package_id')
+
+  // Khởi tạo InputPicker mới cho gói thầu
+  bidPackagePicker = window.$('#bid_package_id').inputpicker({
+    data: filteredBidPackages.value.map((bidPackage) => ({
+      value: bidPackage.id,
+      text: bidPackage.name,
+      code: bidPackage.code || ''
+    })),
+    fields: [
+      { name: 'text', text: 'Tên gói thầu' },
+      { name: 'code', text: 'Mã gói thầu' }
+    ],
+    fieldText: 'text',
+    fieldValue: 'value',
+    filterOpen: false,
+    headShow: true,
+    autoOpen: true,
+    width: '100%'
+  })
+
+  // Sự kiện thay đổi gói thầu
+  window.$('#bid_package_id').on('change', function () {
+    form.bid_package_id = window.$(this).val()
+    onBidPackageChange()
+  })
+}
+
+// Hủy InputPicker khi component unmount
+onBeforeUnmount(() => {
+  try {
+    if (contractorPicker) {
+      window.$('#contractor_id').off('change')
+      window.$('#contractor_id').inputpicker('destroy')
+    }
+
+    if (projectPicker) {
+      window.$('#project_id').off('change')
+      window.$('#project_id').inputpicker('destroy')
+    }
+
+    if (bidPackagePicker) {
+      window.$('#bid_package_id').off('change')
+      window.$('#bid_package_id').inputpicker('destroy')
+    }
+  } catch (e) {
+    console.error('Lỗi khi hủy InputPicker:', e)
+  }
+})
 </script>

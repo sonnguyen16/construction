@@ -41,17 +41,14 @@
               </div>
               <div class="form-group">
                 <label for="customer_id">Khách hàng <span class="text-danger">*</span></label>
-                <select
+                <input
+                  type="text"
                   class="form-control"
                   id="customer_id"
-                  v-model="form.customer_id"
+                  placeholder="Chọn khách hàng"
+                  data-role="inputpicker"
                   :class="{ 'is-invalid': form.errors.customer_id }"
-                >
-                  <option value="">Chọn khách hàng</option>
-                  <option v-for="customer in customers" :key="customer.id" :value="customer.id">
-                    {{ customer.name }} {{ customer.phone ? '- ' + customer.phone : '' }}
-                  </option>
-                </select>
+                />
                 <div class="invalid-feedback" v-if="form.errors.customer_id">
                   {{ form.errors.customer_id }}
                 </div>
@@ -78,17 +75,12 @@
                   class="form-control"
                   id="status"
                   v-model="form.status"
-                  :class="{
-                    'is-invalid': form.errors.status
-                  }"
+                  :class="{ 'is-invalid': form.errors.status }"
                 >
                   <option value="active">Đang hoạt động</option>
                   <option value="completed">Hoàn thành</option>
                   <option value="cancelled">Đã hủy</option>
                 </select>
-                <div class="invalid-feedback" v-if="form.errors.status">
-                  {{ form.errors.status }}
-                </div>
               </div>
             </div>
             <div class="card-footer">
@@ -110,6 +102,7 @@
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { Link, useForm } from '@inertiajs/vue3'
 import { showSuccess } from '@/utils'
+import { onMounted, onBeforeUnmount } from 'vue'
 
 const props = defineProps({
   customers: Array
@@ -123,7 +116,45 @@ const form = useForm({
   status: 'active'
 })
 
+// InputPicker instances
+let customerPicker = null
+
+onMounted(() => {
+  // Khởi tạo InputPicker cho khách hàng
+  customerPicker = window.$('#customer_id').inputpicker({
+    data: props.customers.map((customer) => ({
+      value: customer.id,
+      text: customer.name,
+      phone: customer.phone || '',
+      email: customer.email || '',
+      address: customer.address || ''
+    })),
+    fields: [
+      { name: 'text', text: 'Tên khách hàng' },
+      { name: 'phone', text: 'Số điện thoại' },
+      { name: 'email', text: 'Email' },
+      { name: 'address', text: 'Địa chỉ' }
+    ],
+    fieldText: 'text',
+    fieldValue: 'value',
+    filterOpen: false,
+    headShow: true,
+    autoOpen: true,
+    width: '100%'
+  })
+})
+
+// Hủy InputPicker khi component unmount
+onBeforeUnmount(() => {
+  try {
+    if (customerPicker) window.$('#customer_id').inputpicker('destroy')
+  } catch (e) {
+    console.error('Lỗi khi hủy InputPicker:', e)
+  }
+})
+
 const submit = () => {
+  form.customer_id = window.$('#customer_id').val()
   form.post(route('projects.store'), {
     onSuccess: () => {
       showSuccess('Dự án đã được tạo thành công.')

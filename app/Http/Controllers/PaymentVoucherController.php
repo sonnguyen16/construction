@@ -126,6 +126,7 @@ class PaymentVoucherController extends Controller
     {
         $validated = $request->validate([
             'contractor_id' => 'required|exists:contractors,id',
+            'project_id' => 'required|exists:projects,id',
             'bid_package_id' => 'nullable|exists:bid_packages,id',
             'amount' => 'required|numeric|min:0',
             'description' => 'nullable|string',
@@ -140,7 +141,7 @@ class PaymentVoucherController extends Controller
 
         $paymentVoucher = PaymentVoucher::create($validated);
 
-        return redirect()->route('payment-vouchers.index')
+        return redirect()->route('projects.expenses', $paymentVoucher->project_id)
             ->with('success', 'Phiếu chi đã được tạo thành công.');
     }
 
@@ -200,6 +201,7 @@ class PaymentVoucherController extends Controller
     {
         $validated = $request->validate([
             'contractor_id' => 'required|exists:contractors,id',
+            'project_id' => 'required|exists:projects,id',
             'bid_package_id' => 'nullable|exists:bid_packages,id',
             'amount' => 'required|numeric|min:0',
             'description' => 'nullable|string',
@@ -214,7 +216,7 @@ class PaymentVoucherController extends Controller
 
         $paymentVoucher->update($validated);
 
-        return redirect()->route('payment-vouchers.show', $paymentVoucher->id)
+        return redirect()->route('projects.expenses', $paymentVoucher->project_id)
             ->with('success', 'Phiếu chi đã được cập nhật thành công.');
     }
 

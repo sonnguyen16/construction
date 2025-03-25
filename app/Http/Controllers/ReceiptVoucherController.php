@@ -42,11 +42,6 @@ class ReceiptVoucherController extends Controller
             $query->where('project_id', $request->project_id);
         }
 
-        // Lọc theo gói thầu
-        if ($request->has('bid_package_id') && $request->bid_package_id) {
-            $query->where('bid_package_id', $request->bid_package_id);
-        }
-
         // Lọc theo trạng thái
         if ($request->has('status') && $request->status) {
             $query->where('status', $request->status);
@@ -69,26 +64,16 @@ class ReceiptVoucherController extends Controller
         // Lấy danh sách khách hàng, dự án và gói thầu cho bộ lọc
         $customers = Customer::orderBy('name')->get();
         $projects = Project::orderBy('name')->get();
-        $bidPackages = BidPackage::with('project')->orderBy('created_at', 'desc')->get()
-            ->map(function ($bidPackage) {
-                return [
-                    'id' => $bidPackage->id,
-                    'code' => $bidPackage->code,
-                    'name' => $bidPackage->name,
-                    'project_name' => $bidPackage->project->name ?? 'Không có dự án'
-                ];
-            });
 
         return Inertia::render('ReceiptVouchers/Index', [
             'receiptVouchers' => $receiptVouchers,
             'customers' => $customers,
             'projects' => $projects,
-            'bidPackages' => $bidPackages,
             'statuses' => [
                 'unpaid' => 'Chưa thanh toán',
                 'paid' => 'Đã thanh toán'
             ],
-            'filters' => $request->only(['search', 'customer_id', 'project_id', 'bid_package_id', 'status', 'date_from', 'date_to'])
+            'filters' => $request->only(['search', 'customer_id', 'project_id',  'status', 'date_from', 'date_to'])
         ]);
     }
 
@@ -99,33 +84,20 @@ class ReceiptVoucherController extends Controller
     {
         $customers = Customer::orderBy('name')->get();
         $projects = Project::orderBy('name')->get();
-        $bidPackages = BidPackage::with('project')->orderBy('created_at', 'desc')->get()
-            ->map(function ($bidPackage) {
-                return [
-                    'id' => $bidPackage->id,
-                    'name' => $bidPackage->name,
-                    'code' => $bidPackage->code,
-                    'project_name' => $bidPackage->project->name,
-                    'display_name' => "[{$bidPackage->code}] {$bidPackage->name} - {$bidPackage->project->name}"
-                ];
-            });
 
         // Lấy thông tin từ request nếu có
         $preselectedCustomerId = $request->input('customer_id');
         $preselectedProjectId = $request->input('project_id');
-        $preselectedBidPackageId = $request->input('bid_package_id');
 
         return Inertia::render('ReceiptVouchers/Create', [
             'customers' => $customers,
             'projects' => $projects,
-            'bidPackages' => $bidPackages,
             'statuses' => [
                 'unpaid' => 'Chưa thanh toán',
                 'paid' => 'Đã thanh toán'
             ],
             'preselectedCustomerId' => $preselectedCustomerId,
             'preselectedProjectId' => $preselectedProjectId,
-            'preselectedBidPackageId' => $preselectedBidPackageId
         ]);
     }
 
@@ -136,8 +108,7 @@ class ReceiptVoucherController extends Controller
     {
         $validated = $request->validate([
             'customer_id' => 'required|exists:customers,id',
-            'project_id' => 'nullable|exists:projects,id',
-            'bid_package_id' => 'nullable|exists:bid_packages,id',
+            'project_id' => 'required|exists:projects,id',
             'amount' => 'required|numeric|min:0',
             'description' => 'nullable|string',
             'status' => 'required|in:paid,unpaid',
@@ -180,22 +151,11 @@ class ReceiptVoucherController extends Controller
 
         $customers = Customer::orderBy('name')->get();
         $projects = Project::orderBy('name')->get();
-        $bidPackages = BidPackage::with('project')->orderBy('created_at', 'desc')->get()
-            ->map(function ($bidPackage) {
-                return [
-                    'id' => $bidPackage->id,
-                    'name' => $bidPackage->name,
-                    'code' => $bidPackage->code,
-                    'project_name' => $bidPackage->project->name,
-                    'display_name' => "[{$bidPackage->code}] {$bidPackage->name} - {$bidPackage->project->name}"
-                ];
-            });
 
         return Inertia::render('ReceiptVouchers/Edit', [
             'receiptVoucher' => $receiptVoucher,
             'customers' => $customers,
             'projects' => $projects,
-            'bidPackages' => $bidPackages,
             'statuses' => [
                 'unpaid' => 'Chưa thanh toán',
                 'paid' => 'Đã thanh toán'
@@ -211,7 +171,6 @@ class ReceiptVoucherController extends Controller
         $validated = $request->validate([
             'customer_id' => 'required|exists:customers,id',
             'project_id' => 'nullable|exists:projects,id',
-            'bid_package_id' => 'nullable|exists:bid_packages,id',
             'amount' => 'required|numeric|min:0',
             'description' => 'nullable|string',
             'status' => 'required|in:paid,unpaid',

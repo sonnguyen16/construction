@@ -21,34 +21,28 @@
                   <!-- Select cho khách hàng -->
                   <div class="form-group">
                     <label for="customer_id">Khách hàng <span class="text-danger">*</span></label>
-                    <select
+                    <input
+                      type="text"
                       class="form-control"
                       id="customer_id"
-                      v-model="form.customer_id"
+                      placeholder="Chọn khách hàng"
+                      data-role="inputpicker"
                       :class="{ 'is-invalid': form.errors.customer_id }"
-                    >
-                      <option value="">Chọn khách hàng</option>
-                      <option v-for="customer in customers" :key="customer.id" :value="customer.id">
-                        {{ customer.name }} {{ customer.phone ? '- ' + customer.phone : '' }}
-                      </option>
-                    </select>
+                    />
                     <div class="invalid-feedback" v-if="form.errors.customer_id">{{ form.errors.customer_id }}</div>
                   </div>
 
                   <!-- Select cho dự án -->
                   <div class="form-group">
                     <label for="project_id">Dự án</label>
-                    <select
+                    <input
+                      type="text"
                       class="form-control"
                       id="project_id"
-                      v-model="form.project_id"
+                      placeholder="Chọn dự án"
+                      data-role="inputpicker"
                       :class="{ 'is-invalid': form.errors.project_id }"
-                    >
-                      <option value="">Chọn dự án</option>
-                      <option v-for="project in projects" :key="project.id" :value="project.id">
-                        {{ project.name }} {{ project.code ? '- ' + project.code : '' }}
-                      </option>
-                    </select>
+                    />
                     <div class="invalid-feedback" v-if="form.errors.project_id">{{ form.errors.project_id }}</div>
                   </div>
                 </div>
@@ -62,7 +56,6 @@
                       id="amount"
                       v-model="form.amount"
                       placeholder="Nhập số tiền"
-                      v-currency
                       :class="{ 'is-invalid': form.errors.amount }"
                     />
                     <div class="invalid-feedback" v-if="form.errors.amount">{{ form.errors.amount }}</div>
@@ -75,12 +68,11 @@
                       class="form-control"
                       id="status"
                       v-model="form.status"
-                      :class="{ 'is-invalid': form.errors.status }"
                       @change="onStatusChange"
+                      :class="{ 'is-invalid': form.errors.status }"
                     >
-                      <option v-for="(text, value) in statuses" :key="value" :value="value">
-                        {{ text }}
-                      </option>
+                      <option value="unpaid">Chưa thanh toán</option>
+                      <option value="paid">Đã thanh toán</option>
                     </select>
                     <div class="invalid-feedback" v-if="form.errors.status">{{ form.errors.status }}</div>
                   </div>
@@ -133,6 +125,7 @@
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { Link, useForm } from '@inertiajs/vue3'
 import { parseCurrency, showSuccess, formatCurrency } from '@/utils'
+import { onMounted, onBeforeUnmount } from 'vue'
 
 const props = defineProps({
   receiptVoucher: Object,
@@ -145,10 +138,97 @@ const props = defineProps({
 const form = useForm({
   customer_id: props.receiptVoucher.customer_id || '',
   project_id: props.receiptVoucher.project_id || '',
-  amount: formatCurrency(props.receiptVoucher.amount || ''),
+  amount: formatCurrency(props.receiptVoucher.amount || 0),
   status: props.receiptVoucher.status || 'unpaid',
-  payment_date: props.receiptVoucher.payment_date || '',
+  payment_date: new Date(props.receiptVoucher.payment_date || new Date()).toISOString().split('T')[0] || '',
   description: props.receiptVoucher.description || ''
+})
+
+// InputPicker instances để có thể hủy khi component unmount
+let customerPicker = null
+let projectPicker = null
+let statusPicker = null
+
+// Khởi tạo InputPicker sau khi component được mount
+onMounted(() => {
+  // Khởi tạo InputPicker cho khách hàng
+  customerPicker = window.$('#customer_id').inputpicker({
+    data: props.customers.map((customer) => ({
+      value: customer.id,
+      text: customer.name,
+      phone: customer.phone || '',
+      email: customer.email || '',
+      address: customer.address || ''
+    })),
+    fields: [
+      { name: 'text', text: 'Tên khách hàng' },
+      { name: 'phone', text: 'Số điện thoại' },
+      { name: 'email', text: 'Email' },
+      { name: 'address', text: 'Địa chỉ' }
+    ],
+    fieldText: 'text',
+    fieldValue: 'value',
+    filterOpen: false,
+    headShow: true,
+    autoOpen: true,
+    width: '100%'
+  })
+
+  // Đặt giá trị ban đầu
+  if (form.customer_id) {
+    const selectedCustomer = props.customers.find((c) => c.id == form.customer_id)
+    if (selectedCustomer) {
+      window.$('#customer_id').inputpicker('val', selectedCustomer.id)
+    }
+  }
+
+  // Sự kiện thay đổi khách hàng
+  window.$('#customer_id').on('change', function () {
+    form.customer_id = window.$(this).inputpicker('val')
+  })
+
+  // Khởi tạo InputPicker cho dự án
+  projectPicker = window.$('#project_id').inputpicker({
+    data: props.projects.map((project) => ({
+      value: project.id,
+      text: project.name,
+      code: project.code || ''
+    })),
+    fields: [
+      { name: 'text', text: 'Tên dự án' },
+      { name: 'code', text: 'Mã dự án' }
+    ],
+    fieldText: 'text',
+    fieldValue: 'value',
+    filterOpen: false,
+    headShow: true,
+    autoOpen: true,
+    width: '100%'
+  })
+
+  // Đặt giá trị ban đầu
+  if (form.project_id) {
+    const selectedProject = props.projects.find((p) => p.id == form.project_id)
+    if (selectedProject) {
+      window.$('#project_id').inputpicker('val', selectedProject.id)
+    }
+  }
+
+  // Sự kiện thay đổi dự án
+  window.$('#project_id').on('change', function () {
+    form.project_id = window.$(this).inputpicker('val')
+  })
+})
+
+// Hủy InputPicker khi component unmount
+onBeforeUnmount(() => {
+  try {
+    if (customerPicker) window.$('#customer_id').inputpicker('destroy')
+    if (projectPicker) window.$('#project_id').inputpicker('destroy')
+    if (statusPicker) window.$('#status').inputpicker('destroy')
+  } catch (e) {
+    console.error('Lỗi khi hủy InputPicker:', e)
+  }
 })
 
 // Xử lý khi thay đổi trạng thái

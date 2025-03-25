@@ -73,7 +73,7 @@ class Project extends Model
      */
     public function creator()
     {
-        return $this->belongsTo(User::class, 'created_by')->whereNull('deleted_at');
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     /**
@@ -81,7 +81,7 @@ class Project extends Model
      */
     public function updater()
     {
-        return $this->belongsTo(User::class, 'updated_by')->whereNull('deleted_at');
+        return $this->belongsTo(User::class, 'updated_by');
     }
 
     /**
@@ -94,6 +94,6 @@ class Project extends Model
 
     public function customer()
     {
-        return $this->belongsTo(Customer::class)->whereNull('deleted_at');
+        return $this->belongsTo(Customer::class);
     }
 }

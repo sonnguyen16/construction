@@ -1,6 +1,8 @@
 <template>
   <AdminLayout>
-    <template #header>{{ project.name }}</template>
+    <template #header>
+      <h1 style="font-size: 1.4rem">{{ project.name }}</h1>
+    </template>
     <template #breadcrumb>Chi tiết dự án</template>
     <!-- Danh sách gói thầu -->
     <div class="row">
@@ -35,35 +37,45 @@
                   <td>{{ index + 1 }}</td>
                   <td>{{ bidPackage.code }}</td>
                   <td>{{ bidPackage.name }}</td>
-                  <td>{{ formatCurrency(bidPackage.estimated_price || 0) }}</td>
+                  <td class="text-right">{{ formatCurrency(bidPackage.estimated_price || 0) }}</td>
                   <td>
                     <div class="d-flex justify-between">
-                      {{ formatCurrency(bidPackage.additional_price || 0) }}
                       <button
                         @click="openAdditionalPriceModal(bidPackage)"
-                        class="btn btn-sm btn-primary ml-2"
+                        class="btn btn-sm btn-primary"
                         title="Cập nhật giá phát sinh"
                       >
                         <i class="fas fa-edit"></i>
                       </button>
+                      {{ formatCurrency(bidPackage.additional_price || 0) }}
                     </div>
                   </td>
-                  <td>{{ formatCurrency(bidPackage.client_price || 0) }}</td>
+                  <td class="text-right">{{ formatCurrency(bidPackage.client_price || 0) }}</td>
                   <!-- Nhà thầu 1 -->
                   <td>
                     <div v-if="getBidderAtIndex(bidPackage, 0)">
                       <div class="d-flex align-items-start">
-                        <input
-                          type="radio"
-                          style="margin-top: 6px"
-                          :name="`bidder_${bidPackage.id}`"
-                          :checked="isSelectedContractor(bidPackage, getBidderAtIndex(bidPackage, 0))"
-                          @change="selectContractor(getBidderAtIndex(bidPackage, 0))"
-                        />
-                        <span class="ml-2"
-                          >{{ getBidderAtIndex(bidPackage, 0).contractor.name }} -
-                          {{ formatCurrency(getBidderAtIndex(bidPackage, 0).price) }}</span
-                        >
+                        <div class="text-center">
+                          <input
+                            type="radio"
+                            style="margin: 6px 6px 10px; width: 20px; height: 20px"
+                            :name="`bidder_${bidPackage.id}`"
+                            :checked="isSelectedContractor(bidPackage, getBidderAtIndex(bidPackage, 0))"
+                            @change="selectContractor(getBidderAtIndex(bidPackage, 0))"
+                          />
+                          <button
+                            @click="confirmDeleteBid(getBidderAtIndex(bidPackage, 0))"
+                            class="btn btn-sm btn-danger"
+                          >
+                            <i class="fas fa-trash-alt"></i>
+                          </button>
+                        </div>
+                        <div>
+                          <span class="ml-2">
+                            {{ formatCurrency(getBidderAtIndex(bidPackage, 0).price) }}
+                          </span>
+                          <span class="ml-2 block">{{ getBidderAtIndex(bidPackage, 0).contractor.name }}</span>
+                        </div>
                       </div>
                     </div>
                     <button v-else @click="openAddBidModal(bidPackage)" class="btn btn-sm btn-success">
@@ -74,17 +86,27 @@
                   <td>
                     <div v-if="getBidderAtIndex(bidPackage, 1)">
                       <div class="d-flex align-items-start">
-                        <input
-                          style="margin-top: 6px"
-                          type="radio"
-                          :name="`bidder_${bidPackage.id}`"
-                          :checked="isSelectedContractor(bidPackage, getBidderAtIndex(bidPackage, 1))"
-                          @change="selectContractor(getBidderAtIndex(bidPackage, 1))"
-                        />
-                        <span class="ml-2"
-                          >{{ getBidderAtIndex(bidPackage, 1).contractor.name }} -
-                          {{ formatCurrency(getBidderAtIndex(bidPackage, 1).price) }}</span
-                        >
+                        <div class="text-center">
+                          <input
+                            style="margin: 6px 6px 10px; width: 20px; height: 20px"
+                            type="radio"
+                            :name="`bidder_${bidPackage.id}`"
+                            :checked="isSelectedContractor(bidPackage, getBidderAtIndex(bidPackage, 1))"
+                            @change="selectContractor(getBidderAtIndex(bidPackage, 1))"
+                          />
+                          <button
+                            @click="confirmDeleteBid(getBidderAtIndex(bidPackage, 1))"
+                            class="btn btn-sm btn-danger"
+                          >
+                            <i class="fas fa-trash-alt"></i>
+                          </button>
+                        </div>
+                        <div>
+                          <span class="ml-2">
+                            {{ formatCurrency(getBidderAtIndex(bidPackage, 1).price) }}
+                          </span>
+                          <span class="ml-2 block">{{ getBidderAtIndex(bidPackage, 1).contractor.name }}</span>
+                        </div>
                       </div>
                     </div>
                     <button v-else @click="openAddBidModal(bidPackage)" class="btn btn-sm btn-success">
@@ -95,17 +117,27 @@
                   <td>
                     <div v-if="getBidderAtIndex(bidPackage, 2)">
                       <div class="d-flex align-items-start">
-                        <input
-                          style="margin-top: 6px"
-                          type="radio"
-                          :name="`bidder_${bidPackage.id}`"
-                          :checked="isSelectedContractor(bidPackage, getBidderAtIndex(bidPackage, 2))"
-                          @change="selectContractor(getBidderAtIndex(bidPackage, 2))"
-                        />
-                        <span class="ml-2"
-                          >{{ getBidderAtIndex(bidPackage, 2).contractor.name }} -
-                          {{ formatCurrency(getBidderAtIndex(bidPackage, 2).price) }}</span
-                        >
+                        <div class="text-center">
+                          <input
+                            style="margin: 6px 6px 10px; width: 20px; height: 20px"
+                            type="radio"
+                            :name="`bidder_${bidPackage.id}`"
+                            :checked="isSelectedContractor(bidPackage, getBidderAtIndex(bidPackage, 2))"
+                            @change="selectContractor(getBidderAtIndex(bidPackage, 2))"
+                          />
+                          <button
+                            @click="confirmDeleteBid(getBidderAtIndex(bidPackage, 2))"
+                            class="btn btn-sm btn-danger"
+                          >
+                            <i class="fas fa-trash-alt"></i>
+                          </button>
+                        </div>
+                        <div>
+                          <span class="ml-2">
+                            {{ formatCurrency(getBidderAtIndex(bidPackage, 2).price) }}
+                          </span>
+                          <span class="ml-2 block">{{ getBidderAtIndex(bidPackage, 2).contractor.name }}</span>
+                        </div>
                       </div>
                     </div>
                     <button v-else @click="openAddBidModal(bidPackage)" class="btn btn-sm btn-success">
@@ -113,11 +145,11 @@
                     </button>
                   </td>
                   <td class="text-center">
-                    <div class="btn-group">
-                      <button class="btn btn-xs btn-info" @click="openEditBidPackageModal(bidPackage)">
+                    <div class="d-flex gap-2">
+                      <button class="btn btn-sm btn-info" @click="openEditBidPackageModal(bidPackage)">
                         <i class="fas fa-edit"></i>
                       </button>
-                      <button class="btn btn-xs btn-danger" @click="confirmDeleteBidPackage(bidPackage)">
+                      <button class="btn btn-sm btn-danger" @click="confirmDeleteBidPackage(bidPackage)">
                         <i class="fas fa-trash"></i>
                       </button>
                     </div>
@@ -127,6 +159,15 @@
                   <td colspan="10" class="text-center">Chưa có gói thầu nào</td>
                 </tr>
               </tbody>
+              <tfoot>
+                <tr class="bg-light font-weight-bold">
+                  <td colspan="3" class="text-right">Tổng cộng:</td>
+                  <td class="text-right">{{ formatCurrency(totalEstimatedPrice) }}</td>
+                  <td class="text-right">{{ formatCurrency(totalAdditionalPrice) }}</td>
+                  <td class="text-right">{{ formatCurrency(totalClientPrice) }}</td>
+                  <td colspan="4"></td>
+                </tr>
+              </tfoot>
             </table>
           </div>
         </div>
@@ -167,17 +208,14 @@
               <!-- Select cho nhà thầu -->
               <div class="form-group">
                 <label for="contractor_id">Nhà thầu:</label>
-                <select
+                <input
+                  type="text"
                   class="form-control"
                   id="contractor_id"
+                  placeholder="Nhập tên nhà thầu"
                   v-model="bidForm.contractor_id"
                   :class="{ 'is-invalid': bidFormErrors.contractor_id }"
-                >
-                  <option value="">Chọn nhà thầu</option>
-                  <option v-for="contractor in availableContractors" :key="contractor.id" :value="contractor.id">
-                    {{ contractor.name }} {{ contractor.phone ? '- ' + contractor.phone : '' }}
-                  </option>
-                </select>
+                />
                 <div class="invalid-feedback" v-if="bidFormErrors.contractor_id">
                   {{ bidFormErrors.contractor_id }}
                 </div>
@@ -504,17 +542,14 @@
               </div>
               <div class="form-group">
                 <label for="edit_status">Trạng thái <span class="text-danger">*</span></label>
-                <select
+                <input
+                  type="text"
                   class="form-control"
                   id="edit_status"
-                  v-model="bidPackageForm.status"
+                  placeholder="Chọn trạng thái"
+                  data-role="inputpicker"
                   :class="{ 'is-invalid': bidPackageFormErrors.status }"
-                >
-                  <option value="open">Đang mở thầu</option>
-                  <option value="awarded">Đã chọn nhà thầu</option>
-                  <option value="completed">Hoàn thành</option>
-                  <option value="cancelled">Đã hủy</option>
-                </select>
+                />
                 <div class="invalid-feedback" v-if="bidPackageFormErrors.status">
                   {{ bidPackageFormErrors.status }}
                 </div>
@@ -546,7 +581,6 @@ const props = defineProps({
 })
 
 const selectedBidPackage = ref(null)
-const clientPrices = ref({})
 const bidForm = ref({
   contractor_id: '',
   price: '',
@@ -574,13 +608,6 @@ const bidPackageForm = ref({
 })
 const bidPackageFormErrors = ref({})
 
-// Khởi tạo giá trị cho clientPrices
-onMounted(() => {
-  props.project.bid_packages.forEach((bidPackage) => {
-    clientPrices.value[bidPackage.id] = bidPackage.client_price || ''
-  })
-})
-
 const confirmDeleteBidPackage = (bidPackage) => {
   showConfirm('Xác nhận xóa', `Bạn có chắc chắn muốn xóa gói thầu "${bidPackage.name}" không?`, 'Xóa', 'Hủy').then(
     (result) => {
@@ -603,6 +630,10 @@ const deleteBidPackage = (bidPackage) => {
 }
 
 const selectContractor = (bid) => {
+  // Lưu trạng thái của radio button hiện tại để khôi phục nếu user hủy
+  const currentBidPackage = props.project.bid_packages.find((bp) => bp.bids.some((b) => b.id === bid.id))
+  const currentSelectedBid = currentBidPackage?.bids.find((b) => b.is_selected) || null
+
   showConfirm(
     'Xác nhận chọn nhà thầu',
     `Bạn có chắc chắn muốn chọn nhà thầu "${bid.contractor.name}" với giá ${formatCurrency(bid.price)} không?`,
@@ -616,10 +647,40 @@ const selectContractor = (bid) => {
         },
         onError: (errors) => {
           showError('Không thể chọn nhà thầu. Vui lòng thử lại sau.')
+          // Khôi phục trạng thái cũ khi có lỗi
+          nextTick(() => {
+            resetRadioSelection(currentBidPackage, currentSelectedBid)
+          })
         }
+      })
+    } else {
+      // Nếu người dùng hủy, khôi phục trạng thái cũ
+      nextTick(() => {
+        resetRadioSelection(currentBidPackage, currentSelectedBid)
       })
     }
   })
+}
+
+// Hàm để reset lại radio button
+const resetRadioSelection = (bidPackage, selectedBid) => {
+  if (!bidPackage) return
+
+  const radioName = `bidder_${bidPackage.id}`
+  const radios = document.getElementsByName(radioName)
+
+  // Bỏ chọn tất cả các radio
+  radios.forEach((radio) => {
+    radio.checked = false
+  })
+
+  // Nếu có nhà thầu được chọn trước đó, đánh dấu lại radio đó
+  if (selectedBid) {
+    const index = bidPackage.bids.findIndex((b) => b.id === selectedBid.id)
+    if (index >= 0 && index < radios.length) {
+      radios[index].checked = true
+    }
+  }
 }
 
 // Lấy danh sách nhà thầu khi component được tạo
@@ -659,7 +720,7 @@ const openAddBidModal = async (bidPackage) => {
 
   try {
     // Khởi tạo InputPicker mới
-    window.$('#contractor_picker').inputpicker({
+    window.$('#contractor_id').inputpicker({
       data: availableContractors.value.map((contractor) => ({
         value: contractor.id,
         text: contractor.name,
@@ -683,10 +744,10 @@ const openAddBidModal = async (bidPackage) => {
     })
 
     // Lưu instance để có thể hủy sau này
-    inputpickerInstance = window.$('#contractor_picker')
+    inputpickerInstance = window.$('#contractor_id')
 
     // Xử lý sự kiện change
-    window.$('#contractor_picker').on('change', function (e) {
+    window.$('#contractor_id').on('change', function (e) {
       const contractorId = window.$(this).val()
       bidForm.value.contractor_id = contractorId
 
@@ -750,7 +811,7 @@ window.$('#addBidModal').on('hidden.bs.modal', function () {
   // Hủy InputPicker khi modal đóng
   try {
     if (inputpickerInstance) {
-      window.$('#contractor_picker').inputpicker('destroy')
+      window.$('#contractor_id').inputpicker('destroy')
       inputpickerInstance = null
     }
   } catch (e) {
@@ -766,7 +827,7 @@ onBeforeUnmount(() => {
   // Hủy InputPicker nếu còn tồn tại
   try {
     if (inputpickerInstance) {
-      window.$('#contractor_picker').inputpicker('destroy')
+      window.$('#contractor_id').inputpicker('destroy')
       inputpickerInstance = null
     }
   } catch (e) {
@@ -774,7 +835,7 @@ onBeforeUnmount(() => {
   }
 })
 
-// Lấy nhà thầu tại vị trí index cho bảng
+// Lấy danh sách nhà thầu khi component được tạo
 const getBidderAtIndex = (bidPackage, index) => {
   if (!bidPackage.bids || bidPackage.bids.length <= index) {
     return null
@@ -935,79 +996,49 @@ const submitEditBidPackage = async () => {
     isSubmitting.value = false
   }
 }
+
+const confirmDeleteBid = (bid) => {
+  showConfirm(
+    'Xác nhận xóa giá dự thầu',
+    `Bạn có chắc chắn muốn xóa giá dự thầu của nhà thầu "${bid.contractor.name}" với giá ${formatCurrency(
+      bid.price
+    )} không?`,
+    'Xóa',
+    'Hủy'
+  ).then((result) => {
+    if (result.isConfirmed) {
+      deleteBid(bid)
+    }
+  })
+}
+
+const deleteBid = (bid) => {
+  router.delete(route('bids.destroy', bid.id), {
+    onSuccess: () => {
+      showSuccess('Giá dự thầu đã được xóa thành công.')
+    },
+    onError: (errors) => {
+      showError('Không thể xóa giá dự thầu. Vui lòng thử lại sau.')
+    }
+  })
+}
+
+// Tính tổng cho các cột
+const totalEstimatedPrice = computed(() => {
+  return props.project.bid_packages.reduce((total, bidPackage) => {
+    return total + (parseInt(bidPackage.estimated_price) || 0)
+  }, 0)
+})
+
+const totalAdditionalPrice = computed(() => {
+  return props.project.bid_packages.reduce((total, bidPackage) => {
+    return total + (parseInt(bidPackage.additional_price) || 0)
+  }, 0)
+})
+
+const totalClientPrice = computed(() => {
+  return props.project.bid_packages.reduce((total, bidPackage) => {
+    return total + (parseInt(bidPackage.client_price) || 0)
+  }, 0)
+})
 </script>
-
-<style>
-.table-responsive {
-  overflow-x: auto;
-}
-
-.inputpicker-div {
-  width: 100% !important;
-  max-height: 300px;
-  overflow-y: auto;
-  z-index: 9999;
-}
-
-.inputpicker-arrow {
-  top: 50% !important;
-  transform: translateY(-50%) !important;
-}
-
-.inputpicker-input {
-  width: 100% !important;
-}
-
-.inputpicker-list-item:hover {
-  background-color: #f8f9fa;
-}
-
-.inputpicker-wrapped-list {
-  border: 1px solid #ccc !important;
-}
-
-.inputpicker-active {
-  background-color: #007bff !important;
-  color: white !important;
-}
-
-/* Thêm style cho info-box */
-.info-box {
-  border-radius: 0.25rem;
-  box-shadow: 0 0 1px rgba(0, 0, 0, 0.125), 0 1px 3px rgba(0, 0, 0, 0.2);
-  display: block;
-  margin-bottom: 20px;
-  min-height: 80px;
-  padding: 0;
-  position: relative;
-  width: 100%;
-}
-
-.info-box .info-box-content {
-  display: flex;
-  flex-direction: column;
-  padding: 10px;
-}
-
-.info-box .info-box-text {
-  display: block;
-  font-size: 14px;
-  margin-bottom: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.info-box .info-box-number {
-  display: block;
-  font-size: 18px;
-  font-weight: bold;
-}
-
-/* Đảm bảo các nút trong btn-group có kích thước đồng nhất */
-.btn-group .btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-</style>

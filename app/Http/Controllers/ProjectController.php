@@ -171,7 +171,7 @@ class ProjectController extends Controller
     public function profit(Project $project)
     {
         $project->load([
-            'bidPackages',
+            'bidPackages.selectedContractor',
             'customer'
         ]);
 

@@ -38,29 +38,29 @@
                   <td>{{ bidPackage.code }}</td>
                   <td>{{ bidPackage.name }}</td>
                   <td>{{ bidPackage.selected_contractor ? bidPackage.selected_contractor.name : '-' }}</td>
-                  <td>{{ formatCurrency(bidPackage.client_price || 0) }}</td>
+                  <td class="text-right font-bold">{{ formatCurrency(bidPackage.client_price || 0) }}</td>
 
                   <!-- Chi lần 1 -->
-                  <td>
-                    <div v-if="getPaymentVoucherAtIndex(bidPackage, 0)">
+                  <td class="">
+                    <div class="text-right" v-if="getPaymentVoucherAtIndex(bidPackage, 0)">
                       <button
                         @click="viewPaymentVoucher(getPaymentVoucherAtIndex(bidPackage, 0))"
-                        class="btn btn-xs btn-info"
+                        class="btn font-bold pt-0"
                       >
                         {{ formatCurrency(getPaymentVoucherAtIndex(bidPackage, 0).amount) }}
                       </button>
                     </div>
-                    <button v-else @click="goToCreatePaymentVoucher(bidPackage)" class="btn btn-xs btn-success">
+                    <button v-else @click="goToCreatePaymentVoucher(bidPackage)" class="btn btn-sm btn-success">
                       <i class="fas fa-plus me-1 mb-1"></i> Tạo
                     </button>
                   </td>
 
                   <!-- Chi lần 2 -->
-                  <td>
-                    <div v-if="getPaymentVoucherAtIndex(bidPackage, 1)">
+                  <td class="">
+                    <div class="text-right" v-if="getPaymentVoucherAtIndex(bidPackage, 1)">
                       <button
                         @click="viewPaymentVoucher(getPaymentVoucherAtIndex(bidPackage, 1))"
-                        class="btn btn-xs btn-info"
+                        class="btn font-bold pt-0"
                       >
                         {{ formatCurrency(getPaymentVoucherAtIndex(bidPackage, 1).amount) }}
                       </button>
@@ -68,7 +68,7 @@
                     <button
                       v-else-if="getPaymentVoucherAtIndex(bidPackage, 0)"
                       @click="goToCreatePaymentVoucher(bidPackage)"
-                      class="btn btn-xs btn-success"
+                      class="btn btn-sm btn-success"
                     >
                       <i class="fas fa-plus me-1 mb-1"></i> Tạo
                     </button>
@@ -76,11 +76,11 @@
                   </td>
 
                   <!-- Chi lần 3 -->
-                  <td>
-                    <div v-if="getPaymentVoucherAtIndex(bidPackage, 2)">
+                  <td class="">
+                    <div class="text-right" v-if="getPaymentVoucherAtIndex(bidPackage, 2)">
                       <button
                         @click="viewPaymentVoucher(getPaymentVoucherAtIndex(bidPackage, 2))"
-                        class="btn btn-xs btn-info"
+                        class="btn font-bold pt-0"
                       >
                         {{ formatCurrency(getPaymentVoucherAtIndex(bidPackage, 2).amount) }}
                       </button>
@@ -88,7 +88,7 @@
                     <button
                       v-else-if="getPaymentVoucherAtIndex(bidPackage, 1)"
                       @click="goToCreatePaymentVoucher(bidPackage)"
-                      class="btn btn-xs btn-success"
+                      class="btn btn-sm btn-success"
                     >
                       <i class="fas fa-plus me-1 mb-1"></i> Tạo
                     </button>
@@ -96,11 +96,11 @@
                   </td>
 
                   <!-- Chi lần 4 -->
-                  <td>
-                    <div v-if="getPaymentVoucherAtIndex(bidPackage, 3)">
+                  <td class="">
+                    <div class="text-right" v-if="getPaymentVoucherAtIndex(bidPackage, 3)">
                       <button
                         @click="viewPaymentVoucher(getPaymentVoucherAtIndex(bidPackage, 3))"
-                        class="btn btn-xs btn-info"
+                        class="btn font-bold pt-0"
                       >
                         {{ formatCurrency(getPaymentVoucherAtIndex(bidPackage, 3).amount) }}
                       </button>
@@ -108,7 +108,7 @@
                     <button
                       v-else-if="getPaymentVoucherAtIndex(bidPackage, 2)"
                       @click="goToCreatePaymentVoucher(bidPackage)"
-                      class="btn btn-xs btn-success"
+                      class="btn btn-sm btn-success"
                     >
                       <i class="fas fa-plus me-1 mb-1"></i> Tạo
                     </button>
@@ -116,11 +116,11 @@
                   </td>
 
                   <!-- Chi lần 5 -->
-                  <td>
-                    <div v-if="getPaymentVoucherAtIndex(bidPackage, 4)">
+                  <td class="">
+                    <div class="text-right" v-if="getPaymentVoucherAtIndex(bidPackage, 4)">
                       <button
                         @click="viewPaymentVoucher(getPaymentVoucherAtIndex(bidPackage, 4))"
-                        class="btn btn-xs btn-info"
+                        class="btn font-bold pt-0"
                       >
                         {{ formatCurrency(getPaymentVoucherAtIndex(bidPackage, 4).amount) }}
                       </button>
@@ -128,7 +128,7 @@
                     <button
                       v-else-if="getPaymentVoucherAtIndex(bidPackage, 3)"
                       @click="goToCreatePaymentVoucher(bidPackage)"
-                      class="btn btn-xs btn-success"
+                      class="btn btn-sm btn-success"
                     >
                       <i class="fas fa-plus me-1 mb-1"></i> Tạo
                     </button>
@@ -136,7 +136,7 @@
                   </td>
 
                   <!-- Còn lại -->
-                  <td>
+                  <td class="text-right font-bold">
                     {{ formatCurrency(calculateRemainingAmount(bidPackage)) }}
                   </td>
                 </tr>

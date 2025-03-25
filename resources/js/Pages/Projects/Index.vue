@@ -1,6 +1,8 @@
 <template>
   <AdminLayout>
-    <template #header>Quản lý dự án</template>
+    <template #header>
+      <h1 style="font-size: 1.4rem">Quản lý dự án</h1>
+    </template>
     <template #breadcrumb>Danh sách dự án</template>
 
     <div class="row">
@@ -45,7 +47,7 @@
                   <th>Tên dự án</th>
                   <th>Khách hàng</th>
                   <th>Trạng thái</th>
-                  <th>Ngày tạo</th>
+                  <th>Ghi chú</th>
                   <th width="25%">Thao tác</th>
                 </tr>
               </thead>
@@ -61,10 +63,10 @@
                     </span>
                   </td>
                   <td>
-                    {{ formatDate(project.created_at) }}
+                    {{ project.description }}
                   </td>
                   <td>
-                    <div class="btn-group">
+                    <div class="d-flex gap-2">
                       <Link :href="route('projects.edit', project.id)" class="btn btn-sm btn-primary">
                         <i class="fas fa-edit"></i> Sửa
                       </Link>

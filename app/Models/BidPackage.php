@@ -68,7 +68,7 @@ class BidPackage extends Model
      */
     public function bids()
     {
-        return $this->hasMany(Bid::class);
+        return $this->hasMany(Bid::class)->whereNull('deleted_at');
     }
 
     /**
@@ -76,7 +76,7 @@ class BidPackage extends Model
      */
     public function payment_vouchers()
     {
-        return $this->hasMany(PaymentVoucher::class, 'bid_package_id');
+        return $this->hasMany(PaymentVoucher::class, 'bid_package_id')->whereNull('deleted_at');
     }
 
     /**
@@ -84,6 +84,6 @@ class BidPackage extends Model
      */
     public function receipt_vouchers()
     {
-        return $this->hasMany(ReceiptVoucher::class, 'bid_package_id');
+        return $this->hasMany(ReceiptVoucher::class, 'bid_package_id')->whereNull('deleted_at');
     }
 }

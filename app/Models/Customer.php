@@ -49,7 +49,7 @@ class Customer extends Model
      */
     public function creator()
     {
-        return $this->belongsTo(User::class, 'created_by')->whereNull('deleted_at');
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     /**
@@ -57,6 +57,6 @@ class Customer extends Model
      */
     public function updater()
     {
-        return $this->belongsTo(User::class, 'updated_by')->whereNull('deleted_at');
+        return $this->belongsTo(User::class, 'updated_by');
     }
 }
