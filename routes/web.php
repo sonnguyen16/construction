@@ -67,6 +67,17 @@ Route::middleware('auth')->group(function () {
         ->name('bid-packages.update-profit-percentage');
 });
 
+// File Manager Routes
+Route::group(['prefix' => 'laravel-filemanager', 'middleware' => ['web', 'auth']], function () {
+    \UniSharp\LaravelFilemanager\Lfm::routes();
+});
+
+// Project File Routes
+Route::get('/projects/{project}/files', [App\Http\Controllers\ProjectFileController::class, 'index'])->name('projects.files');
+
+// Bid Package File Routes
+Route::get('/bid-packages/{bidPackage}/files', [App\Http\Controllers\BidPackageFileController::class, 'index'])->name('bid-packages.files');
+
 
 
 

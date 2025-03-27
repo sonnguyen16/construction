@@ -45,7 +45,7 @@
                     <div class="text-right" v-if="getPaymentVoucherAtIndex(bidPackage, 0)">
                       <button
                         @click="viewPaymentVoucher(getPaymentVoucherAtIndex(bidPackage, 0))"
-                        class="btn font-bold pt-0"
+                        class="btn font-bold pt-0 pe-0"
                       >
                         {{ formatCurrency(getPaymentVoucherAtIndex(bidPackage, 0).amount) }}
                       </button>
@@ -60,7 +60,7 @@
                     <div class="text-right" v-if="getPaymentVoucherAtIndex(bidPackage, 1)">
                       <button
                         @click="viewPaymentVoucher(getPaymentVoucherAtIndex(bidPackage, 1))"
-                        class="btn font-bold pt-0"
+                        class="btn font-bold pt-0 pe-0"
                       >
                         {{ formatCurrency(getPaymentVoucherAtIndex(bidPackage, 1).amount) }}
                       </button>
@@ -80,7 +80,7 @@
                     <div class="text-right" v-if="getPaymentVoucherAtIndex(bidPackage, 2)">
                       <button
                         @click="viewPaymentVoucher(getPaymentVoucherAtIndex(bidPackage, 2))"
-                        class="btn font-bold pt-0"
+                        class="btn font-bold pt-0 pe-0"
                       >
                         {{ formatCurrency(getPaymentVoucherAtIndex(bidPackage, 2).amount) }}
                       </button>
@@ -100,7 +100,7 @@
                     <div class="text-right" v-if="getPaymentVoucherAtIndex(bidPackage, 3)">
                       <button
                         @click="viewPaymentVoucher(getPaymentVoucherAtIndex(bidPackage, 3))"
-                        class="btn font-bold pt-0"
+                        class="btn font-bold pt-0 pe-0"
                       >
                         {{ formatCurrency(getPaymentVoucherAtIndex(bidPackage, 3).amount) }}
                       </button>
@@ -120,7 +120,7 @@
                     <div class="text-right" v-if="getPaymentVoucherAtIndex(bidPackage, 4)">
                       <button
                         @click="viewPaymentVoucher(getPaymentVoucherAtIndex(bidPackage, 4))"
-                        class="btn font-bold pt-0"
+                        class="btn font-bold pt-0 pe-0"
                       >
                         {{ formatCurrency(getPaymentVoucherAtIndex(bidPackage, 4).amount) }}
                       </button>
@@ -144,6 +144,18 @@
                   <td colspan="11" class="text-center">Chưa có gói thầu nào</td>
                 </tr>
               </tbody>
+              <tfoot>
+                <tr class="bg-light font-weight-bold">
+                  <td colspan="4" class="text-right">Tổng cộng:</td>
+                  <td class="text-right">{{ formatCurrency(totalContractAmount) }}</td>
+                  <td class="text-right">{{ formatCurrency(totalPaymentAmount(0)) }}</td>
+                  <td class="text-right">{{ formatCurrency(totalPaymentAmount(1)) }}</td>
+                  <td class="text-right">{{ formatCurrency(totalPaymentAmount(2)) }}</td>
+                  <td class="text-right">{{ formatCurrency(totalPaymentAmount(3)) }}</td>
+                  <td class="text-right">{{ formatCurrency(totalPaymentAmount(4)) }}</td>
+                  <td class="text-right">{{ formatCurrency(totalRemainingAmount) }}</td>
+                </tr>
+              </tfoot>
             </table>
           </div>
         </div>
@@ -327,8 +339,30 @@ const goToCreatePaymentVoucher = (bidPackage) => {
 
   // Chuyển hướng đến trang tạo phiếu chi với thông tin gói thầu và nhà thầu được chọn
   const url = `/payment-vouchers/create?project_id=${props.project.id}&bid_package_id=${bidPackage.id}&contractor_id=${bidPackage.selected_contractor_id}`
-  window.location.href = url
+  router.visit(url)
 }
+
+// Tổng giá giao thầu của tất cả các gói thầu
+const totalContractAmount = computed(() => {
+  return props.project.bid_packages.reduce((total, bidPackage) => {
+    return total + (parseInt(bidPackage.client_price) || 0)
+  }, 0)
+})
+
+// Tổng tiền đã chi ở lần chi thứ index
+const totalPaymentAmount = (index) => {
+  return props.project.bid_packages.reduce((total, bidPackage) => {
+    const payment = getPaymentVoucherAtIndex(bidPackage, index)
+    return total + (payment ? parseInt(payment.amount) || 0 : 0)
+  }, 0)
+}
+
+// Tổng tiền còn lại phải chi của tất cả gói thầu
+const totalRemainingAmount = computed(() => {
+  return props.project.bid_packages.reduce((total, bidPackage) => {
+    return total + calculateRemainingAmount(bidPackage)
+  }, 0)
+})
 </script>
 
 <style>

@@ -46,9 +46,12 @@
                   <th width="10%">Mã dự án</th>
                   <th>Tên dự án</th>
                   <th>Khách hàng</th>
+                  <th>Tổng dự toán</th>
+                  <th>Tổng phát sinh</th>
+                  <th>Tổng giao thầu</th>
                   <th>Trạng thái</th>
                   <th>Ghi chú</th>
-                  <th width="25%">Thao tác</th>
+                  <th width="30%">Thao tác</th>
                 </tr>
               </thead>
               <tbody>
@@ -57,6 +60,9 @@
                   <td>{{ project.code }}</td>
                   <td>{{ project.name }}</td>
                   <td>{{ project.customer ? project.customer.name : 'N/A' }}</td>
+                  <td class="text-right">{{ formatCurrency(getTotalEstimatedPrice(project)) }}</td>
+                  <td class="text-right">{{ formatCurrency(getTotalAdditionalPrice(project)) }}</td>
+                  <td class="text-right">{{ formatCurrency(getTotalClientPrice(project)) }}</td>
                   <td>
                     <span :class="getStatusClass(project.status)">
                       {{ getStatusLabel(project.status) }}
@@ -79,11 +85,14 @@
                       <Link :href="route('projects.profit', project.id)" class="btn btn-sm btn-success">
                         <i class="fas fa-chart-line"></i> Lợi nhuận
                       </Link>
+                      <Link :href="route('projects.files', project.id)" class="btn btn-sm btn-secondary">
+                        <i class="fas fa-file"></i> Files
+                      </Link>
                     </div>
                   </td>
                 </tr>
                 <tr v-if="projects.data.length === 0">
-                  <td colspan="7" class="text-center">Không có dữ liệu</td>
+                  <td colspan="10" class="text-center">Không có dữ liệu</td>
                 </tr>
               </tbody>
             </table>
@@ -132,7 +141,7 @@ import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { Link, router } from '@inertiajs/vue3'
 import { ref, watch } from 'vue'
 import Pagination from '@/Components/Pagination.vue'
-import { formatDate } from '@/utils'
+import { formatDate, formatCurrency } from '@/utils'
 
 const props = defineProps({
   projects: Object,
@@ -143,6 +152,30 @@ const props = defineProps({
 const search = ref(props.filters?.search || '')
 const status = ref(props.filters?.status || 'all')
 const selectedProject = ref(null)
+
+// Hàm tính tổng giá dự toán của dự án
+const getTotalEstimatedPrice = (project) => {
+  if (!project.bid_packages || project.bid_packages.length === 0) return 0
+  return project.bid_packages.reduce((total, pkg) => {
+    return total + (parseInt(pkg.estimated_price) || 0)
+  }, 0)
+}
+
+// Hàm tính tổng giá phát sinh của dự án
+const getTotalAdditionalPrice = (project) => {
+  if (!project.bid_packages || project.bid_packages.length === 0) return 0
+  return project.bid_packages.reduce((total, pkg) => {
+    return total + (parseInt(pkg.additional_price) || 0)
+  }, 0)
+}
+
+// Hàm tính tổng giá giao thầu của dự án
+const getTotalClientPrice = (project) => {
+  if (!project.bid_packages || project.bid_packages.length === 0) return 0
+  return project.bid_packages.reduce((total, pkg) => {
+    return total + (parseInt(pkg.client_price) || 0)
+  }, 0)
+}
 
 // Tính số thứ tự dựa trên trang hiện tại và vị trí trong trang
 const getSerialNumber = (index) => {

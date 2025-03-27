@@ -152,6 +152,9 @@
                       <button class="btn btn-sm btn-danger" @click="confirmDeleteBidPackage(bidPackage)">
                         <i class="fas fa-trash"></i>
                       </button>
+                      <Link :href="route('bid-packages.files', bidPackage.id)" class="btn btn-sm btn-secondary">
+                        <i class="fas fa-file"></i> Files
+                      </Link>
                     </div>
                   </td>
                 </tr>
@@ -388,21 +391,6 @@
                 </div>
               </div>
               <div class="form-group">
-                <label for="client_price">Giá giao thầu (VNĐ)</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  id="client_price"
-                  placeholder="Nhập giá giao thầu"
-                  v-model="bidPackageForm.client_price"
-                  :class="{ 'is-invalid': bidPackageFormErrors.client_price }"
-                />
-                <div class="invalid-feedback" v-if="bidPackageFormErrors.client_price">
-                  {{ bidPackageFormErrors.client_price }}
-                </div>
-                <small class="form-text text-muted">Có thể để trống và cập nhật sau.</small>
-              </div>
-              <div class="form-group">
                 <label for="description">Ghi chú</label>
                 <textarea
                   class="form-control"
@@ -513,20 +501,6 @@
                 </div>
               </div>
               <div class="form-group">
-                <label for="edit_client_price">Giá giao thầu (VNĐ)</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  id="edit_client_price"
-                  placeholder="Nhập giá giao thầu"
-                  v-model="bidPackageForm.client_price"
-                  :class="{ 'is-invalid': bidPackageFormErrors.client_price }"
-                />
-                <div class="invalid-feedback" v-if="bidPackageFormErrors.client_price">
-                  {{ bidPackageFormErrors.client_price }}
-                </div>
-              </div>
-              <div class="form-group">
                 <label for="edit_description">Ghi chú</label>
                 <textarea
                   class="form-control"
@@ -603,7 +577,6 @@ const bidPackageForm = ref({
   name: '',
   description: '',
   estimated_price: '',
-  client_price: '',
   status: 'open'
 })
 const bidPackageFormErrors = ref({})

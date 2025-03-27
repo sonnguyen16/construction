@@ -14,7 +14,7 @@ class ProjectController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Project::query();
+        $query = Project::query()->with('bidPackages');
 
         // Tìm kiếm
         if ($request->has('search')) {

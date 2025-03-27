@@ -18,7 +18,6 @@ class BidPackageController extends Controller
             'code' => 'required|string|max:50|unique:bid_packages',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'client_price' => 'nullable|numeric|min:0',
             'estimated_price' => 'nullable|numeric|min:0',
             'status' => 'required|in:open,awarded,completed,cancelled',
         ]);
@@ -40,7 +39,6 @@ class BidPackageController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'estimated_price' => 'nullable|numeric|min:0',
-            'client_price' => 'nullable|numeric|min:0',
             'status' => 'required|in:open,awarded,completed,cancelled'
         ]);
 

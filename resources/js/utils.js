@@ -78,16 +78,6 @@ export function showConfirm(title, text, confirmButtonText = 'Xác nhận', canc
     });
 }
 
-// Cấu hình mặc định cho v-money
-export const moneyConfig = {
-    decimal: ',',
-    thousands: '.',
-    prefix: '',
-    suffix: '',
-    precision: 0,
-    masked: false
-};
-
 // Hàm định dạng số thành tiền tệ
 export const formatCurrency = (value) => {
     return Math.round(value).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
