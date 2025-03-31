@@ -15,7 +15,7 @@
               </Link>
             </div>
           </div>
-          <div class="card-body p-0 table-responsive">
+          <div class="card-body p-0 overflow-y-auto overflow-x-auto" style="max-height: calc(100vh - 250px)">
             <table class="table table-hover">
               <thead>
                 <tr style="white-space: nowrap">
@@ -151,7 +151,7 @@
                   <td colspan="11" class="text-center">Chưa có gói thầu nào</td>
                 </tr>
               </tbody>
-              <tfoot>
+              <tfoot class="sticky bottom-0 bg-light">
                 <tr class="bg-light font-weight-bold">
                   <td colspan="4" class="text-right">Tổng cộng:</td>
                   <td class="text-right">{{ formatCurrency(totalContractAmount) }}</td>

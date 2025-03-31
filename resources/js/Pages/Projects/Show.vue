@@ -15,7 +15,7 @@
               </button>
             </div>
           </div>
-          <div class="card-body p-0 overflow-y-auto overflow-x-hidden" style="max-height: calc(100vh - 250px)">
+          <div class="card-body p-0 overflow-y-auto overflow-x-auto" style="max-height: calc(100vh - 250px)">
             <table class="table table-hover">
               <thead class="">
                 <tr class="bg-light">
