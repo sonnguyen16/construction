@@ -78,18 +78,70 @@ export function showConfirm(title, text, confirmButtonText = 'Xác nhận', canc
     });
 }
 
-// Hàm định dạng số thành tiền tệ
-export const formatCurrency = (value) => {
-    return Math.round(value).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+/**
+ * Format số thành định dạng tiền tệ khi nhập vào input
+ * @param {Event} event - Event từ input
+ * @param {boolean} allowDecimal - Cho phép số thập phân hay không
+ */
+export function formatNumberInput(event, allowDecimal = false) {
+    let value = event.target.value;
+
+    // Chỉ cho phép số và dấu phẩy
+    value = value.replace(/[^\d,]/g, '');
+
+    // Xóa các dấu phẩy cũ
+    value = value.replace(/,/g, '');
+
+    if (allowDecimal) {
+        // Nếu cho phép số thập phân, giữ lại 2 số sau dấu thập phân
+        const parts = value.split('.');
+        if (parts[1]) {
+            parts[1] = parts[1].slice(0, 2);
+            value = parts.join('.');
+        }
+    }
+
+    // Format số với dấu phẩy
+    value = value.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+    // Cập nhật giá trị vào input
+    event.target.value = value;
+
+    // Trigger event để v-model cập nhật
+    event.target.dispatchEvent(new Event('input'));
+}
+
+/**
+ * Format số thành định dạng tiền tệ VN
+ * @param {number|string} value - Giá trị cần format
+ * @param {boolean} showCurrency - Hiển thị ký hiệu tiền tệ
+ * @returns {string} Chuỗi đã được format
+ */
+export const formatCurrency = (value, showCurrency = false) => {
+    if (!value) return '0';
+
+    // Chuyển value thành số
+    const number = typeof value === 'string' ? parseInt(value.replace(/,/g, '')) : value;
+
+    // Format số với dấu phẩy
+    const formatted = Math.round(number).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+    // Thêm ký hiệu tiền tệ nếu cần
+    return showCurrency ? `${formatted} VNĐ` : formatted;
 };
 
-// Hàm chuyển từ chuỗi tiền tệ thành số nguyên
+/**
+ * Chuyển từ chuỗi tiền tệ thành số
+ * @param {string|number} value - Giá trị cần parse
+ * @returns {number} Số đã được parse
+ */
 export const parseCurrency = (value) => {
     if (!value) return 0;
+
     // Nếu là số, trả về số đó
     if (typeof value === 'number') return value;
 
-    // Xóa tất cả dấu chấm phân cách
-    const numStr = value.toString().replace(/\./g, '');
+    // Xóa tất cả dấu phẩy và ký hiệu tiền tệ
+    const numStr = value.toString().replace(/[,VNĐ\s]/g, '');
     return numStr ? parseInt(numStr) : 0;
 };

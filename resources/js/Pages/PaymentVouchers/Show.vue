@@ -13,14 +13,25 @@
                 <i class="fas fa-edit"></i> Sửa
               </Link>
               <button
-                v-if="paymentVoucher.status === 'unpaid'"
+                v-if="paymentVoucher.status === 'proposed'"
+                @click="updateStatus('approved')"
+                class="btn btn-sm btn-warning mr-1"
+              >
+                <i class="fas fa-check"></i> Duyệt chi
+              </button>
+              <button
+                v-if="paymentVoucher.status === 'approved'"
                 @click="updateStatus('paid')"
                 class="btn btn-sm btn-success mr-1"
               >
-                <i class="fas fa-check"></i> Đánh dấu đã thanh toán
+                <i class="fas fa-money-bill"></i> Đánh dấu đã chi
               </button>
-              <button v-else @click="updateStatus('unpaid')" class="btn btn-sm btn-warning mr-1">
-                <i class="fas fa-hourglass-half"></i> Đánh dấu chưa thanh toán
+              <button
+                v-if="paymentVoucher.status === 'paid'"
+                @click="updateStatus('approved')"
+                class="btn btn-sm btn-warning mr-1"
+              >
+                <i class="fas fa-undo"></i> Đánh dấu chưa chi
               </button>
               <button @click="confirmDelete" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i> Xóa</button>
             </div>
@@ -70,11 +81,18 @@
                   <p>
                     <span
                       :class="{
-                        'badge badge-warning': paymentVoucher.status === 'unpaid',
+                        'badge badge-secondary': paymentVoucher.status === 'proposed',
+                        'badge badge-warning': paymentVoucher.status === 'approved',
                         'badge badge-success': paymentVoucher.status === 'paid'
                       }"
                     >
-                      {{ paymentVoucher.status === 'unpaid' ? 'Chưa thanh toán' : 'Đã thanh toán' }}
+                      {{
+                        paymentVoucher.status === 'proposed'
+                          ? 'Đề xuất chi'
+                          : paymentVoucher.status === 'approved'
+                          ? 'Đã duyệt'
+                          : 'Đã chi'
+                      }}
                     </span>
                   </p>
                 </div>
@@ -193,15 +211,22 @@ const props = defineProps({
 
 // Cập nhật trạng thái phiếu chi
 const updateStatus = (status) => {
-  const isCompleted = status === 'paid'
-  const paymentDate = isCompleted ? new Date().toISOString().substr(0, 10) : null
+  let title, message
 
-  showConfirm(
-    `Xác nhận ${isCompleted ? 'đã thanh toán' : 'chưa thanh toán'}`,
-    `Bạn có chắc chắn muốn đánh dấu phiếu chi này là ${isCompleted ? 'đã thanh toán' : 'chưa thanh toán'} không?`,
-    'Xác nhận',
-    'Hủy'
-  ).then((result) => {
+  if (status === 'approved') {
+    title = props.paymentVoucher.status === 'paid' ? 'Chuyển về trạng thái chờ chi' : 'Duyệt phiếu chi'
+    message =
+      props.paymentVoucher.status === 'paid'
+        ? 'Bạn có chắc chắn muốn chuyển phiếu chi này về trạng thái đã duyệt không?'
+        : 'Bạn có chắc chắn muốn duyệt phiếu chi này không?'
+  } else if (status === 'paid') {
+    title = 'Đánh dấu đã chi'
+    message = 'Bạn có chắc chắn muốn đánh dấu phiếu chi này là đã chi không?'
+  }
+
+  const paymentDate = status === 'paid' ? new Date().toISOString().substr(0, 10) : null
+
+  showConfirm(title, message, 'Xác nhận', 'Hủy').then((result) => {
     if (result.isConfirmed) {
       router.patch(
         route('payment-vouchers.update-status', props.paymentVoucher.id),
@@ -211,7 +236,7 @@ const updateStatus = (status) => {
         },
         {
           onSuccess: () => {
-            showSuccess(`Phiếu chi đã được đánh dấu là ${isCompleted ? 'đã thanh toán' : 'chưa thanh toán'}.`)
+            showSuccess(`Phiếu chi đã được cập nhật trạng thái thành công.`)
           }
         }
       )

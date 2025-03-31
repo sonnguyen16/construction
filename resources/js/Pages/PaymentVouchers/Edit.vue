@@ -73,6 +73,7 @@
                       v-model="form.amount"
                       placeholder="Nhập số tiền"
                       :class="{ 'is-invalid': form.errors.amount }"
+                      @input="formatNumberInput($event)"
                     />
                     <div class="invalid-feedback" v-if="form.errors.amount">{{ form.errors.amount }}</div>
                   </div>
@@ -80,19 +81,22 @@
                   <!-- Select cho trạng thái -->
                   <div class="form-group">
                     <label for="status">Trạng thái thanh toán</label>
-                    <input
-                      type="text"
+                    <select
                       class="form-control"
                       id="status"
-                      placeholder="Chọn trạng thái"
-                      data-role="inputpicker"
+                      v-model="form.status"
+                      @change="onStatusChange"
                       :class="{ 'is-invalid': form.errors.status }"
-                    />
+                    >
+                      <option value="proposed">Đề xuất chi</option>
+                      <option value="approved">Đã duyệt</option>
+                      <option value="paid">Đã chi</option>
+                    </select>
                     <div class="invalid-feedback" v-if="form.errors.status">{{ form.errors.status }}</div>
                   </div>
 
                   <div class="form-group" v-if="form.status === 'paid'">
-                    <label for="payment_date">Ngày thanh toán</label>
+                    <label for="payment_date">Ngày chi</label>
                     <input
                       type="date"
                       class="form-control"
@@ -138,7 +142,7 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { Link, useForm } from '@inertiajs/vue3'
-import { parseCurrency, showSuccess, formatCurrency, formatDate } from '@/utils'
+import { parseCurrency, showSuccess, formatCurrency, formatNumberInput, formatDate } from '@/utils'
 import { computed, watch, onMounted, onBeforeUnmount } from 'vue'
 
 const props = defineProps({
@@ -153,9 +157,11 @@ const form = useForm({
   contractor_id: props.paymentVoucher.contractor_id || '',
   project_id: props.paymentVoucher.project_id || '',
   bid_package_id: props.paymentVoucher.bid_package_id || '',
-  amount: formatCurrency(props.paymentVoucher.amount) || 0,
-  status: props.paymentVoucher.status || 'unpaid',
-  payment_date: props.paymentVoucher.payment_date || '',
+  amount: formatCurrency(props.paymentVoucher.amount) || '',
+  status: props.paymentVoucher.status || 'proposed',
+  payment_date: props.paymentVoucher.payment_date
+    ? new Date(props.paymentVoucher.payment_date).toISOString().split('T')[0]
+    : '',
   description: props.paymentVoucher.description || ''
 })
 

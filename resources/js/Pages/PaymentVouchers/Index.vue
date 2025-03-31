@@ -24,16 +24,16 @@
                 <div class="info-box bg-light">
                   <div class="info-box-content">
                     <span class="info-box-text">Tổng số tiền chi</span>
-                    <span class="info-box-number">{{ formatCurrency(totalAmount) }}</span>
+                    <span class="info-box-number">{{ formatCurrency(totalPaidAmount) }}</span>
                   </div>
                 </div>
               </div>
               <div class="col-md-3">
                 <div class="info-box bg-light">
                   <div class="info-box-content">
-                    <span class="info-box-text">Chưa thanh toán</span>
+                    <span class="info-box-text">Đang chờ duyệt</span>
                     <span class="info-box-number">
-                      {{ formatCurrency(pendingAmount) }}
+                      {{ formatCurrency(proposedAmount) }}
                     </span>
                   </div>
                 </div>
@@ -41,9 +41,9 @@
               <div class="col-md-3">
                 <div class="info-box bg-light">
                   <div class="info-box-content">
-                    <span class="info-box-text">Đã thanh toán</span>
+                    <span class="info-box-text">Đã duyệt</span>
                     <span class="info-box-number">
-                      {{ formatCurrency(completedAmount) }}
+                      {{ formatCurrency(approvedAmount) }}
                     </span>
                   </div>
                 </div>
@@ -195,7 +195,8 @@
                     <td>
                       <span
                         :class="{
-                          'badge badge-warning': voucher.status === 'unpaid',
+                          'badge badge-secondary': voucher.status === 'proposed',
+                          'badge badge-warning': voucher.status === 'approved',
                           'badge badge-success': voucher.status === 'paid'
                         }"
                       >
@@ -257,28 +258,24 @@ const filters = ref({
   status: props.filters.status || ''
 })
 
-// Tính tổng số tiền chi
-const totalAmount = computed(() => {
-  return props.paymentVouchers.data.reduce((total, voucher) => total + parseInt(voucher.amount || 0), 0)
-})
-
-// Tính số tiền chi trung bình
-const averageAmount = computed(() => {
-  if (props.paymentVouchers.data.length === 0) return 0
-  return totalAmount.value / props.paymentVouchers.data.length
-})
-
-// Tính số tiền chưa thanh toán
-const pendingAmount = computed(() => {
+// Tính số tiền đã chi (chỉ phiếu chi có trạng thái "đã chi")
+const totalPaidAmount = computed(() => {
   return props.paymentVouchers.data
-    .filter((voucher) => voucher.status === 'unpaid')
+    .filter((voucher) => voucher.status === 'paid')
     .reduce((total, voucher) => total + parseInt(voucher.amount || 0), 0)
 })
 
-// Tính số tiền đã thanh toán
-const completedAmount = computed(() => {
+// Tính số tiền đề xuất chi
+const proposedAmount = computed(() => {
   return props.paymentVouchers.data
-    .filter((voucher) => voucher.status === 'paid')
+    .filter((voucher) => voucher.status === 'proposed')
+    .reduce((total, voucher) => total + parseInt(voucher.amount || 0), 0)
+})
+
+// Tính số tiền đã duyệt
+const approvedAmount = computed(() => {
+  return props.paymentVouchers.data
+    .filter((voucher) => voucher.status === 'approved')
     .reduce((total, voucher) => total + parseInt(voucher.amount || 0), 0)
 })
 

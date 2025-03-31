@@ -76,10 +76,7 @@ class PaymentVoucherController extends Controller
             'paymentVouchers' => $paymentVouchers,
             'contractors' => $contractors,
             'bidPackages' => $bidPackages,
-            'statuses' => [
-                'unpaid' => 'Chưa thanh toán',
-                'paid' => 'Đã thanh toán'
-            ],
+            'statuses' => $this->getStatuses(),
             'filters' => $request->only(['search', 'contractor_id', 'bid_package_id', 'status', 'date_from', 'date_to'])
         ]);
     }
@@ -109,10 +106,7 @@ class PaymentVoucherController extends Controller
             'contractors' => $contractors,
             'projects' => $projects,
             'bidPackages' => $bidPackages,
-            'statuses' => [
-                'unpaid' => 'Chưa thanh toán',
-                'paid' => 'Đã thanh toán'
-            ],
+            'statuses' => $this->getStatuses(),
             'preselectedContractorId' => request('contractor_id'),
             'preselectedProjectId' => request('project_id'),
             'preselectedBidPackageId' => request('bid_package_id')
@@ -130,7 +124,7 @@ class PaymentVoucherController extends Controller
             'bid_package_id' => 'nullable|exists:bid_packages,id',
             'amount' => 'required|numeric|min:0',
             'description' => 'nullable|string',
-            'status' => 'required|in:paid,unpaid',
+            'status' => 'required',
             'payment_date' => 'nullable|date'
         ]);
 
@@ -154,10 +148,7 @@ class PaymentVoucherController extends Controller
 
         return Inertia::render('PaymentVouchers/Show', [
             'paymentVoucher' => $paymentVoucher,
-            'statuses' => [
-                'unpaid' => 'Chưa thanh toán',
-                'paid' => 'Đã thanh toán'
-            ]
+            'statuses' => $this->getStatuses()
         ]);
     }
 
@@ -187,10 +178,7 @@ class PaymentVoucherController extends Controller
             'contractors' => $contractors,
             'projects' => $projects,
             'bidPackages' => $bidPackages,
-            'statuses' => [
-                'unpaid' => 'Chưa thanh toán',
-                'paid' => 'Đã thanh toán'
-            ]
+            'statuses' => $this->getStatuses()
         ]);
     }
 
@@ -205,12 +193,12 @@ class PaymentVoucherController extends Controller
             'bid_package_id' => 'nullable|exists:bid_packages,id',
             'amount' => 'required|numeric|min:0',
             'description' => 'nullable|string',
-            'status' => 'required|in:paid,unpaid',
+            'status' => 'required',
             'payment_date' => 'nullable|date'
         ]);
 
         // Kiểm tra logic payment_date
-        if ($validated['status'] === 'completed' && empty($validated['payment_date'])) {
+        if ($validated['status'] === 'paid' && empty($validated['payment_date'])) {
             $validated['payment_date'] = now()->toDateString();
         }
 
@@ -238,7 +226,7 @@ class PaymentVoucherController extends Controller
     public function updateStatus(Request $request, PaymentVoucher $paymentVoucher)
     {
         $validated = $request->validate([
-            'status' => 'required|in:paid,unpaid',
+            'status' => 'required',
             'payment_date' => 'nullable|date'
         ]);
 
@@ -250,5 +238,14 @@ class PaymentVoucherController extends Controller
         $paymentVoucher->update($validated);
 
         return back()->with('success', 'Trạng thái phiếu chi đã được cập nhật thành công.');
+    }
+
+    function getStatuses()
+    {
+        return [
+            'proposed' => 'Đề xuất chi',
+            'approved' => 'Đã duyệt',
+            'paid' => 'Đã chi'
+        ];
     }
 }

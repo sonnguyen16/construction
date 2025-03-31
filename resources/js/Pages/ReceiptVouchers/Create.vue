@@ -62,6 +62,7 @@
                       v-model="form.amount"
                       placeholder="Nhập số tiền"
                       :class="{ 'is-invalid': form.errors.amount }"
+                      @input="formatNumberInput($event)"
                     />
                     <div class="invalid-feedback" v-if="form.errors.amount">{{ form.errors.amount }}</div>
                   </div>
@@ -75,14 +76,14 @@
                       @change="onStatusChange"
                       :class="{ 'is-invalid': form.errors.status }"
                     >
-                      <option value="unpaid">Chưa thanh toán</option>
-                      <option value="paid">Đã thanh toán</option>
+                      <option value="unpaid">Dự thu</option>
+                      <option value="paid">Đã thu</option>
                     </select>
                     <div class="invalid-feedback" v-if="form.errors.status">{{ form.errors.status }}</div>
                   </div>
 
                   <div class="form-group" v-if="form.status === 'paid'">
-                    <label for="payment_date">Ngày thanh toán</label>
+                    <label for="payment_date">Ngày thu</label>
                     <input
                       type="date"
                       class="form-control"
@@ -128,7 +129,7 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { Link, useForm } from '@inertiajs/vue3'
-import { parseCurrency, showSuccess } from '@/utils'
+import { parseCurrency, showSuccess, formatNumberInput, formatCurrency } from '@/utils'
 import { onMounted, onBeforeUnmount } from 'vue'
 
 const props = defineProps({
@@ -181,7 +182,7 @@ onMounted(() => {
   if (props.preselectedCustomerId) {
     const selectedCustomer = props.customers.find((c) => c.id == props.preselectedCustomerId)
     if (selectedCustomer) {
-      window.$('#customer_id').inputpicker('val', selectedCustomer.name)
+      window.$('#customer_id').inputpicker('val', selectedCustomer.id)
       form.customer_id = props.preselectedCustomerId
     }
   }
@@ -235,6 +236,7 @@ const onStatusChange = () => {
 }
 
 const submit = () => {
+  // Chuyển đổi giá trị từ định dạng tiền tệ sang số
   form.amount = parseCurrency(form.amount)
   form.customer_id = window.$('#customer_id').val()
   form.project_id = window.$('#project_id').val()

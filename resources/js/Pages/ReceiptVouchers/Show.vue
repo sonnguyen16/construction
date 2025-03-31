@@ -17,10 +17,14 @@
                 @click="updateStatus('paid')"
                 class="btn btn-sm btn-success mr-1"
               >
-                <i class="fas fa-check"></i> Đánh dấu đã thanh toán
+                <i class="fas fa-check"></i> Đánh dấu đã thu
               </button>
-              <button v-else @click="updateStatus('unpaid')" class="btn btn-sm btn-warning mr-1">
-                <i class="fas fa-hourglass-half"></i> Đánh dấu chưa thanh toán
+              <button
+                v-if="receiptVoucher.status === 'paid'"
+                @click="updateStatus('unpaid')"
+                class="btn btn-sm btn-warning mr-1"
+              >
+                <i class="fas fa-undo"></i> Đánh dấu dự thu
               </button>
               <button @click="confirmDelete" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i> Xóa</button>
             </div>
@@ -75,7 +79,7 @@
                         'badge badge-success': receiptVoucher.status === 'paid'
                       }"
                     >
-                      {{ receiptVoucher.status === 'unpaid' ? 'Chưa thanh toán' : 'Đã thanh toán' }}
+                      {{ receiptVoucher.status === 'unpaid' ? 'Dự thu' : 'Đã thu' }}
                     </span>
                   </p>
                 </div>
@@ -194,15 +198,15 @@ const props = defineProps({
 
 // Cập nhật trạng thái phiếu thu
 const updateStatus = (status) => {
-  const ispaid = status === 'paid'
-  const paymentDate = ispaid ? new Date().toISOString().substr(0, 10) : null
+  const isPaid = status === 'paid'
+  const title = isPaid ? 'Đánh dấu đã thu' : 'Đánh dấu dự thu'
+  const message = isPaid
+    ? 'Bạn có chắc chắn muốn đánh dấu phiếu thu này là đã thu không?'
+    : 'Bạn có chắc chắn muốn đánh dấu phiếu thu này là dự thu không?'
 
-  showConfirm(
-    `Xác nhận ${ispaid ? 'đã thanh toán' : 'chưa thanh toán'}`,
-    `Bạn có chắc chắn muốn đánh dấu phiếu thu này là ${ispaid ? 'đã thanh toán' : 'chưa thanh toán'} không?`,
-    'Xác nhận',
-    'Hủy'
-  ).then((result) => {
+  const paymentDate = isPaid ? new Date().toISOString().substr(0, 10) : null
+
+  showConfirm(title, message, 'Xác nhận', 'Hủy').then((result) => {
     if (result.isConfirmed) {
       router.patch(
         route('receipt-vouchers.update-status', props.receiptVoucher.id),
@@ -212,7 +216,7 @@ const updateStatus = (status) => {
         },
         {
           onSuccess: () => {
-            showSuccess(`Phiếu thu đã được đánh dấu là ${ispaid ? 'đã thanh toán' : 'chưa thanh toán'}.`)
+            showSuccess(`Phiếu thu đã được cập nhật trạng thái thành công.`)
           }
         }
       )

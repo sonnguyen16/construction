@@ -69,10 +69,7 @@ class ReceiptVoucherController extends Controller
             'receiptVouchers' => $receiptVouchers,
             'customers' => $customers,
             'projects' => $projects,
-            'statuses' => [
-                'unpaid' => 'Chưa thanh toán',
-                'paid' => 'Đã thanh toán'
-            ],
+            'statuses' => $this->getStatuses(),
             'filters' => $request->only(['search', 'customer_id', 'project_id',  'status', 'date_from', 'date_to'])
         ]);
     }
@@ -92,10 +89,7 @@ class ReceiptVoucherController extends Controller
         return Inertia::render('ReceiptVouchers/Create', [
             'customers' => $customers,
             'projects' => $projects,
-            'statuses' => [
-                'unpaid' => 'Chưa thanh toán',
-                'paid' => 'Đã thanh toán'
-            ],
+            'statuses' => $this->getStatuses(),
             'preselectedCustomerId' => $preselectedCustomerId,
             'preselectedProjectId' => $preselectedProjectId,
         ]);
@@ -135,10 +129,7 @@ class ReceiptVoucherController extends Controller
 
         return Inertia::render('ReceiptVouchers/Show', [
             'receiptVoucher' => $receiptVoucher,
-            'statuses' => [
-                'unpaid' => 'Chưa thanh toán',
-                'paid' => 'Đã thanh toán'
-            ]
+            'statuses' => $this->getStatuses()
         ]);
     }
 
@@ -156,10 +147,7 @@ class ReceiptVoucherController extends Controller
             'receiptVoucher' => $receiptVoucher,
             'customers' => $customers,
             'projects' => $projects,
-            'statuses' => [
-                'unpaid' => 'Chưa thanh toán',
-                'paid' => 'Đã thanh toán'
-            ]
+            'statuses' => $this->getStatuses()
         ]);
     }
 
@@ -218,5 +206,13 @@ class ReceiptVoucherController extends Controller
         $receiptVoucher->update($validated);
 
         return back()->with('success', 'Trạng thái phiếu thu đã được cập nhật thành công.');
+    }
+
+    function getStatuses()
+    {
+        return [
+            'unpaid' => 'Dự thu',
+            'paid' => 'Đã thu'
+        ];
     }
 }

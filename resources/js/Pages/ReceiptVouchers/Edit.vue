@@ -57,6 +57,7 @@
                       v-model="form.amount"
                       placeholder="Nhập số tiền"
                       :class="{ 'is-invalid': form.errors.amount }"
+                      @input="formatNumberInput($event)"
                     />
                     <div class="invalid-feedback" v-if="form.errors.amount">{{ form.errors.amount }}</div>
                   </div>
@@ -71,14 +72,14 @@
                       @change="onStatusChange"
                       :class="{ 'is-invalid': form.errors.status }"
                     >
-                      <option value="unpaid">Chưa thanh toán</option>
-                      <option value="paid">Đã thanh toán</option>
+                      <option value="unpaid">Dự thu</option>
+                      <option value="paid">Đã thu</option>
                     </select>
                     <div class="invalid-feedback" v-if="form.errors.status">{{ form.errors.status }}</div>
                   </div>
 
                   <div class="form-group" v-if="form.status === 'paid'">
-                    <label for="payment_date">Ngày thanh toán</label>
+                    <label for="payment_date">Ngày thu</label>
                     <input
                       type="date"
                       class="form-control"
@@ -124,7 +125,7 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { Link, useForm } from '@inertiajs/vue3'
-import { parseCurrency, showSuccess, formatCurrency } from '@/utils'
+import { parseCurrency, showSuccess, formatCurrency, formatNumberInput } from '@/utils'
 import { onMounted, onBeforeUnmount } from 'vue'
 
 const props = defineProps({
@@ -140,7 +141,9 @@ const form = useForm({
   project_id: props.receiptVoucher.project_id || '',
   amount: formatCurrency(props.receiptVoucher.amount || 0),
   status: props.receiptVoucher.status || 'unpaid',
-  payment_date: new Date(props.receiptVoucher.payment_date || new Date()).toISOString().split('T')[0] || '',
+  payment_date: props.receiptVoucher.payment_date
+    ? new Date(props.receiptVoucher.payment_date).toISOString().split('T')[0]
+    : '',
   description: props.receiptVoucher.description || ''
 })
 

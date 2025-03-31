@@ -42,14 +42,6 @@
                   </div>
                 </div>
               </div>
-              <div class="col-md-6">
-                <div class="info-box bg-light">
-                  <div class="info-box-content">
-                    <span class="info-box-text">Mã số thuế</span>
-                    <span class="info-box-number">{{ customer.tax_code || 'Không có' }}</span>
-                  </div>
-                </div>
-              </div>
             </div>
             <div class="row">
               <div class="col-md-12">

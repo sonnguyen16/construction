@@ -1,9 +1,8 @@
 <template>
   <AdminLayout>
-    <template #header>
-      <h1 style="font-size: 1.4rem">{{ project.name }}</h1>
-    </template>
+    <template #header>{{ project.name }}</template>
     <template #breadcrumb>Chi tiết dự án</template>
+
     <!-- Danh sách gói thầu -->
     <div class="row">
       <div class="col-md-12">
@@ -11,15 +10,15 @@
           <div class="card-header">
             <h3 class="card-title">Danh sách gói thầu</h3>
             <div class="card-tools">
-              <button @click="openCreateBidPackageModal" class="btn btn-sm btn-primary">
+              <button @click="openCreateBidPackageModal" class="btn btn-primary btn-sm">
                 <i class="fas fa-plus"></i> Thêm gói thầu
               </button>
             </div>
           </div>
-          <div class="card-body p-0 table-responsive">
+          <div class="card-body p-0 overflow-y-auto overflow-x-hidden" style="max-height: calc(100vh - 250px)">
             <table class="table table-hover">
-              <thead>
-                <tr>
+              <thead class="">
+                <tr class="bg-light">
                   <th>STT</th>
                   <th>Mã</th>
                   <th>Tên gói thầu</th>
@@ -41,9 +40,18 @@
                   <td>
                     <div class="d-flex justify-between">
                       <button
+                        v-if="bidPackage.selected_contractor_id"
                         @click="openAdditionalPriceModal(bidPackage)"
-                        class="btn btn-sm btn-primary"
+                        class="btn btn-sm btn-primary me-2"
                         title="Cập nhật giá phát sinh"
+                      >
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button
+                        v-else
+                        class="btn btn-sm btn-secondary me-2"
+                        disabled
+                        title="Cần chọn nhà thầu trước khi cập nhật giá phát sinh"
                       >
                         <i class="fas fa-edit"></i>
                       </button>
@@ -53,107 +61,129 @@
                   <td class="text-right">{{ formatCurrency(bidPackage.client_price || 0) }}</td>
                   <!-- Nhà thầu 1 -->
                   <td>
-                    <div v-if="getBidderAtIndex(bidPackage, 0)">
-                      <div class="d-flex align-items-start">
-                        <div class="text-center">
-                          <input
-                            type="radio"
-                            style="margin: 6px 6px 10px; width: 20px; height: 20px"
-                            :name="`bidder_${bidPackage.id}`"
-                            :checked="isSelectedContractor(bidPackage, getBidderAtIndex(bidPackage, 0))"
-                            @change="selectContractor(getBidderAtIndex(bidPackage, 0))"
-                          />
-                          <button
-                            @click="confirmDeleteBid(getBidderAtIndex(bidPackage, 0))"
-                            class="btn btn-sm btn-danger"
-                          >
-                            <i class="fas fa-trash-alt"></i>
-                          </button>
-                        </div>
-                        <div>
-                          <span class="ml-2">
-                            {{ formatCurrency(getBidderAtIndex(bidPackage, 0).price) }}
-                          </span>
-                          <span class="ml-2 block">{{ getBidderAtIndex(bidPackage, 0).contractor.name }}</span>
-                        </div>
+                    <div v-if="getBidderAtIndex(bidPackage, 0)" class="contractor-info">
+                      <div class="btn-group-vertical">
+                        <input
+                          type="radio"
+                          class="custom-radio"
+                          :name="`bidder_${bidPackage.id}`"
+                          :checked="isSelectedContractor(bidPackage, getBidderAtIndex(bidPackage, 0))"
+                          @change="selectContractor(getBidderAtIndex(bidPackage, 0))"
+                        />
+                        <button
+                          @click="confirmDeleteBid(getBidderAtIndex(bidPackage, 0))"
+                          class="btn btn-sm btn-danger"
+                          title="Xóa"
+                        >
+                          <i class="fas fa-trash-alt"></i>
+                        </button>
+                        <button
+                          @click="openEditBidModal(getBidderAtIndex(bidPackage, 0))"
+                          class="btn btn-sm btn-warning"
+                          title="Sửa giá dự thầu"
+                        >
+                          <i class="fas fa-edit"></i>
+                        </button>
+                      </div>
+                      <div class="contractor-details">
+                        <span class="contractor-price">{{
+                          formatCurrency(getBidderAtIndex(bidPackage, 0).price)
+                        }}</span>
+                        <span class="contractor-name">{{ getBidderAtIndex(bidPackage, 0).contractor.name }}</span>
                       </div>
                     </div>
                     <button v-else @click="openAddBidModal(bidPackage)" class="btn btn-sm btn-success">
-                      <i class="fas fa-plus me-1 mb-1"></i> Thêm
+                      <i class="fas fa-plus me-1"></i> Thêm
                     </button>
                   </td>
                   <!-- Nhà thầu 2 -->
                   <td>
-                    <div v-if="getBidderAtIndex(bidPackage, 1)">
-                      <div class="d-flex align-items-start">
-                        <div class="text-center">
-                          <input
-                            style="margin: 6px 6px 10px; width: 20px; height: 20px"
-                            type="radio"
-                            :name="`bidder_${bidPackage.id}`"
-                            :checked="isSelectedContractor(bidPackage, getBidderAtIndex(bidPackage, 1))"
-                            @change="selectContractor(getBidderAtIndex(bidPackage, 1))"
-                          />
-                          <button
-                            @click="confirmDeleteBid(getBidderAtIndex(bidPackage, 1))"
-                            class="btn btn-sm btn-danger"
-                          >
-                            <i class="fas fa-trash-alt"></i>
-                          </button>
-                        </div>
-                        <div>
-                          <span class="ml-2">
-                            {{ formatCurrency(getBidderAtIndex(bidPackage, 1).price) }}
-                          </span>
-                          <span class="ml-2 block">{{ getBidderAtIndex(bidPackage, 1).contractor.name }}</span>
-                        </div>
+                    <div v-if="getBidderAtIndex(bidPackage, 1)" class="contractor-info">
+                      <div class="btn-group-vertical">
+                        <input
+                          type="radio"
+                          class="custom-radio"
+                          :name="`bidder_${bidPackage.id}`"
+                          :checked="isSelectedContractor(bidPackage, getBidderAtIndex(bidPackage, 1))"
+                          @change="selectContractor(getBidderAtIndex(bidPackage, 1))"
+                        />
+                        <button
+                          @click="confirmDeleteBid(getBidderAtIndex(bidPackage, 1))"
+                          class="btn btn-sm btn-danger"
+                          title="Xóa"
+                        >
+                          <i class="fas fa-trash-alt"></i>
+                        </button>
+                        <button
+                          @click="openEditBidModal(getBidderAtIndex(bidPackage, 1))"
+                          class="btn btn-sm btn-warning"
+                          title="Sửa giá dự thầu"
+                        >
+                          <i class="fas fa-edit"></i>
+                        </button>
+                      </div>
+                      <div class="contractor-details">
+                        <span class="contractor-price">{{
+                          formatCurrency(getBidderAtIndex(bidPackage, 1).price)
+                        }}</span>
+                        <span class="contractor-name">{{ getBidderAtIndex(bidPackage, 1).contractor.name }}</span>
                       </div>
                     </div>
                     <button v-else @click="openAddBidModal(bidPackage)" class="btn btn-sm btn-success">
-                      <i class="fas fa-plus me-1 mb-1"></i> Thêm
+                      <i class="fas fa-plus me-1"></i> Thêm
                     </button>
                   </td>
                   <!-- Nhà thầu 3 -->
                   <td>
-                    <div v-if="getBidderAtIndex(bidPackage, 2)">
-                      <div class="d-flex align-items-start">
-                        <div class="text-center">
-                          <input
-                            style="margin: 6px 6px 10px; width: 20px; height: 20px"
-                            type="radio"
-                            :name="`bidder_${bidPackage.id}`"
-                            :checked="isSelectedContractor(bidPackage, getBidderAtIndex(bidPackage, 2))"
-                            @change="selectContractor(getBidderAtIndex(bidPackage, 2))"
-                          />
-                          <button
-                            @click="confirmDeleteBid(getBidderAtIndex(bidPackage, 2))"
-                            class="btn btn-sm btn-danger"
-                          >
-                            <i class="fas fa-trash-alt"></i>
-                          </button>
-                        </div>
-                        <div>
-                          <span class="ml-2">
-                            {{ formatCurrency(getBidderAtIndex(bidPackage, 2).price) }}
-                          </span>
-                          <span class="ml-2 block">{{ getBidderAtIndex(bidPackage, 2).contractor.name }}</span>
-                        </div>
+                    <div v-if="getBidderAtIndex(bidPackage, 2)" class="contractor-info">
+                      <div class="btn-group-vertical">
+                        <input
+                          type="radio"
+                          class="custom-radio"
+                          :name="`bidder_${bidPackage.id}`"
+                          :checked="isSelectedContractor(bidPackage, getBidderAtIndex(bidPackage, 2))"
+                          @change="selectContractor(getBidderAtIndex(bidPackage, 2))"
+                        />
+                        <button
+                          @click="confirmDeleteBid(getBidderAtIndex(bidPackage, 2))"
+                          class="btn btn-sm btn-danger"
+                          title="Xóa"
+                        >
+                          <i class="fas fa-trash-alt"></i>
+                        </button>
+                        <button
+                          @click="openEditBidModal(getBidderAtIndex(bidPackage, 2))"
+                          class="btn btn-sm btn-warning"
+                          title="Sửa giá dự thầu"
+                        >
+                          <i class="fas fa-edit"></i>
+                        </button>
+                      </div>
+                      <div class="contractor-details">
+                        <span class="contractor-price">{{
+                          formatCurrency(getBidderAtIndex(bidPackage, 2).price)
+                        }}</span>
+                        <span class="contractor-name">{{ getBidderAtIndex(bidPackage, 2).contractor.name }}</span>
                       </div>
                     </div>
                     <button v-else @click="openAddBidModal(bidPackage)" class="btn btn-sm btn-success">
-                      <i class="fas fa-plus me-1 mb-1"></i> Thêm
+                      <i class="fas fa-plus me-1"></i> Thêm
                     </button>
                   </td>
                   <td class="text-center">
-                    <div class="d-flex gap-2">
-                      <button class="btn btn-sm btn-info" @click="openEditBidPackageModal(bidPackage)">
+                    <div class="action-buttons">
+                      <button class="btn btn-sm btn-info" @click="openEditBidPackageModal(bidPackage)" title="Sửa">
                         <i class="fas fa-edit"></i>
                       </button>
-                      <button class="btn btn-sm btn-danger" @click="confirmDeleteBidPackage(bidPackage)">
+                      <button class="btn btn-sm btn-danger" @click="confirmDeleteBidPackage(bidPackage)" title="Xóa">
                         <i class="fas fa-trash"></i>
                       </button>
-                      <Link :href="route('bid-packages.files', bidPackage.id)" class="btn btn-sm btn-secondary">
-                        <i class="fas fa-file"></i> Files
+                      <Link
+                        :href="route('bid-packages.files', bidPackage.id)"
+                        class="btn btn-sm btn-secondary"
+                        title="Files"
+                      >
+                        <i class="fas fa-file"></i>
                       </Link>
                     </div>
                   </td>
@@ -162,7 +192,7 @@
                   <td colspan="10" class="text-center">Chưa có gói thầu nào</td>
                 </tr>
               </tbody>
-              <tfoot>
+              <tfoot class="sticky bottom-0">
                 <tr class="bg-light font-weight-bold">
                   <td colspan="3" class="text-right">Tổng cộng:</td>
                   <td class="text-right">{{ formatCurrency(totalEstimatedPrice) }}</td>
@@ -243,6 +273,7 @@
                   placeholder="Nhập giá dự thầu"
                   v-model="bidForm.price"
                   :class="{ 'is-invalid': bidFormErrors.price }"
+                  @input="formatNumberInput($event)"
                 />
                 <div class="invalid-feedback" v-if="bidFormErrors.price">
                   {{ bidFormErrors.price }}
@@ -306,6 +337,7 @@
                   placeholder="Nhập giá phát sinh"
                   v-model="additionalPriceForm.additional_price"
                   :class="{ 'is-invalid': additionalPriceFormErrors.additional_price }"
+                  @input="formatNumberInput($event)"
                 />
                 <div class="invalid-feedback" v-if="additionalPriceFormErrors.additional_price">
                   {{ additionalPriceFormErrors.additional_price }}
@@ -385,6 +417,7 @@
                   placeholder="Nhập giá dự toán"
                   v-model="bidPackageForm.estimated_price"
                   :class="{ 'is-invalid': bidPackageFormErrors.estimated_price }"
+                  @input="formatNumberInput($event)"
                 />
                 <div class="invalid-feedback" v-if="bidPackageFormErrors.estimated_price">
                   {{ bidPackageFormErrors.estimated_price }}
@@ -495,6 +528,7 @@
                   placeholder="Nhập giá dự toán"
                   v-model="bidPackageForm.estimated_price"
                   :class="{ 'is-invalid': bidPackageFormErrors.estimated_price }"
+                  @input="formatNumberInput($event)"
                 />
                 <div class="invalid-feedback" v-if="bidPackageFormErrors.estimated_price">
                   {{ bidPackageFormErrors.estimated_price }}
@@ -539,6 +573,111 @@
         </div>
       </div>
     </div>
+
+    <!-- Modal sửa giá dự thầu -->
+    <div
+      class="modal fade"
+      id="editBidModal"
+      tabindex="-1"
+      role="dialog"
+      aria-labelledby="editBidModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="editBidModalLabel">Sửa giá dự thầu</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <form @submit.prevent="submitEditBid" v-if="selectedBid">
+              <div class="form-group">
+                <label>Dự án:</label>
+                <p>
+                  <strong>{{ project.name }}</strong> ({{ project.code }})
+                </p>
+              </div>
+              <div class="form-group">
+                <label>Gói thầu:</label>
+                <p>
+                  <strong>{{ getBidPackageForBid(selectedBid)?.name }}</strong> ({{
+                    getBidPackageForBid(selectedBid)?.code
+                  }})
+                </p>
+              </div>
+              <div class="form-group">
+                <label>Nhà thầu:</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="edit_contractor_id"
+                  placeholder="Nhập tên nhà thầu"
+                  v-model="editBidForm.contractor_id"
+                  :class="{ 'is-invalid': editBidFormErrors.contractor_id }"
+                />
+                <div class="invalid-feedback" v-if="editBidFormErrors.contractor_id">
+                  {{ editBidFormErrors.contractor_id }}
+                </div>
+              </div>
+
+              <!-- Hiển thị thông tin nhà thầu đã chọn -->
+              <div class="form-group bg-light p-3 rounded" v-if="editSelectedContractor">
+                <h6>Thông tin nhà thầu đã chọn</h6>
+                <div><strong>Tên:</strong> {{ editSelectedContractor.name }}</div>
+                <div v-if="editSelectedContractor.phone"><strong>SĐT:</strong> {{ editSelectedContractor.phone }}</div>
+                <div v-if="editSelectedContractor.email">
+                  <strong>Email:</strong> {{ editSelectedContractor.email }}
+                </div>
+                <div v-if="editSelectedContractor.address">
+                  <strong>Địa chỉ:</strong> {{ editSelectedContractor.address }}
+                </div>
+                <div v-if="editSelectedContractor.notes">
+                  <strong>Ghi chú:</strong> {{ editSelectedContractor.notes }}
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="edit_price">Giá dự thầu (VNĐ) <span class="text-danger">*</span></label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="edit_price"
+                  placeholder="Nhập giá dự thầu"
+                  v-model="editBidForm.price"
+                  :class="{ 'is-invalid': editBidFormErrors.price }"
+                  @input="formatNumberInput($event)"
+                />
+                <div class="invalid-feedback" v-if="editBidFormErrors.price">
+                  {{ editBidFormErrors.price }}
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="edit_notes">Ghi chú</label>
+                <textarea
+                  class="form-control"
+                  id="edit_notes"
+                  rows="3"
+                  placeholder="Nhập ghi chú"
+                  v-model="editBidForm.notes"
+                  :class="{ 'is-invalid': editBidFormErrors.notes }"
+                ></textarea>
+                <div class="invalid-feedback" v-if="editBidFormErrors.notes">
+                  {{ editBidFormErrors.notes }}
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+            <button type="button" class="btn btn-primary" @click="submitEditBid" :disabled="isSubmitting">
+              <i class="fas fa-save mr-1"></i> Lưu
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </AdminLayout>
 </template>
 
@@ -547,7 +686,15 @@ import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { Link, router } from '@inertiajs/vue3'
 import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import axios from 'axios'
-import { showConfirm, showSuccess, showError, showWarning, formatCurrency, parseCurrency } from '@/utils'
+import {
+  showConfirm,
+  showSuccess,
+  showError,
+  showWarning,
+  formatCurrency,
+  parseCurrency,
+  formatNumberInput
+} from '@/utils'
 
 const props = defineProps({
   project: Object,
@@ -580,6 +727,15 @@ const bidPackageForm = ref({
   status: 'open'
 })
 const bidPackageFormErrors = ref({})
+const selectedBid = ref(null)
+const editBidForm = ref({
+  contractor_id: '',
+  price: '',
+  notes: ''
+})
+const editBidFormErrors = ref({})
+const editSelectedContractor = ref(null)
+let editInputpickerInstance = null
 
 const confirmDeleteBidPackage = (bidPackage) => {
   showConfirm('Xác nhận xóa', `Bạn có chắc chắn muốn xóa gói thầu "${bidPackage.name}" không?`, 'Xóa', 'Hủy').then(
@@ -680,11 +836,8 @@ const openAddBidModal = async (bidPackage) => {
   selectedContractor.value = null
   contractorSearch.value = ''
 
-  // Lọc các nhà thầu đã đặt giá
-  const existingBidContractorIds = bidPackage.bids.map((bid) => bid.contractor_id)
-  availableContractors.value = contractors.value.filter(
-    (contractor) => !existingBidContractorIds.includes(contractor.id)
-  )
+  // Sử dụng tất cả nhà thầu, không cần lọc
+  availableContractors.value = [...contractors.value]
 
   window.$('#addBidModal').modal('show')
 
@@ -708,7 +861,7 @@ const openAddBidModal = async (bidPackage) => {
       ],
       fieldText: 'text',
       fieldValue: 'value',
-      filterOpen: true,
+      filterOpen: false,
       autoOpen: true,
       headShow: true,
       width: '100%',
@@ -750,7 +903,8 @@ const submitAddBid = async () => {
     await router.post(
       route('bids.store', selectedBidPackage.value.id),
       {
-        ...bidForm.value
+        ...bidForm.value,
+        price: parseCurrency(bidForm.value.price)
       },
       {
         onSuccess: () => {
@@ -796,12 +950,18 @@ window.$('#addBidModal').on('hidden.bs.modal', function () {
 onBeforeUnmount(() => {
   // Hủy sự kiện khi modal đóng
   window.$('#addBidModal').off('hidden.bs.modal')
+  window.$('#editBidModal').off('hidden.bs.modal')
 
   // Hủy InputPicker nếu còn tồn tại
   try {
     if (inputpickerInstance) {
       window.$('#contractor_id').inputpicker('destroy')
       inputpickerInstance = null
+    }
+
+    if (editInputpickerInstance) {
+      window.$('#edit_contractor_id').inputpicker('destroy')
+      editInputpickerInstance = null
     }
   } catch (e) {
     console.log('Không thể hủy InputPicker khi hủy component:', e)
@@ -1014,4 +1174,178 @@ const totalClientPrice = computed(() => {
     return total + (parseInt(bidPackage.client_price) || 0)
   }, 0)
 })
+
+// Lấy gói thầu chứa bid
+const getBidPackageForBid = (bid) => {
+  if (!bid) return null
+  return props.project.bid_packages.find((bp) => bp.bids.some((b) => b.id === bid.id))
+}
+
+// Mở modal sửa giá dự thầu
+const openEditBidModal = async (bid) => {
+  selectedBid.value = bid
+  editBidForm.value = {
+    contractor_id: bid.contractor_id,
+    price: formatCurrency(bid.price || 0),
+    notes: bid.notes || ''
+  }
+  editBidFormErrors.value = {}
+  editSelectedContractor.value = bid.contractor
+
+  try {
+    const response = await axios.get('/api/contractors')
+    contractors.value = response.data
+  } catch (error) {
+    console.error('Không thể lấy danh sách nhà thầu:', error)
+  }
+
+  window.$('#editBidModal').modal('show')
+
+  // Đợi modal hiển thị xong rồi khởi tạo InputPicker
+  await nextTick()
+
+  try {
+    // Khởi tạo InputPicker mới
+    window.$('#edit_contractor_id').inputpicker({
+      data: contractors.value.map((contractor) => ({
+        value: contractor.id,
+        text: contractor.name,
+        phone: contractor.phone || '',
+        email: contractor.email || '',
+        address: contractor.address || '',
+        notes: contractor.notes || ''
+      })),
+      fields: [
+        { name: 'text', text: 'Tên nhà thầu' },
+        { name: 'notes', text: 'Ghi chú' }
+      ],
+      fieldText: 'text',
+      fieldValue: 'value',
+      filterOpen: false,
+      autoOpen: true,
+      headShow: true,
+      width: '100%',
+      selectMode: 'single',
+      responsive: true,
+      selectedValue: bid.contractor_id
+    })
+
+    // Lưu instance để có thể hủy sau này
+    editInputpickerInstance = window.$('#edit_contractor_id')
+
+    // Xử lý sự kiện change
+    window.$('#edit_contractor_id').on('change', function (e) {
+      const contractorId = window.$(this).val()
+      editBidForm.value.contractor_id = contractorId
+
+      if (contractorId) {
+        const contractor = contractors.value.find((c) => c.id == contractorId)
+        if (contractor) {
+          editSelectedContractor.value = contractor
+        }
+      } else {
+        editSelectedContractor.value = null
+      }
+    })
+  } catch (error) {
+    console.error('Lỗi khi khởi tạo InputPicker cho sửa nhà thầu:', error)
+  }
+}
+
+// Gửi form sửa giá dự thầu
+const submitEditBid = async () => {
+  if (isSubmitting.value || !selectedBid.value) return
+
+  editBidFormErrors.value = {}
+  isSubmitting.value = true
+
+  // Parse giá trị tiền tệ thành số
+  const formData = {
+    ...editBidForm.value,
+    price: parseCurrency(editBidForm.value.price)
+  }
+
+  try {
+    await router.put(route('bids.update', selectedBid.value.id), formData, {
+      onSuccess: () => {
+        window.$('#editBidModal').modal('hide')
+        selectedBid.value = null
+        editSelectedContractor.value = null
+        showSuccess('Giá dự thầu đã được cập nhật thành công.')
+      },
+      onError: (errors) => {
+        editBidFormErrors.value = errors
+      },
+      onFinish: () => {
+        isSubmitting.value = false
+      }
+    })
+  } catch (error) {
+    console.error('Lỗi khi cập nhật giá dự thầu:', error)
+    showError('Có lỗi xảy ra khi cập nhật giá dự thầu. Vui lòng thử lại sau.')
+    isSubmitting.value = false
+  }
+}
 </script>
+
+<style scoped>
+/* Thêm CSS cho phần tên dự án và nút thêm gói thầu cố định */
+.fixed-header {
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  width: 100%;
+  background-color: #f4f6f9;
+  padding: 10px 5px;
+}
+
+/* CSS cho phần nút bấm trong bảng */
+.btn-group-vertical {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  width: 40px;
+  z-index: 0;
+}
+
+.contractor-info {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.contractor-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.contractor-price {
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+.contractor-name {
+  font-size: 0.9rem;
+}
+
+/* CSS cho radio button */
+.custom-radio {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+/* CSS cho nút thao tác */
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.action-buttons .btn {
+  padding: 0.25rem 0.5rem;
+}
+</style>

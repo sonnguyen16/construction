@@ -22,7 +22,9 @@ class BidController extends Controller
         ]);
 
         // Kiểm tra xem nhà thầu đã đặt giá cho gói thầu này chưa
-        $existingBid = $bidPackage->bids()->where('contractor_id', $validated['contractor_id'])->first();
+        $existingBid = $bidPackage->bids()->where('contractor_id', $validated['contractor_id'])
+                        ->whereNull('deleted_at')
+                        ->first();
 
         if ($existingBid) {
             return redirect()->back()->withErrors([
@@ -37,25 +39,33 @@ class BidController extends Controller
     }
 
     /**
-     * Cập nhật thông tin giá dự thầu
+     * Cập nhật thông tin dự thầu
      */
     public function update(Request $request, Bid $bid)
     {
         $validated = $request->validate([
+            'contractor_id' => 'sometimes|required|exists:contractors,id',
             'price' => 'required|numeric|min:0',
             'notes' => 'nullable|string',
         ]);
 
-        $bid->update($validated);
-
-        // Nếu giá dự thầu này đã được chọn, cập nhật giá dự toán của gói thầu
-        if ($bid->is_selected) {
+        // Kiểm tra xem gói thầu đã có nhà thầu với contractor_id mới chưa
+        if (isset($validated['contractor_id']) && $validated['contractor_id'] != $bid->contractor_id) {
             $bidPackage = $bid->bidPackage;
-            $bidPackage->estimated_price = $validated['price'];
+            $existingBid = $bidPackage->bids()
+                ->where('contractor_id', $validated['contractor_id'])
+                ->where('id', '!=', $bid->id)
+                ->whereNull('deleted_at')
+                ->first();
+
+            if ($existingBid) {
+                return back()->withErrors(['contractor_id' => 'Nhà thầu này đã có giá dự thầu cho gói thầu này.']);
+            }
         }
 
-        return redirect()->route('projects.show', $bid->bidPackage->project_id)
-            ->with('success', 'Thông tin giá dự thầu đã được cập nhật.');
+        $bid->update($validated);
+
+        return redirect()->back()->with('success', 'Giá dự thầu đã được cập nhật thành công.');
     }
 
     /**
@@ -69,11 +79,12 @@ class BidController extends Controller
         if ($bid->is_selected) {
             $bidPackage = $bid->bidPackage;
             $bidPackage->selected_contractor_id = null;
-            $bidPackage->estimated_price = null;
+            $bidPackage->client_price = null;
+            $bidPackage->status = 'open';
+            $bidPackage->save();
         }
 
-        $bid->deleted_at = now();
-        $bid->save();
+        $bid->delete();
 
         return redirect()->route('projects.show', $projectId)
             ->with('success', 'Giá dự thầu đã được xóa thành công.');
@@ -95,7 +106,6 @@ class BidController extends Controller
 
         // Cập nhật thông tin gói thầu
         $bidPackage->selected_contractor_id = $bid->contractor_id;
-        $bidPackage->estimated_price = $bid->price;
         $bidPackage->client_price = $bid->price + $bidPackage->additional_price;
         $bidPackage->status = 'awarded';
         $bidPackage->save();

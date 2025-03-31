@@ -24,7 +24,7 @@
                     type="text"
                     class="form-control"
                     id="search"
-                    placeholder="Tên, Email, Số điện thoại, Mã số thuế..."
+                    placeholder="Tên, Email, Số điện thoại"
                     v-model="search"
                     @input="debouncedSearch"
                   />
@@ -40,7 +40,6 @@
                     <th>Tên khách hàng</th>
                     <th>Email</th>
                     <th>Số điện thoại</th>
-                    <th>Mã số thuế</th>
                     <th>Địa chỉ</th>
                     <th>Thao tác</th>
                   </tr>
@@ -50,7 +49,6 @@
                     <td>{{ customer.name }}</td>
                     <td>{{ customer.email || '-' }}</td>
                     <td>{{ customer.phone || '-' }}</td>
-                    <td>{{ customer.tax_code || '-' }}</td>
                     <td>{{ truncateText(customer.address, 30) }}</td>
                     <td>
                       <div class="btn-group">

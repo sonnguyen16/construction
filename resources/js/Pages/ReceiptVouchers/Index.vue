@@ -24,23 +24,27 @@
                 <div class="info-box bg-light">
                   <div class="info-box-content">
                     <span class="info-box-text">Tổng số tiền đã thu</span>
-                    <span class="info-box-number">{{ formatCurrency(totalAmount) }}</span>
+                    <span class="info-box-number">{{ formatCurrency(totalPaidAmount) }}</span>
                   </div>
                 </div>
               </div>
               <div class="col-md-3">
                 <div class="info-box bg-light">
                   <div class="info-box-content">
-                    <span class="info-box-text">Số tiền chưa thanh toán</span>
-                    <span class="info-box-number">{{ formatCurrency(pendingAmount) }}</span>
+                    <span class="info-box-text">Số tiền dự thu</span>
+                    <span class="info-box-number">
+                      {{ formatCurrency(proposedAmount) }}
+                    </span>
                   </div>
                 </div>
               </div>
               <div class="col-md-3">
                 <div class="info-box bg-light">
                   <div class="info-box-content">
-                    <span class="info-box-text">Số tiền đã thanh toán</span>
-                    <span class="info-box-number">{{ formatCurrency(completedAmount) }}</span>
+                    <span class="info-box-text">Số tiền còn phải thu</span>
+                    <span class="info-box-number">
+                      {{ formatCurrency(remainingAmount) }}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -175,7 +179,7 @@
                           'badge badge-success': voucher.status === 'paid'
                         }"
                       >
-                        {{ statuses[voucher.status] }}
+                        {{ voucher.status === 'unpaid' ? 'Dự thu' : 'Đã thu' }}
                       </span>
                     </td>
                     <td>{{ formatDate(voucher.created_at) }}</td>
@@ -236,23 +240,24 @@ const filters = ref({
   date_to: props.filters.date_to || ''
 })
 
-// Tính tổng số tiền
-const totalAmount = computed(() => {
-  return props.receiptVouchers.data.reduce((total, voucher) => total + parseInt(voucher.amount || 0), 0)
-})
-
-// Tính số tiền chưa thanh toán
-const pendingAmount = computed(() => {
-  return props.receiptVouchers.data
-    .filter((voucher) => voucher.status === 'unpaid')
-    .reduce((total, voucher) => total + parseInt(voucher.amount || 0), 0)
-})
-
-// Tính số tiền đã thanh toán
-const completedAmount = computed(() => {
+// Tính số tiền đã thu thực tế (chỉ các phiếu có trạng thái đã thu)
+const totalPaidAmount = computed(() => {
   return props.receiptVouchers.data
     .filter((voucher) => voucher.status === 'paid')
     .reduce((total, voucher) => total + parseInt(voucher.amount || 0), 0)
+})
+
+// Tính số tiền dự thu
+const proposedAmount = computed(() => {
+  return props.receiptVouchers.data
+    .filter((voucher) => voucher.status === 'proposed')
+    .reduce((total, voucher) => total + parseInt(voucher.amount || 0), 0)
+})
+
+// Tính số tiền còn phải thu (ví dụ, so với tổng hợp đồng)
+const remainingAmount = computed(() => {
+  // Đây chỉ là mẫu, bạn có thể cần tính toán sử dụng dữ liệu từ dự án hoặc hợp đồng
+  return 0
 })
 
 // Hàm tìm kiếm có debounce

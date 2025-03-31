@@ -36,7 +36,14 @@
                 <tr v-for="(bidPackage, index) in project.bid_packages" :key="bidPackage.id">
                   <td>{{ index + 1 }}</td>
                   <td>{{ bidPackage.code }}</td>
-                  <td>{{ bidPackage.name }}</td>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <button @click="openEditBidPackageModal(bidPackage)" class="btn btn-sm btn-info mr-2">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      {{ bidPackage.name }}
+                    </div>
+                  </td>
                   <td>{{ bidPackage.selected_contractor ? bidPackage.selected_contractor.name : '-' }}</td>
                   <td class="text-right font-bold">{{ formatCurrency(bidPackage.client_price || 0) }}</td>
 
@@ -210,10 +217,17 @@
                     <span
                       :class="{
                         'badge badge-success': selectedPaymentVoucher.status === 'paid',
-                        'badge badge-warning': selectedPaymentVoucher.status === 'unpaid'
+                        'badge badge-warning': selectedPaymentVoucher.status === 'proposed',
+                        'badge badge-info': selectedPaymentVoucher.status === 'approved'
                       }"
                     >
-                      {{ selectedPaymentVoucher.status === 'paid' ? 'Đã thanh toán' : 'Chưa thanh toán' }}
+                      {{
+                        selectedPaymentVoucher.status === 'paid'
+                          ? 'Đã thanh toán'
+                          : selectedPaymentVoucher.status === 'proposed'
+                          ? 'Đề xuất chi'
+                          : 'Đã duyệt'
+                      }}
                     </span>
                   </p>
                 </div>
@@ -253,6 +267,117 @@
         </div>
       </div>
     </div>
+
+    <!-- Thêm modal chỉnh sửa gói thầu -->
+    <div
+      class="modal fade"
+      id="editBidPackageModal"
+      tabindex="-1"
+      role="dialog"
+      aria-labelledby="editBidPackageModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="editBidPackageModalLabel">Chỉnh sửa gói thầu</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <form @submit.prevent="submitEditBidPackage" v-if="selectedBidPackage">
+              <div class="form-group d-flex gap-2">
+                <label>Dự án:</label>
+                <p>
+                  <strong>{{ project.name }}</strong> ({{ project.code }})
+                </p>
+              </div>
+              <div class="form-group">
+                <label for="edit_code">Mã gói thầu <span class="text-danger">*</span></label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="edit_code"
+                  placeholder="Nhập mã gói thầu"
+                  v-model="bidPackageForm.code"
+                  :class="{ 'is-invalid': bidPackageFormErrors.code }"
+                />
+                <div class="invalid-feedback" v-if="bidPackageFormErrors.code">
+                  {{ bidPackageFormErrors.code }}
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="edit_name">Tên gói thầu <span class="text-danger">*</span></label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="edit_name"
+                  placeholder="Nhập tên gói thầu"
+                  v-model="bidPackageForm.name"
+                  :class="{ 'is-invalid': bidPackageFormErrors.name }"
+                />
+                <div class="invalid-feedback" v-if="bidPackageFormErrors.name">
+                  {{ bidPackageFormErrors.name }}
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="edit_estimated_price">Giá dự toán (VNĐ)</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="edit_estimated_price"
+                  placeholder="Nhập giá dự toán"
+                  v-model="bidPackageForm.estimated_price"
+                  :class="{ 'is-invalid': bidPackageFormErrors.estimated_price }"
+                  @input="formatNumberInput($event)"
+                />
+                <div class="invalid-feedback" v-if="bidPackageFormErrors.estimated_price">
+                  {{ bidPackageFormErrors.estimated_price }}
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="edit_description">Ghi chú</label>
+                <textarea
+                  class="form-control"
+                  id="edit_description"
+                  rows="3"
+                  placeholder="Nhập ghi chú"
+                  v-model="bidPackageForm.description"
+                  :class="{ 'is-invalid': bidPackageFormErrors.description }"
+                ></textarea>
+                <div class="invalid-feedback" v-if="bidPackageFormErrors.description">
+                  {{ bidPackageFormErrors.description }}
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="edit_status">Trạng thái <span class="text-danger">*</span></label>
+                <select
+                  class="form-control"
+                  id="edit_status"
+                  v-model="bidPackageForm.status"
+                  :class="{ 'is-invalid': bidPackageFormErrors.status }"
+                >
+                  <option value="open">Đang mở thầu</option>
+                  <option value="awarded">Đã chọn nhà thầu</option>
+                  <option value="completed">Hoàn thành</option>
+                  <option value="cancelled">Đã hủy</option>
+                </select>
+                <div class="invalid-feedback" v-if="bidPackageFormErrors.status">
+                  {{ bidPackageFormErrors.status }}
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+            <button type="button" class="btn btn-primary" @click="submitEditBidPackage" :disabled="isSubmitting">
+              <i class="fas fa-save mr-1"></i> Lưu
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </AdminLayout>
 </template>
 
@@ -260,13 +385,31 @@
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { Link, router } from '@inertiajs/vue3'
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
-import { formatCurrency, showWarning, formatDate } from '@/utils'
+import {
+  formatCurrency,
+  showWarning,
+  formatDate,
+  showSuccess,
+  showError,
+  parseCurrency,
+  formatNumberInput
+} from '@/utils'
 
 const props = defineProps({
   project: Object
 })
 
 const selectedPaymentVoucher = ref(null)
+const selectedBidPackage = ref(null)
+const bidPackageForm = ref({
+  code: '',
+  name: '',
+  description: '',
+  estimated_price: '',
+  status: 'open'
+})
+const bidPackageFormErrors = ref({})
+const isSubmitting = ref(false)
 
 // Lấy phiếu chi tại vị trí index của gói thầu
 const getPaymentVoucherAtIndex = (bidPackage, index) => {
@@ -363,6 +506,75 @@ const totalRemainingAmount = computed(() => {
     return total + calculateRemainingAmount(bidPackage)
   }, 0)
 })
+
+// Mở modal chỉnh sửa gói thầu
+const openEditBidPackageModal = (bidPackage) => {
+  selectedBidPackage.value = bidPackage
+  bidPackageForm.value = {
+    code: bidPackage.code || '',
+    name: bidPackage.name || '',
+    description: bidPackage.description || '',
+    estimated_price: formatCurrency(bidPackage.estimated_price || 0),
+    status: bidPackage.status || 'open'
+  }
+  bidPackageFormErrors.value = {}
+  window.$('#editBidPackageModal').modal('show')
+}
+
+// Gửi form chỉnh sửa gói thầu
+const submitEditBidPackage = async () => {
+  if (isSubmitting.value || !selectedBidPackage.value) return
+
+  bidPackageFormErrors.value = {}
+  isSubmitting.value = true
+
+  // Parse các giá trị tiền tệ thành số
+  const formData = {
+    project_id: props.project.id,
+    ...bidPackageForm.value,
+    estimated_price: parseCurrency(bidPackageForm.value.estimated_price)
+  }
+
+  try {
+    // Đóng modal trước
+    window.$('#editBidPackageModal').modal('hide')
+
+    // Xóa backdrop và reset body
+    const removeBackdrop = () => {
+      const backdrop = document.querySelector('.modal-backdrop')
+      if (backdrop) {
+        backdrop.remove()
+      }
+      document.body.classList.remove('modal-open')
+      document.body.style.paddingRight = ''
+    }
+
+    // Đợi animation đóng modal hoàn tất
+    setTimeout(() => {
+      removeBackdrop()
+
+      // Sau đó mới gửi request cập nhật
+      router.put(route('bid-packages.update', selectedBidPackage.value.id), formData, {
+        onSuccess: () => {
+          selectedBidPackage.value = null
+          showSuccess('Gói thầu đã được cập nhật thành công.')
+        },
+        onError: (errors) => {
+          bidPackageFormErrors.value = errors
+          // Nếu có lỗi, mở lại modal
+          window.$('#editBidPackageModal').modal('show')
+        },
+        onFinish: () => {
+          isSubmitting.value = false
+        }
+      })
+    }, 300) // Đợi 300ms cho animation đóng modal
+  } catch (error) {
+    console.error('Lỗi khi cập nhật gói thầu:', error)
+    showError('Có lỗi xảy ra khi cập nhật gói thầu. Vui lòng thử lại sau.')
+    isSubmitting.value = false
+  }
+}
 </script>
 
 <style>
@@ -388,5 +600,16 @@ body.modal-open {
 /* Đảm bảo z-index của modal cao hơn backdrop */
 .modal-dialog {
   z-index: 1050;
+}
+
+/* Thêm CSS cho phần tên dự án cố định */
+.fixed-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  width: 100%;
+  background-color: #f4f6f9;
+  padding: 10px 0;
+  border-bottom: 1px solid #dee2e6;
 }
 </style>

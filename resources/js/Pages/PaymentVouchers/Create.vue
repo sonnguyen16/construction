@@ -80,6 +80,7 @@
                       v-model="form.amount"
                       placeholder="Nhập số tiền"
                       :class="{ 'is-invalid': form.errors.amount }"
+                      @input="formatNumberInput($event)"
                     />
                     <div class="invalid-feedback" v-if="form.errors.amount">{{ form.errors.amount }}</div>
                   </div>
@@ -91,18 +92,18 @@
                       class="form-control"
                       id="status"
                       v-model="form.status"
-                      :class="{ 'is-invalid': form.errors.status }"
                       @change="onStatusChange"
+                      :class="{ 'is-invalid': form.errors.status }"
                     >
-                      <option v-for="(text, value) in statuses" :key="value" :value="value">
-                        {{ text }}
-                      </option>
+                      <option value="proposed">Đề xuất chi</option>
+                      <option value="approved">Đã duyệt</option>
+                      <option value="paid">Đã chi</option>
                     </select>
                     <div class="invalid-feedback" v-if="form.errors.status">{{ form.errors.status }}</div>
                   </div>
 
                   <div class="form-group" v-if="form.status === 'paid'">
-                    <label for="payment_date">Ngày thanh toán</label>
+                    <label for="payment_date">Ngày chi</label>
                     <input
                       type="date"
                       class="form-control"
@@ -148,7 +149,7 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { Link, useForm } from '@inertiajs/vue3'
-import { parseCurrency, showSuccess } from '@/utils'
+import { parseCurrency, showSuccess, formatNumberInput, formatCurrency } from '@/utils'
 import { computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 
 const props = defineProps({
@@ -166,8 +167,8 @@ const form = useForm({
   contractor_id: props.preselectedContractorId || '',
   project_id: props.preselectedProjectId || '',
   bid_package_id: props.preselectedBidPackageId || '',
-  amount: 0,
-  status: 'unpaid',
+  amount: '',
+  status: 'proposed',
   payment_date: null,
   description: ''
 })
@@ -248,7 +249,7 @@ onMounted(() => {
   if (props.preselectedContractorId) {
     const selectedContractor = props.contractors.find((c) => c.id == props.preselectedContractorId)
     if (selectedContractor) {
-      window.$('#contractor_id').inputpicker('val', selectedContractor.name)
+      window.$('#contractor_id').inputpicker('val', selectedContractor.id)
       form.contractor_id = props.preselectedContractorId
     }
   }
@@ -281,7 +282,7 @@ onMounted(() => {
   if (props.preselectedProjectId) {
     const selectedProject = props.projects.find((p) => p.id == props.preselectedProjectId)
     if (selectedProject) {
-      window.$('#project_id').inputpicker('val', selectedProject.name)
+      window.$('#project_id').inputpicker('val', selectedProject.id)
       form.project_id = props.preselectedProjectId
     }
   }
@@ -308,7 +309,7 @@ onMounted(() => {
     if (props.preselectedBidPackageId) {
       const selectedBidPackage = filteredBidPackages.value.find((bp) => bp.id == props.preselectedBidPackageId)
       if (selectedBidPackage) {
-        window.$('#bid_package_id').inputpicker('val', selectedBidPackage.name)
+        window.$('#bid_package_id').inputpicker('val', selectedBidPackage.id)
         form.bid_package_id = props.preselectedBidPackageId
       }
     }

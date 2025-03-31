@@ -35,7 +35,7 @@ class BidPackageFileController extends Controller
         }
 
         // Tạo URL với working_dir để mở đúng thư mục gói thầu
-        $lfm_url = route('unisharp.lfm.show') . "?type=file&working_dir=/$bidPackageFolder";
+        $lfm_url = route('unisharp.lfm.show');
 
         return Inertia::render('BidPackages/Files', [
             'bidPackage' => $bidPackage,

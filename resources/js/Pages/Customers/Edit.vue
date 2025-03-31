@@ -57,21 +57,6 @@
               </div>
 
               <div class="form-group">
-                <label for="tax_code">Mã số thuế</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  id="tax_code"
-                  placeholder="Nhập mã số thuế"
-                  v-model="form.tax_code"
-                  :class="{ 'is-invalid': form.errors.tax_code }"
-                />
-                <div class="invalid-feedback" v-if="form.errors.tax_code">
-                  {{ form.errors.tax_code }}
-                </div>
-              </div>
-
-              <div class="form-group">
                 <label for="address">Địa chỉ</label>
                 <textarea
                   class="form-control"
