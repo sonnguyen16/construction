@@ -16,7 +16,7 @@
                 <div class="info-box bg-light">
                   <div class="info-box-content">
                     <span class="info-box-text">Tổng số phiếu chi</span>
-                    <span class="info-box-number">{{ paymentVouchers.total }}</span>
+                    <span class="info-box-number">{{ totalPaymentCount }}</span>
                   </div>
                 </div>
               </div>
@@ -24,7 +24,7 @@
                 <div class="info-box bg-light">
                   <div class="info-box-content">
                     <span class="info-box-text">Tổng số tiền chi</span>
-                    <span class="info-box-number">{{ formatCurrency(totalPaidAmount) }}</span>
+                    <span class="info-box-number">{{ formatCurrency(totalPaymentAmount) }}</span>
                   </div>
                 </div>
               </div>
@@ -33,7 +33,7 @@
                   <div class="info-box-content">
                     <span class="info-box-text">Đang chờ duyệt</span>
                     <span class="info-box-number">
-                      {{ formatCurrency(proposedAmount) }}
+                      {{ formatCurrency(totalPaymentAmountProposed) }}
                     </span>
                   </div>
                 </div>
@@ -43,7 +43,7 @@
                   <div class="info-box-content">
                     <span class="info-box-text">Đã duyệt</span>
                     <span class="info-box-number">
-                      {{ formatCurrency(approvedAmount) }}
+                      {{ formatCurrency(totalPaymentAmountApproved) }}
                     </span>
                   </div>
                 </div>
@@ -246,7 +246,11 @@ const props = defineProps({
   contractors: Array,
   bidPackages: Array,
   filters: Object,
-  statuses: Object
+  statuses: Object,
+  totalPaymentCount: Number,
+  totalPaymentAmount: Number,
+  totalPaymentAmountProposed: Number,
+  totalPaymentAmountApproved: Number
 })
 
 const filters = ref({
@@ -256,27 +260,6 @@ const filters = ref({
   date_from: props.filters.date_from || '',
   date_to: props.filters.date_to || '',
   status: props.filters.status || ''
-})
-
-// Tính số tiền đã chi (chỉ phiếu chi có trạng thái "đã chi")
-const totalPaidAmount = computed(() => {
-  return props.paymentVouchers.data
-    .filter((voucher) => voucher.status === 'paid')
-    .reduce((total, voucher) => total + parseInt(voucher.amount || 0), 0)
-})
-
-// Tính số tiền đề xuất chi
-const proposedAmount = computed(() => {
-  return props.paymentVouchers.data
-    .filter((voucher) => voucher.status === 'proposed')
-    .reduce((total, voucher) => total + parseInt(voucher.amount || 0), 0)
-})
-
-// Tính số tiền đã duyệt
-const approvedAmount = computed(() => {
-  return props.paymentVouchers.data
-    .filter((voucher) => voucher.status === 'approved')
-    .reduce((total, voucher) => total + parseInt(voucher.amount || 0), 0)
 })
 
 // Hàm cắt ngắn văn bản

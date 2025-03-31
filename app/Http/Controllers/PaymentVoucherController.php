@@ -19,6 +19,11 @@ class PaymentVoucherController extends Controller
         $query = PaymentVoucher::query()->whereNull('deleted_at')
             ->with(['contractor', 'bidPackage.project', 'creator']);
 
+        $totalPaymentCount = PaymentVoucher::whereNull('deleted_at')->count();
+        $totalPaymentAmount = PaymentVoucher::whereNull('deleted_at')->where('status', 'paid')->sum('amount');
+        $totalPaymentAmountProposed = PaymentVoucher::whereNull('deleted_at')->where('status', 'proposed')->sum('amount');
+        $totalPaymentAmountApproved = PaymentVoucher::whereNull('deleted_at')->where('status', 'approved')->sum('amount');
+
         // Tìm kiếm
         if ($request->has('search') && $request->search) {
             $searchTerm = $request->search;
@@ -77,7 +82,11 @@ class PaymentVoucherController extends Controller
             'contractors' => $contractors,
             'bidPackages' => $bidPackages,
             'statuses' => $this->getStatuses(),
-            'filters' => $request->only(['search', 'contractor_id', 'bid_package_id', 'status', 'date_from', 'date_to'])
+            'filters' => $request->only(['search', 'contractor_id', 'bid_package_id', 'status', 'date_from', 'date_to']),
+            'totalPaymentCount' => $totalPaymentCount,
+            'totalPaymentAmount' => $totalPaymentAmount,
+            'totalPaymentAmountProposed' => $totalPaymentAmountProposed,
+            'totalPaymentAmountApproved' => $totalPaymentAmountApproved
         ]);
     }
 

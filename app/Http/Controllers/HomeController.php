@@ -24,11 +24,11 @@ class HomeController extends Controller
         $totalBidPackages = BidPackage::count();
         $totalContractors = Contractor::count();
         $totalCustomers = Customer::count();
-        $totalPaymentAmount = PaymentVoucher::sum('amount');
-        $totalReceiptAmount = ReceiptVoucher::sum('amount');
+        $totalPaymentAmount = PaymentVoucher::where('status', 'paid')->sum('amount');
+        $totalReceiptAmount = ReceiptVoucher::where('status', 'paid')->sum('amount');
         $balance = $totalReceiptAmount - $totalPaymentAmount;
         $pendingReceiptCount = ReceiptVoucher::where('status', 'unpaid')->count();
-        $pendingPaymentCount = PaymentVoucher::where('status', 'unpaid')->count();
+        $pendingPaymentCount = PaymentVoucher::where('status', 'proposed')->orWhere('status', 'approved')->count();
 
         // Lấy 5 phiếu chi mới nhất
         $recentPaymentVouchers = PaymentVoucher::with(['contractor', 'bidPackage.project', 'creator'])

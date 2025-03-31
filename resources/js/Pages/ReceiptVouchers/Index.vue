@@ -16,7 +16,7 @@
                 <div class="info-box bg-light">
                   <div class="info-box-content">
                     <span class="info-box-text">Tổng số phiếu thu</span>
-                    <span class="info-box-number">{{ receiptVouchers.total }}</span>
+                    <span class="info-box-number">{{ totalReceiptCount }}</span>
                   </div>
                 </div>
               </div>
@@ -24,7 +24,7 @@
                 <div class="info-box bg-light">
                   <div class="info-box-content">
                     <span class="info-box-text">Tổng số tiền đã thu</span>
-                    <span class="info-box-number">{{ formatCurrency(totalPaidAmount) }}</span>
+                    <span class="info-box-number">{{ formatCurrency(totalReceiptAmount) }}</span>
                   </div>
                 </div>
               </div>
@@ -33,17 +33,7 @@
                   <div class="info-box-content">
                     <span class="info-box-text">Số tiền dự thu</span>
                     <span class="info-box-number">
-                      {{ formatCurrency(proposedAmount) }}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div class="col-md-3">
-                <div class="info-box bg-light">
-                  <div class="info-box-content">
-                    <span class="info-box-text">Số tiền còn phải thu</span>
-                    <span class="info-box-number">
-                      {{ formatCurrency(remainingAmount) }}
+                      {{ formatCurrency(totalReceiptAmountUnpaid) }}
                     </span>
                   </div>
                 </div>
@@ -227,7 +217,10 @@ const props = defineProps({
   projects: Array,
   bidPackages: Array,
   statuses: Object,
-  filters: Object
+  filters: Object,
+  totalReceiptCount: Number,
+  totalReceiptAmount: Number,
+  totalReceiptAmountUnpaid: Number
 })
 
 const filters = ref({
@@ -238,26 +231,6 @@ const filters = ref({
   status: props.filters.status || '',
   date_from: props.filters.date_from || '',
   date_to: props.filters.date_to || ''
-})
-
-// Tính số tiền đã thu thực tế (chỉ các phiếu có trạng thái đã thu)
-const totalPaidAmount = computed(() => {
-  return props.receiptVouchers.data
-    .filter((voucher) => voucher.status === 'paid')
-    .reduce((total, voucher) => total + parseInt(voucher.amount || 0), 0)
-})
-
-// Tính số tiền dự thu
-const proposedAmount = computed(() => {
-  return props.receiptVouchers.data
-    .filter((voucher) => voucher.status === 'proposed')
-    .reduce((total, voucher) => total + parseInt(voucher.amount || 0), 0)
-})
-
-// Tính số tiền còn phải thu (ví dụ, so với tổng hợp đồng)
-const remainingAmount = computed(() => {
-  // Đây chỉ là mẫu, bạn có thể cần tính toán sử dụng dữ liệu từ dự án hoặc hợp đồng
-  return 0
 })
 
 // Hàm tìm kiếm có debounce

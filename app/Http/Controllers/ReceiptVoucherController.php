@@ -20,6 +20,10 @@ class ReceiptVoucherController extends Controller
         $query = ReceiptVoucher::query()->whereNull('deleted_at')
             ->with(['customer', 'project', 'bidPackage', 'creator']);
 
+        $totalReceiptCount = ReceiptVoucher::whereNull('deleted_at')->count();
+        $totalReceiptAmount = ReceiptVoucher::whereNull('deleted_at')->where('status', 'paid')->sum('amount');
+        $totalReceiptAmountUnpaid = ReceiptVoucher::whereNull('deleted_at')->where('status', 'unpaid')->sum('amount');
+
         // Tìm kiếm
         if ($request->has('search') && $request->search) {
             $searchTerm = $request->search;
@@ -70,7 +74,10 @@ class ReceiptVoucherController extends Controller
             'customers' => $customers,
             'projects' => $projects,
             'statuses' => $this->getStatuses(),
-            'filters' => $request->only(['search', 'customer_id', 'project_id',  'status', 'date_from', 'date_to'])
+            'filters' => $request->only(['search', 'customer_id', 'project_id',  'status', 'date_from', 'date_to']),
+            'totalReceiptCount' => $totalReceiptCount,
+            'totalReceiptAmount' => $totalReceiptAmount,
+            'totalReceiptAmountUnpaid' => $totalReceiptAmountUnpaid,
         ]);
     }
 
