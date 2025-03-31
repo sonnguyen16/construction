@@ -20,15 +20,15 @@ class HomeController extends Controller
      */
     public function index()
     {
-        $totalProjects = Project::count();
-        $totalBidPackages = BidPackage::count();
-        $totalContractors = Contractor::count();
-        $totalCustomers = Customer::count();
-        $totalPaymentAmount = PaymentVoucher::where('status', 'paid')->sum('amount');
-        $totalReceiptAmount = ReceiptVoucher::where('status', 'paid')->sum('amount');
+        $totalProjects = Project::whereNull('deleted_at')->count();
+        $totalBidPackages = BidPackage::whereNull('deleted_at')->count();
+        $totalContractors = Contractor::whereNull('deleted_at')->count();
+        $totalCustomers = Customer::whereNull('deleted_at')->count();
+        $totalPaymentAmount = PaymentVoucher::whereNull('deleted_at')->where('status', 'paid')->sum('amount');
+        $totalReceiptAmount = ReceiptVoucher::whereNull('deleted_at')->where('status', 'paid')->sum('amount');
         $balance = $totalReceiptAmount - $totalPaymentAmount;
-        $pendingReceiptCount = ReceiptVoucher::where('status', 'unpaid')->count();
-        $pendingPaymentCount = PaymentVoucher::where('status', 'proposed')->orWhere('status', 'approved')->count();
+        $pendingReceiptCount = ReceiptVoucher::whereNull('deleted_at')->where('status', 'unpaid')->count();
+        $pendingPaymentCount = PaymentVoucher::whereNull('deleted_at')->where('status', 'proposed')->orWhere('status', 'approved')->count();
 
         // Lấy 5 phiếu chi mới nhất
         $recentPaymentVouchers = PaymentVoucher::with(['contractor', 'bidPackage.project', 'creator'])
