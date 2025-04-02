@@ -14,7 +14,7 @@ class ProjectController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Project::query()->with('bidPackages');
+        $query = Project::query()->with('bidPackages')->whereNull('deleted_at');
 
         // Tìm kiếm
         if ($request->has('search')) {
@@ -49,7 +49,7 @@ class ProjectController extends Controller
      */
     public function create()
     {
-        $customers = Customer::all();
+        $customers = Customer::whereNull('deleted_at')->get();
         return Inertia::render('Projects/Create', [
             'customers' => $customers
         ]);
@@ -61,7 +61,7 @@ class ProjectController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'code' => 'required|string|max:50|unique:projects',
+            'code' => 'required|string|max:50',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'status' => 'required|in:active,completed,cancelled',
@@ -79,21 +79,24 @@ class ProjectController extends Controller
      */
     public function show(Project $project)
     {
+        // Kiểm tra xem dự án có bị xóa không
+        if ($project->deleted_at) {
+            return redirect()->route('projects.index')
+                ->with('error', 'Dự án không tồn tại.');
+        }
+
+        // Đảm bảo load workItems và contractor và sắp xếp theo thứ tự
         $project->load([
+            'bidPackages' => function ($query) {
+                $query->orderBy('order', 'asc');
+            },
             'bidPackages.bids.contractor',
             'bidPackages.selectedContractor',
             'bidPackages.payment_vouchers.contractor',
+            'bidPackages.work_items.contractor',
             'receipt_vouchers.customer',
         ]);
 
-        // Tính toán profit cho mỗi gói thầu
-        foreach ($project->bidPackages as $bidPackage) {
-            if ($bidPackage->client_price && $bidPackage->estimated_price) {
-                $bidPackage->profit = $bidPackage->client_price - $bidPackage->estimated_price;
-            } else {
-                $bidPackage->profit = null;
-            }
-        }
 
         return Inertia::render('Projects/Show', [
             'project' => $project,
@@ -115,7 +118,7 @@ class ProjectController extends Controller
      */
     public function edit(Project $project)
     {
-        $customers = Customer::all();
+        $customers = Customer::whereNull('deleted_at')->get();
         return Inertia::render('Projects/Edit', [
             'project' => $project,
             'customers' => $customers
@@ -128,7 +131,7 @@ class ProjectController extends Controller
     public function update(Request $request, Project $project)
     {
         $validated = $request->validate([
-            'code' => 'required|string|max:50|unique:projects,code,' . $project->id,
+            'code' => 'required|string|max:50',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'status' => 'required|in:active,completed,cancelled',

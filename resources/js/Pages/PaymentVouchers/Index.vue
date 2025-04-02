@@ -99,6 +99,17 @@
               </div>
               <div class="col-md-3">
                 <div class="form-group">
+                  <label for="project_id">Dự án:</label>
+                  <select class="form-control" id="project_id" v-model="filters.project_id" @change="applyFilters">
+                    <option value="">Tất cả dự án</option>
+                    <option v-for="project in projects" :key="project.id" :value="project.id">
+                      {{ project.name }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="form-group">
                   <label for="bid_package_id">Gói thầu:</label>
                   <select
                     class="form-control"
@@ -107,7 +118,7 @@
                     @change="applyFilters"
                   >
                     <option value="">Tất cả gói thầu</option>
-                    <option v-for="bidPackage in bidPackages" :key="bidPackage.id" :value="bidPackage.id">
+                    <option v-for="bidPackage in bidPackagesFiltered" :key="bidPackage.id" :value="bidPackage.id">
                       {{ bidPackage.code }} - {{ bidPackage.name }}
                     </option>
                   </select>
@@ -244,6 +255,7 @@ import debounce from 'lodash/debounce'
 const props = defineProps({
   paymentVouchers: Object,
   contractors: Array,
+  projects: Array,
   bidPackages: Array,
   filters: Object,
   statuses: Object,
@@ -256,6 +268,7 @@ const props = defineProps({
 const filters = ref({
   search: props.filters.search || '',
   contractor_id: props.filters.contractor_id || '',
+  project_id: props.filters.project_id || '',
   bid_package_id: props.filters.bid_package_id || '',
   date_from: props.filters.date_from || '',
   date_to: props.filters.date_to || '',
@@ -290,6 +303,7 @@ const applyFilters = () => {
     {
       search: filters.value.search,
       contractor_id: filters.value.contractor_id,
+      project_id: filters.value.project_id,
       bid_package_id: filters.value.bid_package_id,
       date_from: filters.value.date_from,
       date_to: filters.value.date_to,
@@ -302,11 +316,16 @@ const applyFilters = () => {
   )
 }
 
+const bidPackagesFiltered = computed(() => {
+  return props.bidPackages.filter((bidPackage) => bidPackage.project_id == filters.value.project_id)
+})
+
 // Hàm đặt lại bộ lọc
 const resetFilters = () => {
   filters.value = {
     search: '',
     contractor_id: '',
+    project_id: '',
     bid_package_id: '',
     date_from: '',
     date_to: '',

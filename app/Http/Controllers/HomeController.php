@@ -28,7 +28,7 @@ class HomeController extends Controller
         $totalReceiptAmount = ReceiptVoucher::whereNull('deleted_at')->where('status', 'paid')->sum('amount');
         $balance = $totalReceiptAmount - $totalPaymentAmount;
         $pendingReceiptCount = ReceiptVoucher::whereNull('deleted_at')->where('status', 'unpaid')->count();
-        $pendingPaymentCount = PaymentVoucher::whereNull('deleted_at')->wheree('status', 'approved')->count();
+        $pendingPaymentCount = PaymentVoucher::whereNull('deleted_at')->where('status', 'approved')->count();
 
         // Lấy 5 phiếu chi mới nhất
         $recentPaymentVouchers = PaymentVoucher::with(['contractor', 'bidPackage.project', 'creator'])
@@ -37,13 +37,13 @@ class HomeController extends Controller
             ->get();
 
         // Lấy 5 phiếu thu mới nhất
-        $recentReceiptVouchers = ReceiptVoucher::with(['customer', 'project', 'bidPackage', 'creator'])
+        $recentReceiptVouchers = ReceiptVoucher::whereNull('deleted_at')->with(['customer', 'project', 'bidPackage', 'creator'])
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
 
         // Lấy tổng tiền chi theo nhà thầu
-        $paymentsByContractor = PaymentVoucher::selectRaw('contractor_id, SUM(amount) as total_amount')
+        $paymentsByContractor = PaymentVoucher::whereNull('deleted_at')->selectRaw('contractor_id, SUM(amount) as total_amount')
             ->with('contractor')
             ->groupBy('contractor_id')
             ->orderByDesc('total_amount')
@@ -51,7 +51,7 @@ class HomeController extends Controller
             ->get();
 
         // Lấy tổng tiền thu theo khách hàng
-        $receiptsByCustomer = ReceiptVoucher::selectRaw('customer_id, SUM(amount) as total_amount')
+        $receiptsByCustomer = ReceiptVoucher::whereNull('deleted_at')->selectRaw('customer_id, SUM(amount) as total_amount')
             ->with('customer')
             ->groupBy('customer_id')
             ->orderByDesc('total_amount')
@@ -60,7 +60,7 @@ class HomeController extends Controller
 
         // Lấy tổng tiền chi theo tháng trong năm hiện tại
         $currentYear = Carbon::now()->year;
-        $paymentsByMonth = PaymentVoucher::selectRaw('MONTH(created_at) as month, SUM(amount) as total_amount')
+        $paymentsByMonth = PaymentVoucher::whereNull('deleted_at')->selectRaw('MONTH(created_at) as month, SUM(amount) as total_amount')
             ->whereYear('created_at', $currentYear)
             ->groupBy('month')
             ->orderBy('month')
@@ -72,7 +72,7 @@ class HomeController extends Controller
             ->toArray();
 
         // Lấy tổng tiền thu theo tháng trong năm hiện tại
-        $receiptsByMonth = ReceiptVoucher::selectRaw('MONTH(created_at) as month, SUM(amount) as total_amount')
+        $receiptsByMonth = ReceiptVoucher::whereNull('deleted_at')->selectRaw('MONTH(created_at) as month, SUM(amount) as total_amount')
             ->whereYear('created_at', $currentYear)
             ->groupBy('month')
             ->orderBy('month')

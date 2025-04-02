@@ -49,6 +49,12 @@ class PaymentVoucherController extends Controller
             $statsQuery->where('contractor_id', $request->contractor_id);
         }
 
+        // Lọc theo dự án
+        if ($request->has('project_id') && $request->project_id) {
+            $query->where('project_id', $request->project_id);
+            $statsQuery->where('project_id', $request->project_id);
+        }
+
         // Lọc theo gói thầu
         if ($request->has('bid_package_id') && $request->bid_package_id) {
             $query->where('bid_package_id', $request->bid_package_id);
@@ -58,7 +64,7 @@ class PaymentVoucherController extends Controller
         // Lọc theo trạng thái
         if ($request->has('status') && $request->status) {
             $query->where('status', $request->status);
-            // Không áp dụng filter trạng thái cho statsQuery vì thống kê dựa trên các trạng thái khác nhau
+            $statsQuery->where('status', $request->status);
         }
 
         // Lọc theo khoảng thời gian
@@ -89,23 +95,17 @@ class PaymentVoucherController extends Controller
         $paymentVouchers = $query->paginate(10)->withQueryString();
 
         // Lấy danh sách nhà thầu và gói thầu cho bộ lọc
-        $contractors = Contractor::orderBy('name')->get();
-        $bidPackages = BidPackage::with('project')->orderBy('created_at', 'desc')->get()
-            ->map(function ($bidPackage) {
-                return [
-                    'id' => $bidPackage->id,
-                    'code' => $bidPackage->code,
-                    'name' => $bidPackage->name,
-                    'project_name' => $bidPackage->project->name ?? 'Không có dự án'
-                ];
-            });
+        $contractors = Contractor::orderBy('name')->whereNull('deleted_at')->get();
+        $projects = Project::orderBy('name')->whereNull('deleted_at')->get();
+        $bidPackages = BidPackage::orderBy('created_at', 'desc')->whereNull('deleted_at')->get();
 
         return Inertia::render('PaymentVouchers/Index', [
             'paymentVouchers' => $paymentVouchers,
             'contractors' => $contractors,
+            'projects' => $projects,
             'bidPackages' => $bidPackages,
             'statuses' => $this->getStatuses(),
-            'filters' => $request->only(['search', 'contractor_id', 'bid_package_id', 'status', 'date_from', 'date_to']),
+            'filters' => $request->only(['search', 'contractor_id', 'project_id', 'bid_package_id', 'status', 'date_from', 'date_to']),
             'totalPaymentCount' => $totalPaymentCount,
             'totalPaymentAmount' => $totalPaymentAmount,
             'totalPaymentAmountProposed' => $totalPaymentAmountProposed,
@@ -120,14 +120,17 @@ class PaymentVoucherController extends Controller
     {
         $contractors = Contractor::select('id', 'name', 'phone')
             ->orderBy('name')
+            ->whereNull('deleted_at')
             ->get();
 
         $projects = Project::select('id', 'name', 'code')
             ->orderBy('name')
+            ->whereNull('deleted_at')
             ->get();
 
         $bidPackages = BidPackage::select('id', 'project_id', 'name', 'code')
             ->with('project:id,name')
+            ->whereNull('deleted_at')
             ->get()
             ->map(function ($bidPackage) {
                 $bidPackage->display_name = "{$bidPackage->code} - {$bidPackage->name}";
@@ -191,19 +194,9 @@ class PaymentVoucherController extends Controller
     {
         $paymentVoucher->load(['contractor', 'bidPackage', 'creator', 'updater']);
 
-        $contractors = Contractor::orderBy('name')->get();
-        $projects = Project::orderBy('name')->get();
-        $bidPackages = BidPackage::with('project')->orderBy('created_at', 'desc')->get()
-            ->map(function ($bidPackage) {
-                return [
-                    'id' => $bidPackage->id,
-                    'name' => $bidPackage->name,
-                    'code' => $bidPackage->code,
-                    'project_id' => $bidPackage->project_id,
-                    'project_name' => $bidPackage->project->name,
-                    'display_name' => "[{$bidPackage->code}] {$bidPackage->name} - {$bidPackage->project->name}"
-                ];
-            });
+        $contractors = Contractor::orderBy('name')->whereNull('deleted_at')->get();
+        $projects = Project::orderBy('name')->whereNull('deleted_at')-> get();
+        $bidPackages = BidPackage::with('project')->orderBy('created_at', 'desc')->get();
 
         return Inertia::render('PaymentVouchers/Edit', [
             'paymentVoucher' => $paymentVoucher,

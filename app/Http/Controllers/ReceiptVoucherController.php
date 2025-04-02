@@ -59,7 +59,7 @@ class ReceiptVoucherController extends Controller
         // Lọc theo trạng thái
         if ($request->has('status') && $request->status) {
             $query->where('status', $request->status);
-            // Không áp dụng filter trạng thái cho statsQuery vì thống kê dựa trên các trạng thái khác nhau
+            $statsQuery->where('status', $request->status);
         }
 
         // Lọc theo khoảng thời gian
@@ -88,8 +88,8 @@ class ReceiptVoucherController extends Controller
         $receiptVouchers = $query->paginate(10)->withQueryString();
 
         // Lấy danh sách khách hàng, dự án và gói thầu cho bộ lọc
-        $customers = Customer::orderBy('name')->get();
-        $projects = Project::orderBy('name')->get();
+        $customers = Customer::orderBy('name')->whereNull('deleted_at')->get();
+        $projects = Project::orderBy('name')->whereNull('deleted_at')->get();
 
         return Inertia::render('ReceiptVouchers/Index', [
             'receiptVouchers' => $receiptVouchers,

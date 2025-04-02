@@ -16,7 +16,7 @@ class BidPackageController extends Controller
     public function store(Request $request, Project $project)
     {
         $validated = $request->validate([
-            'code' => 'required|string|max:50|unique:bid_packages',
+            'code' => 'required|string|max:50',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'estimated_price' => 'nullable|numeric|min:0',
@@ -108,5 +108,39 @@ class BidPackageController extends Controller
         $bidPackage->save();
 
         return redirect()->back()->with('success', 'Phần trăm lợi nhuận đã được cập nhật thành công.');
+    }
+
+    /**
+     * Cập nhật thứ tự gói thầu
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function updateOrder(Request $request)
+    {
+        try {
+            $packages = $request->input('packages', []);
+
+            foreach ($packages as $package) {
+                if (isset($package['id']) && isset($package['order'])) {
+                    BidPackage::where('id', $package['id'])->update(['order' => $package['order']]);
+                }
+            }
+
+
+            $validated = $request->validate([
+                'packages' => 'required|array',
+                'packages.*.id' => 'required|exists:bid_packages,id',
+                'packages.*.order' => 'required|integer|min:0',
+            ]);
+
+            foreach ($validated['packages'] as $package) {
+                BidPackage::where('id', $package['id'])->update(['order' => $package['order']]);
+            }
+
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()]);
+        }
     }
 }

@@ -28,6 +28,7 @@ class BidPackage extends Model
         'status',
         'additional_price',
         'profit_percentage',
+        'order',
     ];
 
     protected static function boot()
@@ -85,5 +86,13 @@ class BidPackage extends Model
     public function receipt_vouchers()
     {
         return $this->hasMany(ReceiptVoucher::class, 'bid_package_id')->whereNull('deleted_at');
+    }
+
+    /**
+     * Quan hệ với hạng mục
+     */
+    public function work_items()
+    {
+        return $this->hasMany(WorkItem::class, 'bid_package_id')->whereNull('deleted_at');
     }
 }

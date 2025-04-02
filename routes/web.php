@@ -11,6 +11,7 @@ use App\Http\Controllers\BidController;
 use App\Http\Controllers\PaymentVoucherController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\ReceiptVoucherController;
+use App\Http\Controllers\WorkItemController;
 
 /*
 |--------------------------------------------------------------------------
@@ -65,6 +66,13 @@ Route::middleware('auth')->group(function () {
     // Thêm route cập nhật tỷ lệ lợi nhuận
     Route::patch('/bid-packages/{bidPackage}/update-profit-percentage', [BidPackageController::class, 'updateProfitPercentage'])
         ->name('bid-packages.update-profit-percentage');
+    // Cập nhật thứ tự gói thầu
+    Route::post('/bid-packages/update-order', [BidPackageController::class, 'updateOrder'])
+        ->name('bid-packages.update-order');
+    // Quản lý hạng mục con của gói thầu
+    Route::post('/bid-packages/{bidPackage}/work-items', [WorkItemController::class, 'store'])->name('work-items.store');
+    Route::put('/work-items/{workItem}', [WorkItemController::class, 'update'])->name('work-items.update');
+    Route::delete('/work-items/{workItem}', [WorkItemController::class, 'destroy'])->name('work-items.destroy');
 });
 
 // File Manager Routes
