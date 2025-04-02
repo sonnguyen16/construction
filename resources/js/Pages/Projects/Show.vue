@@ -914,7 +914,7 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { Link, router } from '@inertiajs/vue3'
-import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
 import axios from 'axios'
 import draggable from 'vuedraggable'
 import { showConfirm, showSuccess, showError, formatCurrency, parseCurrency, formatNumberInput } from '@/utils'
@@ -925,7 +925,14 @@ const props = defineProps({
 })
 
 // Tạo biến để theo dõi các gói thầu có thể kéo thả
-const bidPackages = computed(() => props.project.bid_packages || [])
+const bidPackages = ref(props.project.bid_packages || [])
+
+watch(
+  () => props.project,
+  (newVal) => {
+    bidPackages.value = newVal.bid_packages || []
+  }
+)
 
 // Theo dõi trạng thái kéo thả
 const dragOptions = {

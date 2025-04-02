@@ -114,7 +114,7 @@ import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { Link, router } from '@inertiajs/vue3'
 import { ref, watch } from 'vue'
 import Pagination from '@/Components/Pagination.vue'
-import { formatDate } from '@/utils'
+import { formatDate, showConfirm } from '@/utils'
 const props = defineProps({
   users: Object
 })
@@ -124,16 +124,22 @@ const selectedUser = ref(null)
 
 const confirmDelete = (user) => {
   selectedUser.value = user
-  // Sử dụng jQuery của AdminLTE để hiển thị modal
-  window.$('#deleteModal').modal('show')
+  // Sử dụng hàm showConfirm từ utils.js
+  showConfirm('Xác nhận xóa', `Bạn có chắc chắn muốn xóa người dùng "${user.name}" không?`, 'Xóa', 'Hủy').then(
+    (result) => {
+      if (result.isConfirmed) {
+        deleteUser()
+      }
+    }
+  )
 }
 
 const deleteUser = () => {
   if (selectedUser.value) {
     router.delete(`/users/${selectedUser.value.id}`, {
       onSuccess: () => {
-        window.$('#deleteModal').modal('hide')
         selectedUser.value = null
+        router.reload({ preserveState: true })
       }
     })
   }

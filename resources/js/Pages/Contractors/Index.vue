@@ -105,6 +105,7 @@ import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { Link, router } from '@inertiajs/vue3'
 import { ref, watch } from 'vue'
 import Pagination from '@/Components/Pagination.vue'
+import { showConfirm } from '@/utils'
 
 const props = defineProps({
   contractors: Object,
@@ -123,16 +124,22 @@ const getSerialNumber = (index) => {
 
 const confirmDelete = (contractor) => {
   selectedContractor.value = contractor
-  // Sử dụng jQuery của AdminLTE để hiển thị modal
-  window.$('#deleteModal').modal('show')
+  // Sử dụng hàm showConfirm từ utils.js
+  showConfirm('Xác nhận xóa', `Bạn có chắc chắn muốn xóa nhà thầu "${contractor.name}" không?`, 'Xóa', 'Hủy').then(
+    (result) => {
+      if (result.isConfirmed) {
+        deleteContractor()
+      }
+    }
+  )
 }
 
 const deleteContractor = () => {
   if (selectedContractor.value) {
     router.delete(route('contractors.destroy', selectedContractor.value.id), {
       onSuccess: () => {
-        window.$('#deleteModal').modal('hide')
         selectedContractor.value = null
+        router.reload({ preserveState: true })
       }
     })
   }

@@ -88,6 +88,9 @@
                       <Link :href="route('projects.files', project.id)" class="btn btn-sm btn-secondary">
                         <i class="fas fa-file"></i> Files
                       </Link>
+                      <button @click="confirmDelete(project)" class="btn btn-sm btn-danger">
+                        <i class="fas fa-trash"></i> Xóa
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -141,7 +144,7 @@ import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { Link, router } from '@inertiajs/vue3'
 import { ref, watch } from 'vue'
 import Pagination from '@/Components/Pagination.vue'
-import { formatDate, formatCurrency } from '@/utils'
+import { formatDate, formatCurrency, showConfirm } from '@/utils'
 
 const props = defineProps({
   projects: Object,
@@ -204,16 +207,22 @@ const getStatusClass = (status) => {
 
 const confirmDelete = (project) => {
   selectedProject.value = project
-  // Sử dụng jQuery của AdminLTE để hiển thị modal
-  window.$('#deleteModal').modal('show')
+  // Sử dụng hàm showConfirm từ utils.js
+  showConfirm('Xác nhận xóa', `Bạn có chắc chắn muốn xóa dự án "${project.name}" không?`, 'Xóa', 'Hủy').then(
+    (result) => {
+      if (result.isConfirmed) {
+        deleteProject()
+      }
+    }
+  )
 }
 
 const deleteProject = () => {
   if (selectedProject.value) {
     router.delete(route('projects.destroy', selectedProject.value.id), {
       onSuccess: () => {
-        window.$('#deleteModal').modal('hide')
         selectedProject.value = null
+        router.reload({ preserveState: true })
       }
     })
   }
