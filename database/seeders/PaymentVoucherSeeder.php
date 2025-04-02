@@ -43,7 +43,7 @@ class PaymentVoucherSeeder extends Seeder
             $updatedBy = rand(0, 1) ? $createdBy : $users->random()->id;
 
             // Xác định trạng thái
-            $status = $faker->randomElement(['paid', 'unpaid']);
+            $status = $faker->randomElement(['proposed', 'approved', 'paid']);
 
             if ($status === 'paid') {
                 $paymentDate = $faker->dateTimeBetween('-1 month', 'now');

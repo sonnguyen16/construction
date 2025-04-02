@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Bid;
 use App\Models\BidPackage;
 use App\Models\Project;
 use Illuminate\Http\Request;
@@ -32,7 +33,6 @@ class BidPackageController extends Controller
      */
     public function update(Request $request, BidPackage $bidPackage)
     {
-
         $validated = $request->validate([
             'project_id' => 'required|exists:projects,id',
             'code' => 'required|string|max:50',
@@ -42,8 +42,11 @@ class BidPackageController extends Controller
             'status' => 'required|in:open,awarded,completed,cancelled'
         ]);
 
-        $bidPackage->profit = $bidPackage->client_price - $bidPackage->estimated_price;
+        // Lấy giá dự thầu và giá giao thầu hiện tại
+        $estimatedPrice = (int)$validated['estimated_price'];
+
         $bidPackage->update($validated);
+
 
         if ($bidPackage->status === 'open') {
             $bidPackage->bids()->update(['is_selected' => false]);
@@ -76,9 +79,16 @@ class BidPackageController extends Controller
             'additional_price' => 'required|numeric|min:0',
         ]);
 
+        // Lưu giá phát sinh
         $bidPackage->additional_price = $validated['additional_price'];
-        $bidPackage->client_price = $bidPackage->estimated_price + $validated['additional_price'];
+        // Tính giá giao thầu = giá dự thầu + giá phát sinh
+        $bidPriceSelected = Bid::where('bid_package_id', $bidPackage->id)->where('is_selected', true)->whereNull('deleted_at')->first();
+        $additionalPrice = (int)$validated['additional_price'];
+        $bidPackage->client_price = $bidPriceSelected->price + $additionalPrice;
+        // Cập nhật lợi nhuận (sử dụng định nghĩa mới: lợi nhuận = giá dự thầu - giá giao thầu)
+        $bidPackage->profit = $bidPriceSelected->price - $bidPackage->client_price;
         $bidPackage->save();
+
         return redirect()->back()->with('success', 'Giá phát sinh đã được cập nhật thành công.');
     }
 
@@ -89,7 +99,12 @@ class BidPackageController extends Controller
         ]);
 
         $bidPackage->profit_percentage = $validated['profit_percentage'];
-        $bidPackage->profit = $bidPackage->client_price * $bidPackage->profit_percentage / 100;
+
+        // Cập nhật lợi nhuận theo định nghĩa mới: Lợi nhuận = giá dự thầu - giá giao thầu
+        $estimatedPrice = (int)$bidPackage->estimated_price;
+        $clientPrice = (int)$bidPackage->client_price;
+        $bidPackage->profit = $estimatedPrice - $clientPrice;
+
         $bidPackage->save();
 
         return redirect()->back()->with('success', 'Phần trăm lợi nhuận đã được cập nhật thành công.');

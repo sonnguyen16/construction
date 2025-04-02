@@ -28,7 +28,7 @@ class HomeController extends Controller
         $totalReceiptAmount = ReceiptVoucher::whereNull('deleted_at')->where('status', 'paid')->sum('amount');
         $balance = $totalReceiptAmount - $totalPaymentAmount;
         $pendingReceiptCount = ReceiptVoucher::whereNull('deleted_at')->where('status', 'unpaid')->count();
-        $pendingPaymentCount = PaymentVoucher::whereNull('deleted_at')->where('status', 'proposed')->orWhere('status', 'approved')->count();
+        $pendingPaymentCount = PaymentVoucher::whereNull('deleted_at')->wheree('status', 'approved')->count();
 
         // Lấy 5 phiếu chi mới nhất
         $recentPaymentVouchers = PaymentVoucher::with(['contractor', 'bidPackage.project', 'creator'])

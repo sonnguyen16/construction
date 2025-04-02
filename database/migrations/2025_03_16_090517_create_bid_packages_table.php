@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('bid_packages', function (Blueprint $table) {
             $table->id();
             $table->foreignId('project_id')->constrained()->onDelete('cascade');
-            $table->string('code')->unique(); // Mã gói thầu
+            $table->string('code'); // Mã gói thầu
             $table->string('name'); // Tên gói thầu
             $table->text('description')->nullable(); // Ghi chú
             $table->decimal('client_price', 15, 2)->nullable(); // Giá giao thầu cho khách hàng

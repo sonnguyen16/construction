@@ -252,7 +252,7 @@ const applyFilters = () => {
       date_to: filters.value.date_to
     },
     {
-      preserveState: true,
+      preserveState: false,
       replace: true
     }
   )

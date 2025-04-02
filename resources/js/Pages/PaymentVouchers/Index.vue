@@ -296,7 +296,7 @@ const applyFilters = () => {
       status: filters.value.status
     },
     {
-      preserveState: true,
+      preserveState: false,
       replace: true
     }
   )

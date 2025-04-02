@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('projects', function (Blueprint $table) {
             $table->id();
-            $table->string('code')->unique(); // Mã dự án
+            $table->string('code'); // Mã dự án
             $table->string('name'); // Tên dự án
             $table->foreignId('customer_id')->nullable()->constrained(); // Khách hàng
             $table->text('description')->nullable(); // Ghi chú

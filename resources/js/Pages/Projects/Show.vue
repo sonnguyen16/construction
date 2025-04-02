@@ -17,12 +17,12 @@
           </div>
           <div class="card-body p-0 overflow-y-auto overflow-x-auto" style="max-height: calc(100vh - 250px)">
             <table class="table table-hover">
-              <thead class="">
+              <thead class="sticky top-0 bg-light">
                 <tr class="bg-light">
                   <th>STT</th>
                   <th>Mã</th>
                   <th>Tên gói thầu</th>
-                  <th>Giá dự toán</th>
+                  <th>Giá dự thầu</th>
                   <th>Phát sinh</th>
                   <th>Giá giao thầu</th>
                   <th style="width: 15%">Nhà thầu 1</th>
@@ -32,7 +32,11 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="(bidPackage, index) in project.bid_packages" :key="bidPackage.id">
+                <tr
+                  v-for="(bidPackage, index) in project.bid_packages"
+                  :key="bidPackage.id"
+                  :class="{ 'bg-danger text-white': isPackageLosing(bidPackage) }"
+                >
                   <td>{{ index + 1 }}</td>
                   <td>{{ bidPackage.code }}</td>
                   <td>{{ bidPackage.name }}</td>
@@ -409,12 +413,12 @@
                 </div>
               </div>
               <div class="form-group">
-                <label for="estimated_price">Giá dự toán (VNĐ)</label>
+                <label for="estimated_price">Giá dự thầu (VNĐ)</label>
                 <input
                   type="text"
                   class="form-control"
                   id="estimated_price"
-                  placeholder="Nhập giá dự toán"
+                  placeholder="Nhập giá dự thầu"
                   v-model="bidPackageForm.estimated_price"
                   :class="{ 'is-invalid': bidPackageFormErrors.estimated_price }"
                   @input="formatNumberInput($event)"
@@ -520,12 +524,12 @@
                 </div>
               </div>
               <div class="form-group">
-                <label for="edit_estimated_price">Giá dự toán (VNĐ)</label>
+                <label for="edit_estimated_price">Giá dự thầu (VNĐ)</label>
                 <input
                   type="text"
                   class="form-control"
                   id="edit_estimated_price"
-                  placeholder="Nhập giá dự toán"
+                  placeholder="Nhập giá dự thầu"
                   v-model="bidPackageForm.estimated_price"
                   :class="{ 'is-invalid': bidPackageFormErrors.estimated_price }"
                   @input="formatNumberInput($event)"
@@ -1285,6 +1289,13 @@ const submitEditBid = async () => {
     showError('Có lỗi xảy ra khi cập nhật giá dự thầu. Vui lòng thử lại sau.')
     isSubmitting.value = false
   }
+}
+
+// Kiểm tra xem gói thầu có bị lỗ không (giá giao thầu > giá dự thầu)
+const isPackageLosing = (bidPackage) => {
+  const clientPrice = parseInt(bidPackage.client_price) || 0
+  const estimatedPrice = parseInt(bidPackage.estimated_price) || 0
+  return clientPrice > estimatedPrice
 }
 </script>
 

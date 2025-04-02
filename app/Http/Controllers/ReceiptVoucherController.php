@@ -20,9 +20,8 @@ class ReceiptVoucherController extends Controller
         $query = ReceiptVoucher::query()->whereNull('deleted_at')
             ->with(['customer', 'project', 'bidPackage', 'creator']);
 
-        $totalReceiptCount = ReceiptVoucher::whereNull('deleted_at')->count();
-        $totalReceiptAmount = ReceiptVoucher::whereNull('deleted_at')->where('status', 'paid')->sum('amount');
-        $totalReceiptAmountUnpaid = ReceiptVoucher::whereNull('deleted_at')->where('status', 'unpaid')->sum('amount');
+        // Tạo một truy vấn cơ bản cho thống kê
+        $statsQuery = ReceiptVoucher::query()->whereNull('deleted_at');
 
         // Tìm kiếm
         if ($request->has('search') && $request->search) {
@@ -34,31 +33,54 @@ class ReceiptVoucherController extends Controller
                       $q->where('name', 'like', "%{$searchTerm}%");
                   });
             });
+
+            // Áp dụng filter tương tự cho statsQuery
+            $statsQuery->where(function($q) use ($searchTerm) {
+                $q->where('code', 'like', "%{$searchTerm}%")
+                  ->orWhere('description', 'like', "%{$searchTerm}%")
+                  ->orWhereHas('customer', function($q) use ($searchTerm) {
+                      $q->where('name', 'like', "%{$searchTerm}%");
+                  });
+            });
         }
 
         // Lọc theo khách hàng
         if ($request->has('customer_id') && $request->customer_id) {
             $query->where('customer_id', $request->customer_id);
+            $statsQuery->where('customer_id', $request->customer_id);
         }
 
         // Lọc theo dự án
         if ($request->has('project_id') && $request->project_id) {
             $query->where('project_id', $request->project_id);
+            $statsQuery->where('project_id', $request->project_id);
         }
 
         // Lọc theo trạng thái
         if ($request->has('status') && $request->status) {
             $query->where('status', $request->status);
+            // Không áp dụng filter trạng thái cho statsQuery vì thống kê dựa trên các trạng thái khác nhau
         }
 
         // Lọc theo khoảng thời gian
         if ($request->has('date_from') && $request->date_from) {
             $query->whereDate('created_at', '>=', $request->date_from);
+            $statsQuery->whereDate('created_at', '>=', $request->date_from);
         }
 
         if ($request->has('date_to') && $request->date_to) {
             $query->whereDate('created_at', '<=', $request->date_to);
+            $statsQuery->whereDate('created_at', '<=', $request->date_to);
         }
+
+        // Tính toán thống kê dựa trên các filter đã áp dụng
+        $totalReceiptCount = $statsQuery->count();
+
+        $totalReceiptAmount = clone $statsQuery;
+        $totalReceiptAmount = $totalReceiptAmount->where('status', 'paid')->sum('amount');
+
+        $totalReceiptAmountUnpaid = clone $statsQuery;
+        $totalReceiptAmountUnpaid = $totalReceiptAmountUnpaid->where('status', 'unpaid')->sum('amount');
 
         // Sắp xếp theo ngày tạo mới nhất
         $query->orderBy('created_at', 'desc');

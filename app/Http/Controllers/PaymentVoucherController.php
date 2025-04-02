@@ -19,10 +19,8 @@ class PaymentVoucherController extends Controller
         $query = PaymentVoucher::query()->whereNull('deleted_at')
             ->with(['contractor', 'bidPackage.project', 'creator']);
 
-        $totalPaymentCount = PaymentVoucher::whereNull('deleted_at')->count();
-        $totalPaymentAmount = PaymentVoucher::whereNull('deleted_at')->where('status', 'paid')->sum('amount');
-        $totalPaymentAmountProposed = PaymentVoucher::whereNull('deleted_at')->where('status', 'proposed')->sum('amount');
-        $totalPaymentAmountApproved = PaymentVoucher::whereNull('deleted_at')->where('status', 'approved')->sum('amount');
+        // Tạo một truy vấn cơ bản cho thống kê
+        $statsQuery = PaymentVoucher::query()->whereNull('deleted_at');
 
         // Tìm kiếm
         if ($request->has('search') && $request->search) {
@@ -34,31 +32,56 @@ class PaymentVoucherController extends Controller
                       $q->where('name', 'like', "%{$searchTerm}%");
                   });
             });
+
+            // Áp dụng filter tương tự cho statsQuery
+            $statsQuery->where(function($q) use ($searchTerm) {
+                $q->where('code', 'like', "%{$searchTerm}%")
+                  ->orWhere('description', 'like', "%{$searchTerm}%")
+                  ->orWhereHas('contractor', function($q) use ($searchTerm) {
+                      $q->where('name', 'like', "%{$searchTerm}%");
+                  });
+            });
         }
 
         // Lọc theo nhà thầu
         if ($request->has('contractor_id') && $request->contractor_id) {
             $query->where('contractor_id', $request->contractor_id);
+            $statsQuery->where('contractor_id', $request->contractor_id);
         }
 
         // Lọc theo gói thầu
         if ($request->has('bid_package_id') && $request->bid_package_id) {
             $query->where('bid_package_id', $request->bid_package_id);
+            $statsQuery->where('bid_package_id', $request->bid_package_id);
         }
 
         // Lọc theo trạng thái
         if ($request->has('status') && $request->status) {
             $query->where('status', $request->status);
+            // Không áp dụng filter trạng thái cho statsQuery vì thống kê dựa trên các trạng thái khác nhau
         }
 
         // Lọc theo khoảng thời gian
         if ($request->has('date_from') && $request->date_from) {
             $query->whereDate('created_at', '>=', $request->date_from);
+            $statsQuery->whereDate('created_at', '>=', $request->date_from);
         }
 
         if ($request->has('date_to') && $request->date_to) {
             $query->whereDate('created_at', '<=', $request->date_to);
+            $statsQuery->whereDate('created_at', '<=', $request->date_to);
         }
+
+        // Tính toán thống kê dựa trên các filter đã áp dụng
+        $totalPaymentCount = $statsQuery->count();
+        $totalPaymentAmount = clone $statsQuery;
+        $totalPaymentAmount = $totalPaymentAmount->where('status', 'paid')->sum('amount');
+
+        $totalPaymentAmountProposed = clone $statsQuery;
+        $totalPaymentAmountProposed = $totalPaymentAmountProposed->where('status', 'proposed')->sum('amount');
+
+        $totalPaymentAmountApproved = clone $statsQuery;
+        $totalPaymentAmountApproved = $totalPaymentAmountApproved->where('status', 'approved')->sum('amount');
 
         // Sắp xếp theo ngày tạo mới nhất
         $query->orderBy('created_at', 'desc');

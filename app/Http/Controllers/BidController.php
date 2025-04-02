@@ -63,6 +63,14 @@ class BidController extends Controller
             }
         }
 
+        if($bid->is_selected){
+            $bidPackage = $bid->bidPackage;
+            $bidPackage->selected_contractor_id = $bid->contractor_id;
+            $bidPackage->client_price = $bid->price + $bidPackage->additional_price;
+            $bidPackage->status = 'awarded';
+            $bidPackage->save();
+        }
+
         $bid->update($validated);
 
         return redirect()->back()->with('success', 'Giá dự thầu đã được cập nhật thành công.');
@@ -84,7 +92,8 @@ class BidController extends Controller
             $bidPackage->save();
         }
 
-        $bid->delete();
+        $bid->deleted_at = now();
+        $bid->save();
 
         return redirect()->route('projects.show', $projectId)
             ->with('success', 'Giá dự thầu đã được xóa thành công.');

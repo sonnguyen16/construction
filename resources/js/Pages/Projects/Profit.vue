@@ -23,11 +23,10 @@
                   <th>Mã</th>
                   <th>Tên gói thầu</th>
                   <th>Tên nhà thầu</th>
-                  <th>Giá dự toán</th>
-                  <th>Giá phát sinh</th>
-                  <th>Giá giao thầu</th>
-                  <th>%</th>
+                  <th>Giá dự thầu</th>
+                  <th>Giá giao thầu (đã bao gồm phát sinh)</th>
                   <th>Lợi nhuận</th>
+                  <th>%</th>
                 </tr>
               </thead>
               <tbody>
@@ -37,41 +36,25 @@
                   <td>{{ bidPackage.name }}</td>
                   <td>{{ bidPackage.selected_contractor ? bidPackage.selected_contractor.name : '-' }}</td>
                   <td>{{ formatCurrency(bidPackage.estimated_price || 0) }}</td>
-                  <td>{{ formatCurrency(bidPackage.additional_price || 0) }}</td>
                   <td>{{ formatCurrency(bidPackage.client_price || 0) }}</td>
-                  <!-- Phần trăm lợi nhuận -->
-                  <td>
-                    <div class="input-group input-group-sm" style="width: 100px">
-                      <input
-                        type="number"
-                        class="form-control"
-                        v-model="profitPercentages[bidPackage.id]"
-                        @input="updateProfitPercentage(bidPackage.id)"
-                        min="0"
-                        max="100"
-                        step="0.1"
-                      />
-                      <div class="input-group-append">
-                        <span class="input-group-text">%</span>
-                      </div>
-                    </div>
+                  <!-- Lợi nhuận = giá dự thầu - giá giao thầu -->
+                  <td :class="getProfitClass(calculateProfit(bidPackage))">
+                    {{ formatCurrency(calculateProfit(bidPackage)) }}
                   </td>
-
-                  <!-- Lợi nhuận tính theo % -->
-                  <td :class="getProfitClass(bidPackage.profit)">
-                    {{ formatCurrency(bidPackage.profit) }}
+                  <!-- Phần trăm lợi nhuận = lợi nhuận / giá dự thầu * 100 -->
+                  <td :class="getProfitClass(calculateProfit(bidPackage))">
+                    {{ calculateProfitPercentage(bidPackage) }}%
                   </td>
                 </tr>
                 <tr v-if="project.bid_packages.length === 0">
-                  <td colspan="6" class="text-center">Chưa có gói thầu nào</td>
+                  <td colspan="8" class="text-center">Chưa có gói thầu nào</td>
                 </tr>
                 <tr class="bg-light font-weight-bold sticky bottom-0">
                   <td colspan="4" class="text-right">Tổng cộng:</td>
                   <td>{{ formatCurrency(totalEstimatedPrice) }}</td>
-                  <td>{{ formatCurrency(totalAdditionalPrice) }}</td>
                   <td>{{ formatCurrency(totalContractAmount) }}</td>
-                  <td>{{ calculateAverageProfitPercentage() }}%</td>
                   <td>{{ formatCurrency(totalProfit) }}</td>
+                  <td>{{ calculateAverageProfitPercentage() }}%</td>
                 </tr>
               </tbody>
             </table>
@@ -125,6 +108,22 @@ const updateProfitPercentage = (bidPackageId) => {
   )
 }
 
+// Tính lợi nhuận cho một gói thầu: Lợi nhuận = giá dự thầu - giá giao thầu
+const calculateProfit = (bidPackage) => {
+  const estimatedPrice = parseInt(bidPackage.estimated_price || 0)
+  const clientPrice = parseInt(bidPackage.client_price || 0)
+  return estimatedPrice - clientPrice
+}
+
+// Tính phần trăm lợi nhuận cho một gói thầu: % = lợi nhuận / giá dự thầu * 100
+const calculateProfitPercentage = (bidPackage) => {
+  const estimatedPrice = parseInt(bidPackage.estimated_price || 0)
+  if (estimatedPrice === 0) return 0
+
+  const profit = calculateProfit(bidPackage)
+  return ((profit / estimatedPrice) * 100).toFixed(2)
+}
+
 // Tính tổng giá trị hợp đồng
 const totalContractAmount = computed(() => {
   return props.project.bid_packages.reduce((total, bidPackage) => {
@@ -140,31 +139,17 @@ const totalEstimatedPrice = computed(() => {
   }, 0)
 })
 
-const totalAdditionalPrice = computed(() => {
-  return props.project.bid_packages.reduce((total, bidPackage) => {
-    return total + parseInt(bidPackage.additional_price || 0)
-  }, 0)
-})
-
 // Tính tổng lợi nhuận
 const totalProfit = computed(() => {
   return props.project.bid_packages.reduce((total, bidPackage) => {
-    return total + parseInt(bidPackage.profit || 0)
+    return total + calculateProfit(bidPackage)
   }, 0)
 })
 
-// Tính phần trăm lợi nhuận trung bình (có trọng số)
+// Tính phần trăm lợi nhuận trung bình
 const calculateAverageProfitPercentage = () => {
-  if (totalContractAmount.value === 0) return 0
-
-  // Tính tỷ lệ lợi nhuận trung bình có trọng số
-  const weightedSum = props.project.bid_packages.reduce((total, bidPackage) => {
-    // Sử dụng formatCurrency để lấy giá trị đã được điều chỉnh
-    const amount = parseInt(bidPackage.client_price || 0)
-    return total + amount * (profitPercentages.value[bidPackage.id] || 0)
-  }, 0)
-
-  return (weightedSum / totalContractAmount.value || 0).toFixed(2)
+  if (totalEstimatedPrice.value === 0) return 0
+  return ((totalProfit.value / totalEstimatedPrice.value) * 100).toFixed(2)
 }
 
 // Lấy class CSS dựa trên lợi nhuận
