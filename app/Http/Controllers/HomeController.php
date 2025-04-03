@@ -21,27 +21,37 @@ class HomeController extends Controller
     public function index()
     {
         $totalProjects = Project::whereNull('deleted_at')->count();
-        $totalBidPackages = BidPackage::whereNull('deleted_at')->count();
-        $totalContractors = Contractor::whereNull('deleted_at')->count();
-        $totalCustomers = Customer::whereNull('deleted_at')->count();
-        $totalPaymentAmount = PaymentVoucher::whereNull('deleted_at')->where('status', 'paid')->sum('amount');
+        $completedProjects = Project::whereNull('deleted_at')->where('status', 'completed')->count();
+        $inProgressProjects = Project::whereNull('deleted_at')->where('status', 'active')->count();
+
+        // Tính toán doanh thu (tổng giá dự thầu - estimated_price)
+        $totalRevenue = BidPackage::whereNull('deleted_at')->sum('estimated_price');
+
+        // Tính toán tổng thu (phiếu thu có trạng thái paid)
         $totalReceiptAmount = ReceiptVoucher::whereNull('deleted_at')->where('status', 'paid')->sum('amount');
-        $balance = $totalReceiptAmount - $totalPaymentAmount;
+
+        // Tính toán phải thu (tổng giá dự thầu - tổng thu)
+        $receivables = $totalRevenue - $totalReceiptAmount;
+
+        // Tính toán chi phí (tổng giá giao thầu - client_price)
+        $totalExpense = BidPackage::whereNull('deleted_at')->sum('client_price');
+
+        // Tính toán tổng chi (phiếu chi có trạng thái paid)
+        $totalPaymentAmount = PaymentVoucher::whereNull('deleted_at')->where('status', 'paid')->sum('amount');
+
+        // Tính toán phải chi (tổng giá giao thầu - tổng chi)
+        $payables = $totalExpense - $totalPaymentAmount;
+
+        // Tính toán lợi nhuận (tổng giá dự thầu - tổng giá giao thầu)
+        $profit = $totalRevenue - $totalExpense;
+
+        // Đề xuất thu (phiếu thu có trạng thái unpaid)
         $pendingReceiptCount = ReceiptVoucher::whereNull('deleted_at')->where('status', 'unpaid')->count();
-        $pendingPaymentCount = PaymentVoucher::whereNull('deleted_at')->where('status', 'approved')->count();
+        $pendingReceiptAmount = ReceiptVoucher::whereNull('deleted_at')->where('status', 'unpaid')->sum('amount');
 
-        // Lấy 5 phiếu chi mới nhất
-        $recentPaymentVouchers = PaymentVoucher::with(['contractor', 'bidPackage.project', 'creator'])
-            ->orderBy('created_at', 'desc')
-            ->limit(5)
-            ->get();
-
-        // Lấy 5 phiếu thu mới nhất
-        $recentReceiptVouchers = ReceiptVoucher::whereNull('deleted_at')->with(['customer', 'project', 'bidPackage', 'creator'])
-            ->orderBy('created_at', 'desc')
-            ->limit(5)
-            ->get();
-
+        // Đề xuất chi (phiếu chi có trạng thái approved)
+        $pendingPaymentCount = PaymentVoucher::whereNull('deleted_at')->where('status', 'proposed')->count();
+        $pendingPaymentAmount = PaymentVoucher::whereNull('deleted_at')->where('status', 'proposed')->sum('amount');
         // Lấy tổng tiền chi theo nhà thầu
         $paymentsByContractor = PaymentVoucher::whereNull('deleted_at')->selectRaw('contractor_id, SUM(amount) as total_amount')
             ->with('contractor')
@@ -86,17 +96,23 @@ class HomeController extends Controller
         return Inertia::render('Home', [
             'stats' => [
                 'totalProjects' => $totalProjects,
-                'totalBidPackages' => $totalBidPackages,
-                'totalContractors' => $totalContractors,
-                'totalCustomers' => $totalCustomers,
-                'totalPaymentAmount' => $totalPaymentAmount,
+                'completedProjects' => $completedProjects,
+                'inProgressProjects' => $inProgressProjects,
+                'totalBidPackages' => BidPackage::whereNull('deleted_at')->count(),
+                'totalContractors' => Contractor::whereNull('deleted_at')->count(),
+                'totalCustomers' => Customer::whereNull('deleted_at')->count(),
+                'totalRevenue' => $totalRevenue,
                 'totalReceiptAmount' => $totalReceiptAmount,
-                'balance' => $balance,
+                'receivables' => $receivables,
+                'totalExpense' => $totalExpense,
+                'totalPaymentAmount' => $totalPaymentAmount,
+                'payables' => $payables,
+                'profit' => $profit,
                 'pendingReceiptCount' => $pendingReceiptCount,
-                'pendingPaymentCount' => $pendingPaymentCount
+                'pendingReceiptAmount' => $pendingReceiptAmount,
+                'pendingPaymentCount' => $pendingPaymentCount,
+                'pendingPaymentAmount' => $pendingPaymentAmount
             ],
-            'recentPaymentVouchers' => $recentPaymentVouchers,
-            'recentReceiptVouchers' => $recentReceiptVouchers,
             'paymentsByContractor' => $paymentsByContractor,
             'receiptsByCustomer' => $receiptsByCustomer,
             'paymentsByMonth' => $paymentsByMonth,

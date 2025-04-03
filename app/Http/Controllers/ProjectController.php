@@ -85,18 +85,32 @@ class ProjectController extends Controller
                 ->with('error', 'Dự án không tồn tại.');
         }
 
-        // Đảm bảo load workItems và contractor và sắp xếp theo thứ tự
+        // Lấy các gói thầu gốc (không phải hạng mục con)
+        $bidPackages = $project->bidPackages()
+            ->whereNull('deleted_at')
+            ->whereNull('parent_id')  // Chỉ lấy gói thầu gốc
+            ->with([
+                'bids.contractor',
+                'selectedContractor',
+                'payment_vouchers.contractor',
+                'children' => function ($query) {  // Load hạng mục con
+                    $query->whereNull('deleted_at')
+                        ->with([
+                            'bids.contractor',
+                            'selectedContractor',
+                        ]);
+                }
+            ])
+            ->orderBy('order', 'asc')
+            ->get();
+
+        // Đặt các gói thầu đã lấy vào project
+        $project->setRelation('bid_packages', $bidPackages);
+
+        // Load các mối quan hệ khác
         $project->load([
-            'bidPackages' => function ($query) {
-                $query->orderBy('order', 'asc');
-            },
-            'bidPackages.bids.contractor',
-            'bidPackages.selectedContractor',
-            'bidPackages.payment_vouchers.contractor',
-            'bidPackages.work_items.contractor',
             'receipt_vouchers.customer',
         ]);
-
 
         return Inertia::render('Projects/Show', [
             'project' => $project,
@@ -175,11 +189,43 @@ class ProjectController extends Controller
     {
         $project->load([
             'bidPackages.selectedContractor',
+            'bidPackages.payment_vouchers',
+            'receipt_vouchers',
             'customer'
         ]);
 
         return Inertia::render('Projects/Profit', [
             'project' => $project
+        ]);
+    }
+
+    /**
+     * API để lấy danh sách gói thầu cho một dự án
+     */
+    public function getBidPackages(Project $project)
+    {
+        // Lấy các gói thầu gốc (không phải hạng mục con)
+        $bidPackages = $project->bidPackages()
+            ->whereNull('deleted_at')
+            ->whereNull('parent_id')  // Chỉ lấy gói thầu gốc
+            ->with([
+                'bids.contractor',
+                'selectedContractor',
+                'payment_vouchers.contractor',
+                'children' => function ($query) {  // Load hạng mục con
+                    $query->whereNull('deleted_at')
+                        ->with([
+                            'bids.contractor',
+                            'selectedContractor',
+                        ]);
+                }
+            ])
+            ->orderBy('order', 'asc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'bid_packages' => $bidPackages
         ]);
     }
 }

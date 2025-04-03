@@ -46,7 +46,7 @@
                   <div
                     :class="[
                       'grid grid-cols-24 gap-1 bid-package-row py-2',
-                      { 'bg-danger text-white': isPackageLosing(bidPackage) },
+                      { 'text-danger': isPackageLosing(bidPackage) },
                       { expanded: expandedPackages.includes(bidPackage.id) }
                     ]"
                   >
@@ -55,15 +55,12 @@
                     </div>
                     <div class="col-span-1 px-2 text-center">
                       <button
-                        class="btn btn-sm"
+                        class="btn btn-sm d-flex align-items-center gap-2"
                         @click="togglePackageExpand(bidPackage.id)"
                         :class="expandedPackages.includes(bidPackage.id) ? 'btn-info' : 'btn-secondary'"
                       >
-                        <i
-                          :class="
-                            expandedPackages.includes(bidPackage.id) ? 'fas fa-chevron-down' : 'fas fa-chevron-right'
-                          "
-                        ></i>
+                        <!-- count work items -->
+                        <span class="badge badge-secondary">{{ bidPackage.children?.length || 0 }}</span>
                       </button>
                     </div>
                     <div class="col-span-1 px-2">{{ index + 1 }}</div>
@@ -247,47 +244,211 @@
                   <!-- Danh sách hạng mục con -->
                   <div
                     v-if="
-                      expandedPackages.includes(bidPackage.id) &&
-                      bidPackage.work_items &&
-                      bidPackage.work_items.length > 0
+                      expandedPackages.includes(bidPackage.id) && bidPackage.children && bidPackage.children.length > 0
                     "
                     class="work-items-container p-3 bg-light"
                   >
                     <h5 class="mb-3">Danh sách hạng mục của gói thầu {{ bidPackage.name }}</h5>
-                    <div class="grid grid-cols-12 work-item-header font-weight-bold mb-2">
-                      <div class="col-span-1">STT</div>
-                      <div class="col-span-3">Tên hạng mục</div>
-                      <div class="col-span-2">Nhà thầu</div>
-                      <div class="col-span-2">Giá</div>
-                      <div class="col-span-2">Trạng thái</div>
-                      <div class="col-span-1">Ghi chú</div>
-                      <div class="col-span-1">Thao tác</div>
-                    </div>
-                    <div
-                      v-for="(workItem, i) in bidPackage.work_items"
-                      :key="workItem.id"
-                      class="grid grid-cols-12 work-item-row py-2"
-                    >
-                      <div class="col-span-1">{{ i + 1 }}</div>
-                      <div class="col-span-3">{{ workItem.name }}</div>
-                      <div class="col-span-2">{{ workItem.contractor ? workItem.contractor.name : 'Chưa chọn' }}</div>
-                      <div class="col-span-2 text-right pr-5">{{ formatCurrency(workItem.price) }}</div>
-                      <div class="col-span-2">
-                        <span :class="getWorkItemStatusClass(workItem.status)">
-                          {{ getWorkItemStatusLabel(workItem.status) }}
-                        </span>
-                      </div>
-                      <div class="col-span-1">{{ workItem.notes || '-' }}</div>
-                      <div class="col-span-1">
-                        <div class="btn-group">
-                          <button class="btn btn-sm btn-info" @click="openEditWorkItemModal(workItem)">
-                            <i class="fas fa-edit"></i>
-                          </button>
-                          <button class="btn btn-sm btn-danger" @click="confirmDeleteWorkItem(workItem)">
-                            <i class="fas fa-trash"></i>
-                          </button>
-                        </div>
-                      </div>
+
+                    <!-- Hiển thị hạng mục con bằng table thay vì grid -->
+                    <div class="table-responsive">
+                      <table class="table table-bordered table-hover">
+                        <thead class="bg-light">
+                          <tr>
+                            <th style="width: 50px" class="text-center">STT</th>
+                            <th style="width: 100px">Mã</th>
+                            <th style="width: 180px">Tên hạng mục</th>
+                            <th style="width: 150px" class="text-right">Giá dự thầu</th>
+                            <th style="width: 150px">Phát sinh</th>
+                            <th style="width: 150px" class="text-right">Giá giao thầu</th>
+                            <th style="width: 200px">Nhà thầu 1</th>
+                            <th style="width: 200px">Nhà thầu 2</th>
+                            <th style="width: 200px">Nhà thầu 3</th>
+                            <th style="width: 150px" class="text-center">Thao tác</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr
+                            v-for="(workItem, i) in bidPackage.children"
+                            :key="workItem.id"
+                            :class="{ 'text-danger': isPackageLosing(workItem) }"
+                          >
+                            <td class="text-center">{{ i + 1 }}</td>
+                            <td>{{ workItem.code }}</td>
+                            <td>{{ workItem.name }}</td>
+                            <td class="text-right">{{ formatCurrency(workItem.estimated_price || 0) }}</td>
+                            <td>
+                              <div class="d-flex justify-between">
+                                <button
+                                  v-if="workItem.selected_contractor_id"
+                                  @click="openAdditionalPriceModal(workItem)"
+                                  class="btn btn-sm btn-primary me-2"
+                                  title="Cập nhật giá phát sinh"
+                                >
+                                  <i class="fas fa-edit"></i>
+                                </button>
+                                <button
+                                  v-else
+                                  class="btn btn-sm btn-secondary me-2"
+                                  disabled
+                                  title="Cần chọn nhà thầu trước khi cập nhật giá phát sinh"
+                                >
+                                  <i class="fas fa-edit"></i>
+                                </button>
+                                {{ formatCurrency(workItem.additional_price || 0) }}
+                              </div>
+                            </td>
+                            <td class="text-right">{{ formatCurrency(workItem.client_price || 0) }}</td>
+
+                            <!-- Nhà thầu 1 -->
+                            <td>
+                              <div v-if="getBidderAtIndex(workItem, 0)" class="contractor-info">
+                                <div class="btn-group-vertical">
+                                  <input
+                                    type="radio"
+                                    class="custom-radio"
+                                    :name="`bidder_${workItem.id}`"
+                                    :checked="isSelectedContractor(workItem, getBidderAtIndex(workItem, 0))"
+                                    @change="selectContractor(getBidderAtIndex(workItem, 0))"
+                                  />
+                                  <button
+                                    @click="confirmDeleteBid(getBidderAtIndex(workItem, 0))"
+                                    class="btn btn-sm btn-danger"
+                                    title="Xóa"
+                                  >
+                                    <i class="fas fa-trash-alt"></i>
+                                  </button>
+                                  <button
+                                    @click="openEditBidModal(getBidderAtIndex(workItem, 0))"
+                                    class="btn btn-sm btn-warning"
+                                    title="Sửa giá dự thầu"
+                                  >
+                                    <i class="fas fa-edit"></i>
+                                  </button>
+                                </div>
+                                <div class="contractor-details">
+                                  <span class="contractor-price">{{
+                                    formatCurrency(getBidderAtIndex(workItem, 0).price)
+                                  }}</span>
+                                  <span class="contractor-name">{{
+                                    getBidderAtIndex(workItem, 0).contractor.name
+                                  }}</span>
+                                </div>
+                              </div>
+                              <button v-else @click="openAddBidModal(workItem)" class="btn btn-sm btn-success">
+                                <i class="fas fa-plus me-1"></i> Thêm
+                              </button>
+                            </td>
+
+                            <!-- Nhà thầu 2 -->
+                            <td>
+                              <div v-if="getBidderAtIndex(workItem, 1)" class="contractor-info">
+                                <div class="btn-group-vertical">
+                                  <input
+                                    type="radio"
+                                    class="custom-radio"
+                                    :name="`bidder_${workItem.id}`"
+                                    :checked="isSelectedContractor(workItem, getBidderAtIndex(workItem, 1))"
+                                    @change="selectContractor(getBidderAtIndex(workItem, 1))"
+                                  />
+                                  <button
+                                    @click="confirmDeleteBid(getBidderAtIndex(workItem, 1))"
+                                    class="btn btn-sm btn-danger"
+                                    title="Xóa"
+                                  >
+                                    <i class="fas fa-trash-alt"></i>
+                                  </button>
+                                  <button
+                                    @click="openEditBidModal(getBidderAtIndex(workItem, 1))"
+                                    class="btn btn-sm btn-warning"
+                                    title="Sửa giá dự thầu"
+                                  >
+                                    <i class="fas fa-edit"></i>
+                                  </button>
+                                </div>
+                                <div class="contractor-details">
+                                  <span class="contractor-price">{{
+                                    formatCurrency(getBidderAtIndex(workItem, 1).price)
+                                  }}</span>
+                                  <span class="contractor-name">{{
+                                    getBidderAtIndex(workItem, 1).contractor.name
+                                  }}</span>
+                                </div>
+                              </div>
+                              <button v-else @click="openAddBidModal(workItem)" class="btn btn-sm btn-success">
+                                <i class="fas fa-plus me-1"></i> Thêm
+                              </button>
+                            </td>
+
+                            <!-- Nhà thầu 3 -->
+                            <td>
+                              <div v-if="getBidderAtIndex(workItem, 2)" class="contractor-info">
+                                <div class="btn-group-vertical">
+                                  <input
+                                    type="radio"
+                                    class="custom-radio"
+                                    :name="`bidder_${workItem.id}`"
+                                    :checked="isSelectedContractor(workItem, getBidderAtIndex(workItem, 2))"
+                                    @change="selectContractor(getBidderAtIndex(workItem, 2))"
+                                  />
+                                  <button
+                                    @click="confirmDeleteBid(getBidderAtIndex(workItem, 2))"
+                                    class="btn btn-sm btn-danger"
+                                    title="Xóa"
+                                  >
+                                    <i class="fas fa-trash-alt"></i>
+                                  </button>
+                                  <button
+                                    @click="openEditBidModal(getBidderAtIndex(workItem, 2))"
+                                    class="btn btn-sm btn-warning"
+                                    title="Sửa giá dự thầu"
+                                  >
+                                    <i class="fas fa-edit"></i>
+                                  </button>
+                                </div>
+                                <div class="contractor-details">
+                                  <span class="contractor-price">{{
+                                    formatCurrency(getBidderAtIndex(workItem, 2).price)
+                                  }}</span>
+                                  <span class="contractor-name">{{
+                                    getBidderAtIndex(workItem, 2).contractor.name
+                                  }}</span>
+                                </div>
+                              </div>
+                              <button v-else @click="openAddBidModal(workItem)" class="btn btn-sm btn-success">
+                                <i class="fas fa-plus me-1"></i> Thêm
+                              </button>
+                            </td>
+
+                            <!-- Thao tác -->
+                            <td class="text-center">
+                              <div class="action-buttons">
+                                <button
+                                  class="btn btn-sm btn-info mb-1"
+                                  @click="openEditBidPackageModal(workItem)"
+                                  title="Sửa"
+                                >
+                                  <i class="fas fa-edit"></i>
+                                </button>
+                                <button
+                                  class="btn btn-sm btn-danger mb-1"
+                                  @click="confirmDeleteBidPackage(workItem)"
+                                  title="Xóa"
+                                >
+                                  <i class="fas fa-trash"></i>
+                                </button>
+                                <Link
+                                  :href="route('bid-packages.files', workItem.id)"
+                                  class="btn btn-sm btn-secondary mb-1"
+                                  title="Files"
+                                >
+                                  <i class="fas fa-file"></i>
+                                </Link>
+                              </div>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
                     </div>
                   </div>
 
@@ -957,7 +1118,7 @@ const onDragEnd = () => {
     })
     .then((response) => {
       if (response.data.success) {
-        showSuccess('Đã cập nhật thứ tự gói thầu thành công')
+        // showSuccess('Đã cập nhật thứ tự gói thầu thành công')
       }
     })
     .catch((error) => {
@@ -1357,10 +1518,16 @@ const submitCreateBidPackage = async () => {
   }
 
   try {
-    await router.post(route('bid-packages.store', props.project.id), formData, {
+    let url =
+      formData.is_work_item && selectedBidPackage.value
+        ? route('bid-packages.work-items.store', selectedBidPackage.value.id)
+        : route('bid-packages.store', props.project.id)
+
+    await router.post(url, formData, {
       onSuccess: () => {
         window.$('#createBidPackageModal').modal('hide')
-        showSuccess('Gói thầu đã được tạo thành công.')
+        showSuccess(formData.is_work_item ? 'Hạng mục đã được tạo thành công.' : 'Gói thầu đã được tạo thành công.')
+        router.reload({ preserveState: true })
       },
       onError: (errors) => {
         bidPackageFormErrors.value = errors
@@ -1592,61 +1759,18 @@ const isPackageLosing = (bidPackage) => {
 }
 
 // Mở modal thêm hạng mục
-const openCreateWorkItemModal = async (bidPackage) => {
+const openCreateWorkItemModal = (bidPackage) => {
   selectedBidPackage.value = bidPackage
-  workItemForm.value = {
+  bidPackageForm.value = {
+    code: '',
     name: '',
-    contractor_id: '',
-    price: '',
-    notes: '',
-    status: 'pending'
+    description: '',
+    estimated_price: '',
+    status: 'open',
+    is_work_item: true
   }
-  workItemFormErrors.value = {}
-  isEditingWorkItem.value = false
-  window.$('#workItemModal').modal('show')
-
-  // Đợi modal hiển thị xong rồi khởi tạo InputPicker
-  await nextTick()
-
-  try {
-    // Lấy danh sách nhà thầu nếu chưa có
-    if (contractors.value.length === 0) {
-      const response = await axios.get('/api/contractors')
-      contractors.value = response.data
-    }
-
-    // Khởi tạo InputPicker mới
-    window.$('#work_item_contractor_id').inputpicker({
-      data: contractors.value.map((contractor) => ({
-        value: contractor.id,
-        text: contractor.name,
-        phone: contractor.phone || '',
-        email: contractor.email || '',
-        address: contractor.address || '',
-        notes: contractor.notes || ''
-      })),
-      fields: [
-        { name: 'text', text: 'Tên nhà thầu' },
-        { name: 'phone', text: 'SĐT' }
-      ],
-      fieldText: 'text',
-      fieldValue: 'value',
-      filterOpen: true,
-      autoOpen: true,
-      headShow: true,
-      width: '100%',
-      selectMode: 'single',
-      responsive: true
-    })
-
-    // Xử lý sự kiện change
-    window.$('#work_item_contractor_id').on('change', function (e) {
-      const contractorId = window.$(this).val()
-      workItemForm.value.contractor_id = contractorId
-    })
-  } catch (error) {
-    console.error('Lỗi khi khởi tạo InputPicker:', error)
-  }
+  bidPackageFormErrors.value = {}
+  window.$('#createBidPackageModal').modal('show')
 }
 
 // Mở modal sửa hạng mục

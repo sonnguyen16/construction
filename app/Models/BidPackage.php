@@ -18,6 +18,8 @@ class BidPackage extends Model
 
     protected $fillable = [
         'project_id',
+        'parent_id',
+        'is_work_item',
         'code',
         'name',
         'description',
@@ -72,6 +74,11 @@ class BidPackage extends Model
         return $this->hasMany(Bid::class)->whereNull('deleted_at');
     }
 
+    public function bidPriceSelected()
+    {
+        return $this->hasOne(Bid::class)->where('is_selected', true)->whereNull('deleted_at');
+    }
+
     /**
      * Quan hệ với phiếu chi
      */
@@ -79,17 +86,41 @@ class BidPackage extends Model
     {
         return $this->hasMany(PaymentVoucher::class, 'bid_package_id')->whereNull('deleted_at');
     }
+    /**
+     * Lấy gói thầu cha (nếu là hạng mục con)
+     */
+    public function parent()
+    {
+        return $this->belongsTo(BidPackage::class, 'parent_id');
+    }
 
     /**
-     * Quan hệ với phiếu thu
+     * Lấy các hạng mục con của gói thầu
      */
-    public function receipt_vouchers()
+    public function children()
     {
-        return $this->hasMany(ReceiptVoucher::class, 'bid_package_id')->whereNull('deleted_at');
+        return $this->hasMany(BidPackage::class, 'parent_id')->whereNull('deleted_at');
+    }
+
+    /**
+     * Scope để lấy các gói thầu gốc (không có parent)
+     */
+    public function scopeParents($query)
+    {
+        return $query->whereNull('parent_id');
+    }
+
+    /**
+     * Scope để lấy các hạng mục con
+     */
+    public function scopeWorkItems($query)
+    {
+        return $query->where('is_work_item', true);
     }
 
     /**
      * Quan hệ với hạng mục
+     * @deprecated Sử dụng children() thay thế
      */
     public function work_items()
     {

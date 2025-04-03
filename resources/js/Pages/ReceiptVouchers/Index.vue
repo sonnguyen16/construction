@@ -117,8 +117,7 @@
                   </div>
                 </div>
               </div>
-            </div>
-            <div class="row mb-3">
+
               <div class="col-md-3">
                 <div class="form-group">
                   <label for="status">Trạng thái:</label>

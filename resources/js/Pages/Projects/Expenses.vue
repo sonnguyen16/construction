@@ -17,7 +17,7 @@
           </div>
           <div class="card-body p-0 overflow-y-auto overflow-x-auto" style="max-height: calc(100vh - 250px)">
             <table class="table table-hover">
-              <thead>
+              <thead class="sticky top-0 bg-light">
                 <tr style="white-space: nowrap">
                   <th>STT</th>
                   <th>Mã</th>

@@ -17,14 +17,16 @@
           </div>
           <div class="card-body p-0 overflow-y-auto overflow-x-auto" style="max-height: calc(100vh - 250px)">
             <table class="table table-hover">
-              <thead>
+              <thead class="sticky top-0 bg-light">
                 <tr style="white-space: nowrap">
                   <th>STT</th>
                   <th>Mã</th>
                   <th>Tên gói thầu</th>
                   <th>Tên nhà thầu</th>
                   <th>Giá dự thầu</th>
-                  <th>Giá giao thầu (đã bao gồm phát sinh)</th>
+                  <th>Giá giao thầu</th>
+                  <th>Tổng thu</th>
+                  <th>Tổng chi</th>
                   <th>Lợi nhuận</th>
                   <th>%</th>
                 </tr>
@@ -37,6 +39,8 @@
                   <td>{{ bidPackage.selected_contractor ? bidPackage.selected_contractor.name : '-' }}</td>
                   <td>{{ formatCurrency(bidPackage.estimated_price || 0) }}</td>
                   <td>{{ formatCurrency(bidPackage.client_price || 0) }}</td>
+                  <td></td>
+                  <td>{{ formatCurrency(getTotalPaymentAmount(bidPackage)) }}</td>
                   <!-- Lợi nhuận = giá dự thầu - giá giao thầu -->
                   <td :class="getProfitClass(calculateProfit(bidPackage))">
                     {{ formatCurrency(calculateProfit(bidPackage)) }}
@@ -47,12 +51,14 @@
                   </td>
                 </tr>
                 <tr v-if="project.bid_packages.length === 0">
-                  <td colspan="8" class="text-center">Chưa có gói thầu nào</td>
+                  <td colspan="10" class="text-center">Chưa có gói thầu nào</td>
                 </tr>
                 <tr class="bg-light font-weight-bold sticky bottom-0">
                   <td colspan="4" class="text-right">Tổng cộng:</td>
                   <td>{{ formatCurrency(totalEstimatedPrice) }}</td>
+                  <td>{{ formatCurrency(totalReceiptAmount) }}</td>
                   <td>{{ formatCurrency(totalContractAmount) }}</td>
+                  <td>{{ formatCurrency(totalPaidAmount) }}</td>
                   <td>{{ formatCurrency(totalProfit) }}</td>
                   <td>{{ calculateAverageProfitPercentage() }}%</td>
                 </tr>
@@ -157,6 +163,34 @@ const getProfitClass = (profit) => {
   if (profit === null || profit === undefined) return ''
   return profit > 0 ? 'text-success' : profit < 0 ? 'text-danger' : ''
 }
+
+// Tính tổng chi cho một gói thầu
+const getTotalPaymentAmount = (bidPackage) => {
+  const totalPaid = bidPackage.payment_vouchers
+    ? bidPackage.payment_vouchers.reduce((total, voucher) => total + parseInt(voucher.amount || 0), 0)
+    : 0
+  return totalPaid
+}
+
+// Tổng tiền đã chi của tất cả gói thầu
+const totalPaidAmount = computed(() => {
+  return props.project.bid_packages.reduce((total, bidPackage) => {
+    return total + getTotalPaymentAmount(bidPackage)
+  }, 0)
+})
+
+// Tính tổng thu từ phiếu thu của dự án
+const getTotalReceiptAmount = () => {
+  if (!props.project.receipt_vouchers) return 0
+  return props.project.receipt_vouchers.reduce((total, receipt) => {
+    return total + parseInt(receipt.amount || 0)
+  }, 0)
+}
+
+// Tổng thu từ phiếu thu của dự án
+const totalReceiptAmount = computed(() => {
+  return getTotalReceiptAmount()
+})
 </script>
 
 <style>

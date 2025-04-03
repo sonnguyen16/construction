@@ -21,13 +21,39 @@ class BidPackageController extends Controller
             'description' => 'nullable|string',
             'estimated_price' => 'nullable|numeric|min:0',
             'status' => 'required|in:open,awarded,completed,cancelled',
+            'parent_id' => 'nullable|exists:bid_packages,id',
+            'is_work_item' => 'nullable|boolean',
         ]);
 
         $project->bidPackages()->create($validated);
 
         return redirect()->route('projects.show', $project)
-            ->with('success', 'Gói thầu đã được tạo thành công.');
+            ->with('success', $validated['is_work_item'] ? 'Hạng mục đã được tạo thành công.' : 'Gói thầu đã được tạo thành công.');
     }
+
+    /**
+     * Lưu hạng mục con cho gói thầu
+     */
+    public function storeWorkItem(Request $request, BidPackage $parent)
+    {
+        $validated = $request->validate([
+            'code' => 'required|string|max:50',
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'estimated_price' => 'nullable|numeric|min:0',
+            'status' => 'required|in:open,awarded,completed,cancelled',
+        ]);
+
+        $validated['parent_id'] = $parent->id;
+        $validated['is_work_item'] = true;
+        $validated['project_id'] = $parent->project_id;
+
+        $parent->children()->create($validated);
+
+        return redirect()->route('projects.show', $parent->project_id)
+            ->with('success', 'Hạng mục đã được tạo thành công.');
+    }
+
     /**
      * Cập nhật gói thầu
      */
@@ -39,7 +65,9 @@ class BidPackageController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'estimated_price' => 'nullable|numeric|min:0',
-            'status' => 'required|in:open,awarded,completed,cancelled'
+            'status' => 'required|in:open,awarded,completed,cancelled',
+            'parent_id' => 'nullable|exists:bid_packages,id',
+            'is_work_item' => 'nullable|boolean',
         ]);
 
         // Lấy giá dự thầu và giá giao thầu hiện tại
@@ -55,7 +83,7 @@ class BidPackageController extends Controller
         }
 
         return redirect()->route('projects.show', $bidPackage->project_id)
-            ->with('success', 'Gói thầu đã được cập nhật thành công.');
+            ->with('success', $bidPackage->is_work_item ? 'Hạng mục đã được cập nhật thành công.' : 'Gói thầu đã được cập nhật thành công.');
     }
 
     public function destroy(BidPackage $bidPackage)
@@ -63,13 +91,25 @@ class BidPackageController extends Controller
         $projectId = $bidPackage->project_id;
 
         try {
+            // Xóa tất cả hạng mục con nếu là gói thầu cha
+            if (!$bidPackage->parent_id) {
+                $bidPackage->children()->update(['deleted_at' => now()]);
+            }
+
             $bidPackage->deleted_at = now();
             $bidPackage->save();
+
+            if ($bidPackage->is_work_item) {
+                $parent = $bidPackage->parent;
+                $parent->client_price -= $bidPackage->client_price;
+                $parent->save();
+            }
+
             return redirect()->route('projects.show', $projectId)
-                ->with('success', 'Gói thầu đã được xóa thành công.');
+                ->with('success', $bidPackage->is_work_item ? 'Hạng mục đã được xóa thành công.' : 'Gói thầu đã được xóa thành công.');
         } catch (\Exception $e) {
             return redirect()->route('projects.show', $projectId)
-                ->with('error', 'Không thể xóa gói thầu. Vui lòng thử lại sau.');
+                ->with('error', 'Không thể xóa. Vui lòng thử lại sau.');
         }
     }
 
@@ -82,12 +122,19 @@ class BidPackageController extends Controller
         // Lưu giá phát sinh
         $bidPackage->additional_price = $validated['additional_price'];
         // Tính giá giao thầu = giá dự thầu + giá phát sinh
-        $bidPriceSelected = Bid::where('bid_package_id', $bidPackage->id)->where('is_selected', true)->whereNull('deleted_at')->first();
+        $bidPriceSelected = $bidPackage->bidPriceSelected;
         $additionalPrice = (int)$validated['additional_price'];
         $bidPackage->client_price = $bidPriceSelected->price + $additionalPrice;
         // Cập nhật lợi nhuận (sử dụng định nghĩa mới: lợi nhuận = giá dự thầu - giá giao thầu)
         $bidPackage->profit = $bidPriceSelected->price - $bidPackage->client_price;
         $bidPackage->save();
+
+        if ($bidPackage->is_work_item) {
+            $parent = $bidPackage->parent;
+            $bidParent = $parent->bidPriceSelected;
+            $parent->client_price = $bidParent->price + $parent->additional_price + $bidPackage->client_price;
+            $parent->save();
+        }
 
         return redirect()->back()->with('success', 'Giá phát sinh đã được cập nhật thành công.');
     }

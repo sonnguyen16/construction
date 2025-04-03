@@ -5,11 +5,12 @@
 
     <!-- Thống kê tổng quan -->
     <div class="row">
+      <!-- Thông tin dự án -->
       <div class="col-lg-4 col-6">
         <div class="small-box bg-info">
           <div class="inner">
             <h3>{{ stats.totalProjects }}</h3>
-            <p>Dự án</p>
+            <p>Tổng số dự án</p>
           </div>
           <div class="icon">
             <i class="fas fa-project-diagram"></i>
@@ -19,7 +20,54 @@
           </Link>
         </div>
       </div>
-      <!-- Thêm ô tổng thu -->
+      <div class="col-lg-4 col-6">
+        <div class="small-box bg-success">
+          <div class="inner">
+            <h3>{{ stats.completedProjects }}</h3>
+            <p>Dự án đã hoàn thành</p>
+          </div>
+          <div class="icon">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <Link :href="route('projects.index') + '?status=completed'" class="small-box-footer">
+            Xem chi tiết <i class="fas fa-arrow-circle-right"></i>
+          </Link>
+        </div>
+      </div>
+      <div class="col-lg-4 col-6">
+        <div class="small-box bg-warning">
+          <div class="inner">
+            <h3>{{ stats.inProgressProjects }}</h3>
+            <p>Dự án đang thực hiện</p>
+          </div>
+          <div class="icon">
+            <i class="fas fa-spinner"></i>
+          </div>
+          <Link :href="route('projects.index') + '?status=active'" class="small-box-footer">
+            Xem chi tiết <i class="fas fa-arrow-circle-right"></i>
+          </Link>
+        </div>
+      </div>
+    </div>
+
+    <!-- Thống kê tài chính -->
+    <div class="row">
+      <!-- Doanh thu -->
+      <div class="col-lg-4 col-6">
+        <div class="small-box bg-primary">
+          <div class="inner">
+            <h3>{{ formatCurrency(stats.totalRevenue) }}</h3>
+            <p>Doanh thu</p>
+          </div>
+          <div class="icon">
+            <i class="fas fa-chart-line"></i>
+          </div>
+          <div class="small-box-footer">
+            <i class="fas fa-info-circle"></i>
+          </div>
+        </div>
+      </div>
+      <!-- Tổng thu -->
       <div class="col-lg-4 col-6">
         <div class="small-box bg-success">
           <div class="inner">
@@ -29,13 +77,45 @@
           <div class="icon">
             <i class="fas fa-money-bill"></i>
           </div>
-          <div class="small-box-footer d-flex justify-content-between">
-            <Link :href="route('receipt-vouchers.index')" class="flex-grow-1">
-              Xem chi tiết <i class="fas fa-arrow-circle-right"></i>
-            </Link>
+          <Link :href="route('receipt-vouchers.index') + '?status=paid'" class="small-box-footer">
+            Xem chi tiết <i class="fas fa-arrow-circle-right"></i>
+          </Link>
+        </div>
+      </div>
+      <!-- Phải thu -->
+      <div class="col-lg-4 col-6">
+        <div class="small-box bg-info">
+          <div class="inner">
+            <h3>{{ formatCurrency(stats.receivables) }}</h3>
+            <p>Phải thu</p>
+          </div>
+          <div class="icon">
+            <i class="fas fa-hand-holding-usd"></i>
+          </div>
+          <div class="small-box-footer">
+            <i class="fas fa-info-circle"></i>
           </div>
         </div>
       </div>
+    </div>
+
+    <div class="row">
+      <!-- Chi phí -->
+      <div class="col-lg-4 col-6">
+        <div class="small-box bg-secondary">
+          <div class="inner">
+            <h3>{{ formatCurrency(stats.totalExpense) }}</h3>
+            <p>Chi phí</p>
+          </div>
+          <div class="icon">
+            <i class="fas fa-chart-pie"></i>
+          </div>
+          <div class="small-box-footer">
+            <i class="fas fa-info-circle"></i>
+          </div>
+        </div>
+      </div>
+      <!-- Tổng chi -->
       <div class="col-lg-4 col-6">
         <div class="small-box bg-danger">
           <div class="inner">
@@ -45,183 +125,72 @@
           <div class="icon">
             <i class="fas fa-money-bill-wave"></i>
           </div>
-          <div class="small-box-footer d-flex justify-content-between">
-            <Link :href="route('payment-vouchers.index')" class="flex-grow-1">
-              Xem chi tiết <i class="fas fa-arrow-circle-right"></i>
-            </Link>
-          </div>
+          <Link :href="route('payment-vouchers.index') + '?status=paid'" class="small-box-footer">
+            Xem chi tiết <i class="fas fa-arrow-circle-right"></i>
+          </Link>
         </div>
       </div>
-    </div>
-
-    <!-- Thêm hàng mới cho số dư và các thống kê thanh toán -->
-    <div class="row">
-      <div class="col-lg-4 col-12">
-        <div class="small-box bg-info">
+      <!-- Phải chi -->
+      <div class="col-lg-4 col-6">
+        <div class="small-box bg-dark">
           <div class="inner">
-            <h3>{{ formatCurrency(stats.balance) }}</h3>
-            <p>Số dư (Thu - Chi)</p>
+            <h3>{{ formatCurrency(stats.payables) }}</h3>
+            <p>Phải chi</p>
           </div>
           <div class="icon">
-            <i class="fas fa-wallet"></i>
+            <i class="fas fa-credit-card"></i>
           </div>
           <div class="small-box-footer">
             <i class="fas fa-info-circle"></i>
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- Lợi nhuận và Cân đối -->
+    <div class="row">
       <div class="col-lg-4 col-12">
-        <div class="small-box bg-warning">
+        <div class="small-box bg-success">
           <div class="inner">
-            <h3>{{ stats.pendingReceiptCount }}</h3>
-            <p>Phiếu thu chưa thanh toán</p>
+            <h3>{{ formatCurrency(stats.profit) }}</h3>
+            <p>Lợi nhuận (Doanh thu - Chi phí)</p>
           </div>
           <div class="icon">
-            <i class="fas fa-hourglass-half"></i>
+            <i class="fas fa-chart-bar"></i>
           </div>
-          <Link :href="`/receipt-vouchers?status=unpaid`" class="small-box-footer">
+          <div class="small-box-footer">
+            <i class="fas fa-info-circle"></i>
+          </div>
+        </div>
+      </div>
+      <!-- Đề xuất thu -->
+      <div class="col-lg-4 col-6">
+        <div class="small-box bg-warning">
+          <div class="inner">
+            <h3>{{ formatCurrency(stats.pendingReceiptAmount) }}</h3>
+            <p>Đề xuất thu ({{ stats.pendingReceiptCount }})</p>
+          </div>
+          <div class="icon">
+            <i class="fas fa-file-invoice-dollar"></i>
+          </div>
+          <Link :href="route('receipt-vouchers.index') + '?status=unpaid'" class="small-box-footer">
             Xem chi tiết <i class="fas fa-arrow-circle-right"></i>
           </Link>
         </div>
       </div>
-      <div class="col-lg-4 col-12">
+      <!-- Đề xuất chi -->
+      <div class="col-lg-4 col-6">
         <div class="small-box bg-warning">
           <div class="inner">
-            <h3>{{ stats.pendingPaymentCount }}</h3>
-            <p>Phiếu chi chưa thanh toán</p>
+            <h3>{{ formatCurrency(stats.pendingPaymentAmount) }}</h3>
+            <p>Đề xuất chi ({{ stats.pendingPaymentCount }})</p>
           </div>
           <div class="icon">
-            <i class="fas fa-hourglass-half"></i>
+            <i class="fas fa-file-invoice"></i>
           </div>
-          <Link :href="`/payment-vouchers?status=approved`" class="small-box-footer">
+          <Link :href="route('payment-vouchers.index') + '?status=proposed'" class="small-box-footer">
             Xem chi tiết <i class="fas fa-arrow-circle-right"></i>
           </Link>
-        </div>
-      </div>
-    </div>
-
-    <!-- Phiếu thu gần đây -->
-    <div class="row">
-      <div class="col-md-12">
-        <div class="card">
-          <div class="card-header">
-            <h3 class="card-title">Phiếu thu gần đây</h3>
-            <div class="card-tools">
-              <Link :href="route('receipt-vouchers.index')" class="btn btn-tool">
-                <i class="fas fa-list"></i> Xem tất cả
-              </Link>
-            </div>
-          </div>
-          <div class="card-body p-0">
-            <table class="table table-hover">
-              <thead>
-                <tr>
-                  <th>Mã phiếu thu</th>
-                  <th>Khách hàng</th>
-                  <th>Dự án</th>
-                  <th>Số tiền</th>
-                  <th>Trạng thái</th>
-                  <th>Ngày tạo</th>
-                  <th>Thao tác</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="voucher in recentReceiptVouchers" :key="voucher.id">
-                  <td>{{ voucher.code }}</td>
-                  <td>{{ voucher.customer.name }}</td>
-                  <td>
-                    <span v-if="voucher.project">
-                      {{ voucher.project.name }}
-                    </span>
-                    <span v-else>-</span>
-                  </td>
-                  <td>{{ formatCurrency(voucher.amount) }}</td>
-                  <td>
-                    <span
-                      :class="{
-                        'badge badge-warning': voucher.status === 'pending',
-                        'badge badge-success': voucher.status === 'completed'
-                      }"
-                    >
-                      {{ voucher.status === 'pending' ? 'Chưa thanh toán' : 'Đã thanh toán' }}
-                    </span>
-                  </td>
-                  <td>{{ formatDate(voucher.created_at) }}</td>
-                  <td>
-                    <Link :href="route('receipt-vouchers.show', voucher.id)" class="btn btn-xs btn-info">
-                      <i class="fas fa-eye"></i> Xem
-                    </Link>
-                  </td>
-                </tr>
-                <tr v-if="recentReceiptVouchers.length === 0">
-                  <td colspan="7" class="text-center">Không có phiếu thu nào</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Phiếu chi gần đây -->
-    <div class="row">
-      <div class="col-md-12">
-        <div class="card">
-          <div class="card-header">
-            <h3 class="card-title">Phiếu chi gần đây</h3>
-            <div class="card-tools">
-              <Link :href="route('payment-vouchers.index')" class="btn btn-tool">
-                <i class="fas fa-list"></i> Xem tất cả
-              </Link>
-            </div>
-          </div>
-          <div class="card-body p-0">
-            <table class="table table-hover">
-              <thead>
-                <tr>
-                  <th>Mã phiếu chi</th>
-                  <th>Nhà thầu</th>
-                  <th>Gói thầu</th>
-                  <th>Số tiền</th>
-                  <th>Trạng thái</th>
-                  <th>Ngày tạo</th>
-                  <th>Thao tác</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="voucher in recentPaymentVouchers" :key="voucher.id">
-                  <td>{{ voucher.code }}</td>
-                  <td>{{ voucher.contractor.name }}</td>
-                  <td>
-                    <span v-if="voucher.bid_package">
-                      {{ voucher.bid_package.code }} - {{ voucher.bid_package.name }}
-                    </span>
-                    <span v-else>-</span>
-                  </td>
-                  <td>{{ formatCurrency(voucher.amount) }}</td>
-                  <td>
-                    <span
-                      :class="{
-                        'badge badge-warning': voucher.status === 'pending',
-                        'badge badge-success': voucher.status === 'completed'
-                      }"
-                    >
-                      {{ voucher.status === 'pending' ? 'Chưa thanh toán' : 'Đã thanh toán' }}
-                    </span>
-                  </td>
-                  <td>{{ formatDate(voucher.created_at) }}</td>
-                  <td>
-                    <Link :href="route('payment-vouchers.show', voucher.id)" class="btn btn-xs btn-info">
-                      <i class="fas fa-eye"></i> Xem
-                    </Link>
-                  </td>
-                </tr>
-                <tr v-if="recentPaymentVouchers.length === 0">
-                  <td colspan="7" class="text-center">Không có phiếu chi nào</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
         </div>
       </div>
     </div>
