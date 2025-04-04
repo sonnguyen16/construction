@@ -26,6 +26,13 @@
               >
                 <i class="fas fa-undo"></i> Đánh dấu dự thu
               </button>
+              <a
+                :href="`/receipt-vouchers/${receiptVoucher.id}/print`"
+                target="_blank"
+                class="btn btn-sm btn-secondary mr-1"
+              >
+                <i class="fas fa-print"></i> In phiếu thu
+              </a>
               <button @click="confirmDelete" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i> Xóa</button>
             </div>
           </div>

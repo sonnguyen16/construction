@@ -56,8 +56,8 @@
                 <tr class="bg-light font-weight-bold sticky bottom-0">
                   <td colspan="4" class="text-right">Tổng cộng:</td>
                   <td>{{ formatCurrency(totalEstimatedPrice) }}</td>
-                  <td>{{ formatCurrency(totalReceiptAmount) }}</td>
                   <td>{{ formatCurrency(totalContractAmount) }}</td>
+                  <td>{{ formatCurrency(totalReceiptAmount) }}</td>
                   <td>{{ formatCurrency(totalPaidAmount) }}</td>
                   <td>{{ formatCurrency(totalProfit) }}</td>
                   <td>{{ calculateAverageProfitPercentage() }}%</td>

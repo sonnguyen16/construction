@@ -60,6 +60,10 @@ Route::middleware('auth')->group(function () {
     Route::patch('/receipt-vouchers/{receipt_voucher}/update-status', [ReceiptVoucherController::class, 'updateStatus'])->name('receipt-vouchers.update-status');
     // Route cập nhật trạng thái phiếu chi
     Route::patch('/payment-vouchers/{payment_voucher}/update-status', [PaymentVoucherController::class, 'updateStatus'])->name('payment-vouchers.update-status');
+    // Thêm route in phiếu chi
+    Route::get('/payment-vouchers/{paymentVoucher}/print', [PaymentVoucherController::class, 'print'])->name('payment-vouchers.print');
+    // Thêm route in phiếu thu
+    Route::get('/receipt-vouchers/{receiptVoucher}/print', [ReceiptVoucherController::class, 'print'])->name('receipt-vouchers.print');
     // Thêm route cho các trang chi phí và lợi nhuận
     Route::get('/projects/{project}/expenses', [ProjectController::class, 'expenses'])->name('projects.expenses');
     Route::get('/projects/{project}/profit', [ProjectController::class, 'profit'])->name('projects.profit');
@@ -90,6 +94,10 @@ Route::get('/projects/{project}/files', [App\Http\Controllers\ProjectFileControl
 
 // Bid Package File Routes
 Route::get('/bid-packages/{bidPackage}/files', [App\Http\Controllers\BidPackageFileController::class, 'index'])->name('bid-packages.files');
+
+// API Routes
+Route::get('/api/contractors', [ContractorController::class, 'getContractors']);
+Route::get('/api/customers', [CustomerController::class, 'getCustomers']);
 
 
 

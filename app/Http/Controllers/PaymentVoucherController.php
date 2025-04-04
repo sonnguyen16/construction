@@ -273,4 +273,133 @@ class PaymentVoucherController extends Controller
             'paid' => 'Đã chi'
         ];
     }
+
+    /**
+     * In phiếu chi
+     */
+    public function print(PaymentVoucher $paymentVoucher)
+    {
+        $paymentVoucher->load(['contractor', 'project', 'bidPackage', 'creator']);
+
+        // Chuyển đổi số tiền thành chữ
+        $amountInWords = $this->convertNumberToWords($paymentVoucher->amount);
+
+        // Tạo view cho phiếu chi
+        $pdf = \PDF::loadView('pdf.payment-voucher', [
+            'paymentVoucher' => $paymentVoucher,
+            'amountInWords' => $amountInWords,
+            'company' => [
+                'name' => 'CÔNG TY TNHH KIẾN TRÚC NỘI THẤT HOÀNG TÂM',
+                'address' => 'D13 Đại An, Nguyễn Thị Định, Phường 9, Thành phố Vũng Tàu, Tỉnh Bà Rịa - Vũng Tàu, Việt Nam'
+            ]
+        ]);
+
+        return $pdf->stream("phieu-chi-{$paymentVoucher->code}.pdf");
+    }
+
+    /**
+     * Chuyển đổi số thành chữ tiếng Việt
+     */
+    private function convertNumberToWords($number)
+    {
+        $words = [
+            0 => 'không',
+            1 => 'một',
+            2 => 'hai',
+            3 => 'ba',
+            4 => 'bốn',
+            5 => 'năm',
+            6 => 'sáu',
+            7 => 'bảy',
+            8 => 'tám',
+            9 => 'chín',
+        ];
+
+        $units = ['', 'nghìn', 'triệu', 'tỷ', 'nghìn tỷ', 'triệu tỷ'];
+
+        if ($number == 0) {
+            return 'không đồng';
+        }
+
+        if ($number < 0) {
+            return 'âm ' . $this->convertNumberToWords(abs($number));
+        }
+
+        // Làm tròn số, bỏ phần thập phân
+        $number = round($number);
+
+        $result = '';
+
+        // Xử lý từng nhóm 3 chữ số
+        $groups = [];
+        while ($number > 0) {
+            $groups[] = $number % 1000;
+            $number = floor($number / 1000);
+        }
+
+        // Đọc từng nhóm, bắt đầu từ đơn vị lớn nhất
+        for ($i = count($groups) - 1; $i >= 0; $i--) {
+            $group = $groups[$i];
+            if ($group > 0) {
+                $result .= $this->readThreeDigits($group, $words) . ' ' . $units[$i];
+                if ($i > 0 && $groups[$i-1] > 0) {
+                    $result .= ' ';
+                }
+            }
+        }
+
+        $result = trim($result);
+        return $result . ' đồng';
+    }
+
+    /**
+     * Đọc một nhóm 3 chữ số
+     */
+    private function readThreeDigits($number, $words)
+    {
+        $number = (int)$number;
+        if ($number == 0) return '';
+
+        $hundreds = floor($number / 100);
+        $tens = floor(($number % 100) / 10);
+        $ones = $number % 10;
+
+        $result = '';
+
+        // Đọc hàng trăm
+        if ($hundreds > 0) {
+            $result .= $words[$hundreds] . ' trăm';
+            if ($tens > 0 || $ones > 0) $result .= ' ';
+        }
+
+        // Đọc hàng chục
+        if ($tens > 0) {
+            if ($tens == 1) {
+                $result .= 'mười';
+            } else {
+                $result .= $words[$tens] . ' mươi';
+            }
+
+            if ($ones > 0) {
+                if ($tens > 1 && $ones == 1) {
+                    $result .= ' mốt';
+                } else if ($ones == 5 && $tens >= 1) {
+                    $result .= ' lăm';
+                } else if ($tens > 1 && $ones == 4) {
+                    $result .= ' tư';
+                } else {
+                    $result .= ' ' . $words[$ones];
+                }
+            }
+        } else if ($ones > 0) {
+            // Trường hợp chỉ có hàng đơn vị
+            if ($hundreds > 0) {
+                $result .= 'lẻ ' . $words[$ones];
+            } else {
+                $result .= $words[$ones];
+            }
+        }
+
+        return $result;
+    }
 }

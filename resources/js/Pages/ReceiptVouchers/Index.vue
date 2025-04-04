@@ -183,6 +183,13 @@
                         <button @click="confirmDelete(voucher)" class="btn btn-xs btn-danger">
                           <i class="fas fa-trash"></i> Xóa
                         </button>
+                        <a
+                          :href="`/receipt-vouchers/${voucher.id}/print`"
+                          target="_blank"
+                          class="btn btn-xs btn-secondary"
+                        >
+                          <i class="fas fa-print"></i> In
+                        </a>
                       </div>
                     </td>
                   </tr>

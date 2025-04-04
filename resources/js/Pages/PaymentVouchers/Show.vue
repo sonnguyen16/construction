@@ -12,6 +12,13 @@
               <Link :href="route('payment-vouchers.edit', paymentVoucher.id)" class="btn btn-sm btn-primary mr-1">
                 <i class="fas fa-edit"></i> Sửa
               </Link>
+              <a
+                :href="`/payment-vouchers/${paymentVoucher.id}/print`"
+                target="_blank"
+                class="btn btn-sm btn-secondary mr-1"
+              >
+                <i class="fas fa-print"></i> In phiếu chi
+              </a>
               <button
                 v-if="paymentVoucher.status === 'proposed'"
                 @click="updateStatus('approved')"
