@@ -199,7 +199,6 @@
             <div class="signature-column">
                 <div><strong>Người lập phiếu</strong></div>
                 <div class="signature-line"></div>
-                <div>{{ $receiptVoucher->creator ? $receiptVoucher->creator->name : '' }}</div>
             </div>
 
             <div class="signature-column">
