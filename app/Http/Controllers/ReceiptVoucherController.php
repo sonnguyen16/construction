@@ -256,7 +256,7 @@ class ReceiptVoucherController extends Controller
         $amountInWords = $this->convertNumberToWords($receiptVoucher->amount);
 
         // Tạo view cho phiếu thu
-        $pdf = \PDF::loadView('pdf.receipt-voucher', [
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.receipt-voucher', [
             'receiptVoucher' => $receiptVoucher,
             'amountInWords' => $amountInWords,
             'company' => [
