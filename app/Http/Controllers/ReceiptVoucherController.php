@@ -260,8 +260,8 @@ class ReceiptVoucherController extends Controller
             'receiptVoucher' => $receiptVoucher,
             'amountInWords' => $amountInWords,
             'company' => [
-                'name' => 'CÔNG TY TNHH KIẾN TRÚC NỘI THẤT HOÀNG TÂM',
-                'address' => 'D13 Đại An, Nguyễn Thị Định, Phường 9, Thành phố Vũng Tàu, Tỉnh Bà Rịa - Vũng Tàu, Việt Nam'
+                'name' => 'CÔNG TY TNHH HOÀNG TÂM CONSULTANTS',
+                'address' => '152/4 Ba Cu, Phường 3, Thành phố Vũng Tàu, Tỉnh Bà Rịa - Vũng Tàu, Việt Nam'
             ]
         ]);
 
