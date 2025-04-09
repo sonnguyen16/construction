@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\BidPackage;
 use App\Models\Customer;
+use App\Models\Contractor;
 class ProjectController extends Controller
 {
     /**
@@ -112,9 +113,12 @@ class ProjectController extends Controller
             'receipt_vouchers.customer',
         ]);
 
+        $contractors = Contractor::whereNull('deleted_at')->get();
+
         return Inertia::render('Projects/Show', [
             'project' => $project,
-            'bidPackageStatuses' => BidPackage::STATUSES
+            'bidPackageStatuses' => BidPackage::STATUSES,
+            'contractors' => $contractors
         ]);
     }
 
