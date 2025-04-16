@@ -1503,15 +1503,14 @@ const openEditBidModal = async (bid) => {
     price: formatCurrency(bid.price || 0),
     notes: bid.notes || ''
   }
-  editBidFormErrors.value = {}
-  editSelectedContractor.value = bid.contractor
+  bidFormErrors.value = {}
+  editSelectedContractor.value = editBidForm.value.contractor_id
+    ? props.contractors.find((c) => c.id == editBidForm.value.contractor_id)
+    : null
+  contractorSearch.value = ''
 
-  try {
-    const response = await axios.get('/api/contractors')
-    contractors.value = response.data
-  } catch (error) {
-    console.error('Không thể lấy danh sách nhà thầu:', error)
-  }
+  // Sử dụng tất cả nhà thầu, không cần lọc
+  availableContractors.value = [...props.contractors]
 
   window.$('#editBidModal').modal('show')
 
@@ -1521,7 +1520,7 @@ const openEditBidModal = async (bid) => {
   try {
     // Khởi tạo InputPicker mới
     window.$('#edit_contractor_id').inputpicker({
-      data: contractors.value.map((contractor) => ({
+      data: availableContractors.value.map((contractor) => ({
         value: contractor.id,
         text: contractor.name,
         phone: contractor.phone || '',
@@ -1540,12 +1539,11 @@ const openEditBidModal = async (bid) => {
       headShow: true,
       width: '100%',
       selectMode: 'single',
-      responsive: true,
-      selectedValue: bid.contractor_id
+      responsive: true
     })
 
     // Lưu instance để có thể hủy sau này
-    editInputpickerInstance = window.$('#edit_contractor_id')
+    inputpickerInstance = window.$('#edit_contractor_id')
 
     // Xử lý sự kiện change
     window.$('#edit_contractor_id').on('change', function (e) {
@@ -1553,7 +1551,7 @@ const openEditBidModal = async (bid) => {
       editBidForm.value.contractor_id = contractorId
 
       if (contractorId) {
-        const contractor = contractors.value.find((c) => c.id == contractorId)
+        const contractor = availableContractors.value.find((c) => c.id == contractorId)
         if (contractor) {
           editSelectedContractor.value = contractor
         }
@@ -1562,7 +1560,8 @@ const openEditBidModal = async (bid) => {
       }
     })
   } catch (error) {
-    console.error('Lỗi khi khởi tạo InputPicker cho sửa nhà thầu:', error)
+    console.error('Lỗi khi khởi tạo InputPicker:', error)
+    alert('Có lỗi khi khởi tạo InputPicker. Vui lòng thử lại.')
   }
 }
 

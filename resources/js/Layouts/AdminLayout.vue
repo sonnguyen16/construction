@@ -158,6 +158,88 @@
 
             <li class="nav-item">
               <Link
+                :href="route('receipt-categories.index')"
+                class="nav-link"
+                :class="{ active: $page.component.startsWith('ReceiptCategories/') }"
+              >
+                <i class="fas fa-tags nav-icon"></i>
+                <p>Loại thu</p>
+              </Link>
+            </li>
+            <li class="nav-item">
+              <Link
+                :href="route('payment-categories.index')"
+                class="nav-link"
+                :class="{ active: $page.component.startsWith('PaymentCategories/') }"
+              >
+                <i class="fas fa-tags nav-icon"></i>
+                <p>Loại chi</p>
+              </Link>
+            </li>
+
+            <li class="nav-item">
+              <Link
+                :href="route('project-categories.index')"
+                class="nav-link"
+                :class="{ active: $page.component.startsWith('ProjectCategories/') }"
+              >
+                <i class="fas fa-project-diagram nav-icon"></i>
+                <p>Danh mục dự án</p>
+              </Link>
+            </li>
+            <li class="nav-item">
+              <Link
+                :href="route('categories.index')"
+                class="nav-link"
+                :class="{ active: $page.component.startsWith('Categories/') }"
+              >
+                <i class="fas fa-tags nav-icon"></i>
+                <p>Loại sản phẩm</p>
+              </Link>
+            </li>
+            <li class="nav-item">
+              <Link
+                :href="route('units.index')"
+                class="nav-link"
+                :class="{ active: $page.component.startsWith('Units/') }"
+              >
+                <i class="fas fa-ruler nav-icon"></i>
+                <p>Đơn vị tính</p>
+              </Link>
+            </li>
+            <li class="nav-item">
+              <Link
+                :href="route('products.index')"
+                class="nav-link"
+                :class="{ active: $page.component.startsWith('Products/') }"
+              >
+                <i class="fas fa-boxes nav-icon"></i>
+                <p>Sản phẩm</p>
+              </Link>
+            </li>
+            <li class="nav-item">
+              <Link
+                :href="route('import-vouchers.index')"
+                class="nav-link"
+                :class="{ active: $page.component.startsWith('ImportVouchers/') }"
+              >
+                <i class="fas fa-file-import nav-icon"></i>
+                <p>Phiếu nhập kho</p>
+              </Link>
+            </li>
+            <li class="nav-item">
+              <Link
+                :href="route('export-vouchers.index')"
+                class="nav-link"
+                :class="{ active: $page.component.startsWith('ExportVouchers/') }"
+              >
+                <i class="fas fa-file-export nav-icon"></i>
+                <p>Phiếu xuất kho</p>
+              </Link>
+            </li>
+
+            <li class="nav-item">
+              <Link
                 href="/users"
                 class="nav-link"
                 :class="{
@@ -227,10 +309,22 @@
 
 <script setup>
 import { Link, router, usePage } from '@inertiajs/vue3'
-import { onMounted, watch } from 'vue'
+import { onMounted, watch, computed } from 'vue'
 import { showSuccess, showError, showWarning } from '@/utils'
 
 const $page = usePage()
+
+// Kiểm tra xem menu kho có đang được kích hoạt không
+const isInventoryActive = computed(() => {
+  return (
+    $page.component.startsWith('Products/') ||
+    $page.component.startsWith('ImportVouchers/') ||
+    $page.component.startsWith('ExportVouchers/') ||
+    $page.component.startsWith('Categories/') ||
+    $page.component.startsWith('Units/') ||
+    $page.component.startsWith('ProjectCategories/')
+  )
+})
 
 const logout = () => {
   router.post('/logout')

@@ -6,6 +6,7 @@ use App\Models\PaymentVoucher;
 use App\Models\Contractor;
 use App\Models\BidPackage;
 use App\Models\Project;
+use App\Models\PaymentCategory;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -17,7 +18,7 @@ class PaymentVoucherController extends Controller
     public function index(Request $request)
     {
         $query = PaymentVoucher::query()->whereNull('deleted_at')
-            ->with(['contractor', 'bidPackage.project', 'creator']);
+            ->with(['contractor', 'bidPackage.project', 'creator', 'paymentCategory']);
 
         // Tạo một truy vấn cơ bản cho thống kê
         $statsQuery = PaymentVoucher::query()->whereNull('deleted_at');
@@ -61,6 +62,11 @@ class PaymentVoucherController extends Controller
             $statsQuery->where('bid_package_id', $request->bid_package_id);
         }
 
+        if ($request->has('payment_category_id') && $request->payment_category_id) {
+            $query->where('payment_category_id', $request->payment_category_id);
+            $statsQuery->where('payment_category_id', $request->payment_category_id);
+        }
+
         // Lọc theo trạng thái
         if ($request->has('status') && $request->status) {
             $query->where('status', $request->status);
@@ -98,14 +104,16 @@ class PaymentVoucherController extends Controller
         $contractors = Contractor::orderBy('name')->whereNull('deleted_at')->get();
         $projects = Project::orderBy('name')->whereNull('deleted_at')->get();
         $bidPackages = BidPackage::orderBy('created_at', 'desc')->whereNull('deleted_at')->get();
+        $paymentCategories = PaymentCategory::orderBy('name')->get();
 
         return Inertia::render('PaymentVouchers/Index', [
             'paymentVouchers' => $paymentVouchers,
             'contractors' => $contractors,
             'projects' => $projects,
             'bidPackages' => $bidPackages,
+            'paymentCategories' => $paymentCategories,
             'statuses' => $this->getStatuses(),
-            'filters' => $request->only(['search', 'contractor_id', 'project_id', 'bid_package_id', 'status', 'date_from', 'date_to']),
+            'filters' => $request->only(['search', 'contractor_id', 'project_id', 'bid_package_id', 'payment_category_id', 'status', 'date_from', 'date_to']),
             'totalPaymentCount' => $totalPaymentCount,
             'totalPaymentAmount' => $totalPaymentAmount,
             'totalPaymentAmountProposed' => $totalPaymentAmountProposed,
@@ -137,10 +145,13 @@ class PaymentVoucherController extends Controller
                 return $bidPackage;
             });
 
+        $paymentCategories = PaymentCategory::orderBy('name')->get();
+
         return Inertia::render('PaymentVouchers/Create', [
             'contractors' => $contractors,
             'projects' => $projects,
             'bidPackages' => $bidPackages,
+            'paymentCategories' => $paymentCategories,
             'statuses' => $this->getStatuses(),
             'preselectedContractorId' => request('contractor_id'),
             'preselectedProjectId' => request('project_id'),
@@ -156,7 +167,8 @@ class PaymentVoucherController extends Controller
         $validated = $request->validate([
             'contractor_id' => 'required|exists:contractors,id',
             'project_id' => 'required|exists:projects,id',
-            'bid_package_id' => 'nullable|exists:bid_packages,id',
+            'bid_package_id' => 'required|exists:bid_packages,id',
+            'payment_category_id' => 'nullable|exists:payment_categories,id',
             'amount' => 'required|numeric|min:0',
             'description' => 'nullable|string',
             'status' => 'required',
@@ -179,7 +191,7 @@ class PaymentVoucherController extends Controller
      */
     public function show(PaymentVoucher $paymentVoucher)
     {
-        $paymentVoucher->load(['contractor', 'project', 'bidPackage', 'creator', 'updater']);
+        $paymentVoucher->load(['contractor', 'project', 'bidPackage', 'creator', 'updater', 'paymentCategory']);
 
         return Inertia::render('PaymentVouchers/Show', [
             'paymentVoucher' => $paymentVoucher,
@@ -192,17 +204,19 @@ class PaymentVoucherController extends Controller
      */
     public function edit(PaymentVoucher $paymentVoucher)
     {
-        $paymentVoucher->load(['contractor', 'bidPackage', 'creator', 'updater']);
+        $paymentVoucher->load(['contractor', 'bidPackage', 'creator', 'updater', 'paymentCategory']);
 
         $contractors = Contractor::orderBy('name')->whereNull('deleted_at')->get();
         $projects = Project::orderBy('name')->whereNull('deleted_at')-> get();
         $bidPackages = BidPackage::with('project')->orderBy('created_at', 'desc')->get();
+        $paymentCategories = PaymentCategory::orderBy('name')->get();
 
         return Inertia::render('PaymentVouchers/Edit', [
             'paymentVoucher' => $paymentVoucher,
             'contractors' => $contractors,
             'projects' => $projects,
             'bidPackages' => $bidPackages,
+            'paymentCategories' => $paymentCategories,
             'statuses' => $this->getStatuses()
         ]);
     }
@@ -215,7 +229,8 @@ class PaymentVoucherController extends Controller
         $validated = $request->validate([
             'contractor_id' => 'required|exists:contractors,id',
             'project_id' => 'required|exists:projects,id',
-            'bid_package_id' => 'nullable|exists:bid_packages,id',
+            'bid_package_id' => 'required|exists:bid_packages,id',
+            'payment_category_id' => 'nullable|exists:payment_categories,id',
             'amount' => 'required|numeric|min:0',
             'description' => 'nullable|string',
             'status' => 'required',

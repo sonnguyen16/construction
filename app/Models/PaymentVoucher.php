@@ -14,6 +14,7 @@ class PaymentVoucher extends Model
         'code',
         'description',
         'contractor_id',
+        'payment_category_id',
         'project_id',
         'bid_package_id',
         'amount',
@@ -88,6 +89,14 @@ class PaymentVoucher extends Model
     public function project()
     {
         return $this->belongsTo(Project::class);
+    }
+
+    /**
+     * Lấy loại chi liên quan đến phiếu chi
+     */
+    public function paymentCategory()
+    {
+        return $this->belongsTo(PaymentCategory::class);
     }
 
     /**

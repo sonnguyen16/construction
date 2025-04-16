@@ -8,6 +8,7 @@ use Inertia\Inertia;
 use App\Models\BidPackage;
 use App\Models\Customer;
 use App\Models\Contractor;
+use App\Models\ProjectCategory;
 class ProjectController extends Controller
 {
     /**
@@ -51,8 +52,10 @@ class ProjectController extends Controller
     public function create()
     {
         $customers = Customer::whereNull('deleted_at')->get();
+        $projectCategories = ProjectCategory::orderBy('name')->get();
         return Inertia::render('Projects/Create', [
-            'customers' => $customers
+            'customers' => $customers,
+            'projectCategories' => $projectCategories
         ]);
     }
 
@@ -67,7 +70,19 @@ class ProjectController extends Controller
             'description' => 'nullable|string',
             'status' => 'required|in:active,completed,cancelled',
             'customer_id' => 'required|exists:customers,id',
+            'project_category_id' => 'nullable|exists:project_categories,id',
         ]);
+
+        // Nếu có chọn danh mục dự án, thêm tiền tố vào mã dự án
+        if (!empty($validated['project_category_id'])) {
+            $category = ProjectCategory::find($validated['project_category_id']);
+            if ($category) {
+                // Thêm tiền tố vào mã dự án nếu chưa có
+                if (!str_starts_with($validated['code'], $category->name . '_')) {
+                    $validated['code'] = $category->name . '_' . $validated['code'];
+                }
+            }
+        }
 
         Project::create($validated);
 
@@ -137,9 +152,11 @@ class ProjectController extends Controller
     public function edit(Project $project)
     {
         $customers = Customer::whereNull('deleted_at')->get();
+        $projectCategories = ProjectCategory::orderBy('name')->get();
         return Inertia::render('Projects/Edit', [
             'project' => $project,
-            'customers' => $customers
+            'customers' => $customers,
+            'projectCategories' => $projectCategories
         ]);
     }
 
@@ -154,7 +171,27 @@ class ProjectController extends Controller
             'description' => 'nullable|string',
             'status' => 'required|in:active,completed,cancelled',
             'customer_id' => 'required|exists:customers,id',
+            'project_category_id' => 'nullable|exists:project_categories,id',
         ]);
+
+        // Nếu có chọn danh mục dự án và khác với danh mục hiện tại
+        if (!empty($validated['project_category_id']) && $project->project_category_id != $validated['project_category_id']) {
+            $category = ProjectCategory::find($validated['project_category_id']);
+            if ($category) {
+                // Xóa tiền tố cũ nếu có
+                if ($project->projectCategory) {
+                    $oldPrefix = $project->projectCategory->name . '_';
+                    if (str_starts_with($validated['code'], $oldPrefix)) {
+                        $validated['code'] = substr($validated['code'], strlen($oldPrefix));
+                    }
+                }
+
+                // Thêm tiền tố mới vào mã dự án nếu chưa có
+                if (!str_starts_with($validated['code'], $category->name . '_')) {
+                    $validated['code'] = $category->name . '_' . $validated['code'];
+                }
+            }
+        }
 
         $project->update($validated);
 

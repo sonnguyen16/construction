@@ -6,6 +6,7 @@ use App\Models\ReceiptVoucher;
 use App\Models\Customer;
 use App\Models\Project;
 use App\Models\BidPackage;
+use App\Models\ReceiptCategory;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
@@ -18,7 +19,7 @@ class ReceiptVoucherController extends Controller
     public function index(Request $request)
     {
         $query = ReceiptVoucher::query()->whereNull('deleted_at')
-            ->with(['customer', 'project', 'bidPackage', 'creator']);
+            ->with(['customer', 'project', 'bidPackage', 'creator', 'receiptCategory']);
 
         // Tạo một truy vấn cơ bản cho thống kê
         $statsQuery = ReceiptVoucher::query()->whereNull('deleted_at');
@@ -56,6 +57,11 @@ class ReceiptVoucherController extends Controller
             $statsQuery->where('project_id', $request->project_id);
         }
 
+        if ($request->has('receipt_category_id') && $request->receipt_category_id) {
+            $query->where('receipt_category_id', $request->receipt_category_id);
+            $statsQuery->where('receipt_category_id', $request->receipt_category_id);
+        }
+
         // Lọc theo trạng thái
         if ($request->has('status') && $request->status) {
             $query->where('status', $request->status);
@@ -90,13 +96,15 @@ class ReceiptVoucherController extends Controller
         // Lấy danh sách khách hàng, dự án và gói thầu cho bộ lọc
         $customers = Customer::orderBy('name')->whereNull('deleted_at')->get();
         $projects = Project::orderBy('name')->whereNull('deleted_at')->get();
+        $receiptCategories = ReceiptCategory::orderBy('name')->get();
 
         return Inertia::render('ReceiptVouchers/Index', [
             'receiptVouchers' => $receiptVouchers,
             'customers' => $customers,
             'projects' => $projects,
+            'receiptCategories' => $receiptCategories,
             'statuses' => $this->getStatuses(),
-            'filters' => $request->only(['search', 'customer_id', 'project_id',  'status', 'date_from', 'date_to']),
+            'filters' => $request->only(['search', 'customer_id', 'project_id', 'receipt_category_id', 'status', 'date_from', 'date_to']),
             'totalReceiptCount' => $totalReceiptCount,
             'totalReceiptAmount' => $totalReceiptAmount,
             'totalReceiptAmountUnpaid' => $totalReceiptAmountUnpaid,
@@ -110,6 +118,7 @@ class ReceiptVoucherController extends Controller
     {
         $customers = Customer::orderBy('name')->get();
         $projects = Project::orderBy('name')->get();
+        $receiptCategories = ReceiptCategory::orderBy('name')->get();
 
         // Lấy thông tin từ request nếu có
         $preselectedCustomerId = $request->input('customer_id');
@@ -118,6 +127,7 @@ class ReceiptVoucherController extends Controller
         return Inertia::render('ReceiptVouchers/Create', [
             'customers' => $customers,
             'projects' => $projects,
+            'receiptCategories' => $receiptCategories,
             'statuses' => $this->getStatuses(),
             'preselectedCustomerId' => $preselectedCustomerId,
             'preselectedProjectId' => $preselectedProjectId,
@@ -132,6 +142,7 @@ class ReceiptVoucherController extends Controller
         $validated = $request->validate([
             'customer_id' => 'required|exists:customers,id',
             'project_id' => 'required|exists:projects,id',
+            'receipt_category_id' => 'nullable|exists:receipt_categories,id',
             'amount' => 'required|numeric|min:0',
             'description' => 'nullable|string',
             'status' => 'required|in:paid,unpaid',
@@ -167,15 +178,17 @@ class ReceiptVoucherController extends Controller
      */
     public function edit(ReceiptVoucher $receiptVoucher)
     {
-        $receiptVoucher->load(['customer', 'project', 'bidPackage', 'creator', 'updater']);
+        $receiptVoucher->load(['customer', 'project', 'bidPackage', 'creator', 'updater', 'receiptCategory']);
 
         $customers = Customer::orderBy('name')->get();
         $projects = Project::orderBy('name')->get();
+        $receiptCategories = ReceiptCategory::orderBy('name')->get();
 
         return Inertia::render('ReceiptVouchers/Edit', [
             'receiptVoucher' => $receiptVoucher,
             'customers' => $customers,
             'projects' => $projects,
+            'receiptCategories' => $receiptCategories,
             'statuses' => $this->getStatuses()
         ]);
     }
@@ -188,6 +201,7 @@ class ReceiptVoucherController extends Controller
         $validated = $request->validate([
             'customer_id' => 'required|exists:customers,id',
             'project_id' => 'nullable|exists:projects,id',
+            'receipt_category_id' => 'nullable|exists:receipt_categories,id',
             'amount' => 'required|numeric|min:0',
             'description' => 'nullable|string',
             'status' => 'required|in:paid,unpaid',

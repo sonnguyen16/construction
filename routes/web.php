@@ -11,7 +11,14 @@ use App\Http\Controllers\BidController;
 use App\Http\Controllers\PaymentVoucherController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\ReceiptVoucherController;
-use App\Http\Controllers\WorkItemController;
+use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\UnitController;
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ImportVoucherController;
+use App\Http\Controllers\ExportVoucherController;
+use App\Http\Controllers\ReceiptCategoryController;
+use App\Http\Controllers\PaymentCategoryController;
+use App\Http\Controllers\ProjectCategoryController;
 
 /*
 |--------------------------------------------------------------------------
@@ -78,6 +85,30 @@ Route::middleware('auth')->group(function () {
     // Cập nhật thứ tự gói thầu
     Route::post('/bid-packages/update-order', [BidPackageController::class, 'updateOrder'])
         ->name('bid-packages.update-order');
+    // Quản lý danh mục
+    Route::resource('categories', CategoryController::class);
+
+    // Quản lý đơn vị
+    Route::resource('units', UnitController::class)->except(['show']);
+
+    // Quản lý loại thu
+    Route::resource('receipt-categories', ReceiptCategoryController::class)->except(['show']);
+
+    // Quản lý loại chi
+    Route::resource('payment-categories', PaymentCategoryController::class)->except(['show']);
+
+    // Quản lý danh mục dự án
+    Route::resource('project-categories', ProjectCategoryController::class)->except(['show']);
+
+    // Quản lý sản phẩm
+    Route::resource('products', ProductController::class);
+
+    // Quản lý phiếu nhập kho
+    Route::resource('import-vouchers', ImportVoucherController::class);
+
+    // Quản lý phiếu xuất kho
+    Route::resource('export-vouchers', ExportVoucherController::class);
+
     // Deprecated: Quản lý hạng mục con của gói thầu (sử dụng BidPackage thay thế)
     // Route::post('/bid-packages/{bidPackage}/work-items', [WorkItemController::class, 'store'])->name('work-items.store');
     // Route::put('/work-items/{workItem}', [WorkItemController::class, 'update'])->name('work-items.update');

@@ -14,6 +14,7 @@ class ReceiptVoucher extends Model
         'code',
         'description',
         'customer_id',
+        'receipt_category_id',
         'project_id',
         'bid_package_id',
         'amount',
@@ -85,6 +86,14 @@ class ReceiptVoucher extends Model
     public function bidPackage()
     {
         return $this->belongsTo(BidPackage::class);
+    }
+
+    /**
+     * Quan hệ với loại thu
+     */
+    public function receiptCategory()
+    {
+        return $this->belongsTo(ReceiptCategory::class);
     }
 
     /**

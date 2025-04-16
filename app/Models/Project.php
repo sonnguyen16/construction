@@ -15,6 +15,7 @@ class Project extends Model
         'description',
         'status',
         'customer_id',
+        'project_category_id',
         'created_by',
         'updated_by',
     ];
@@ -95,5 +96,13 @@ class Project extends Model
     public function customer()
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    /**
+     * Quan hệ với danh mục dự án
+     */
+    public function projectCategory()
+    {
+        return $this->belongsTo(ProjectCategory::class);
     }
 }

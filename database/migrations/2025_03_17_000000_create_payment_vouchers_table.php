@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('payment_vouchers', function (Blueprint $table) {
             $table->id();
-            $table->string('code')->unique(); // Mã phiếu chi (tự động)
+            $table->string('code'); // Mã phiếu chi (tự động)
             $table->text('description')->nullable(); // Mô tả (không bắt buộc)
             $table->foreignId('contractor_id')->constrained(); // Nhà thầu
             $table->foreignId('bid_package_id')->nullable()->constrained(); // Gói thầu (có thể null)

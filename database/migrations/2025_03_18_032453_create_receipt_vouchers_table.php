@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('receipt_vouchers', function (Blueprint $table) {
             $table->id();
-            $table->string('code')->unique();
+            $table->string('code');
             $table->text('description')->nullable();
             $table->foreignId('customer_id')->constrained('customers');
             $table->foreignId('project_id')->constrained('projects');

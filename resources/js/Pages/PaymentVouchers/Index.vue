@@ -150,6 +150,22 @@
               </div>
               <div class="col-md-3">
                 <div class="form-group">
+                  <label for="payment_category_id">Loại chi:</label>
+                  <select
+                    class="form-control"
+                    id="payment_category_id"
+                    v-model="filters.payment_category_id"
+                    @change="applyFilters"
+                  >
+                    <option value="">Tất cả loại chi</option>
+                    <option v-for="category in paymentCategories" :key="category.id" :value="category.id">
+                      {{ category.name }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="form-group">
                   <label for="status">Trạng thái:</label>
                   <select class="form-control" id="status" v-model="filters.status" @change="applyFilters">
                     <option value="">Tất cả trạng thái</option>
@@ -175,6 +191,7 @@
                     <th>Nhà thầu</th>
                     <th>Dự án</th>
                     <th>Gói thầu</th>
+                    <th>Loại chi</th>
                     <th>Số tiền</th>
                     <th>Mô tả</th>
                     <th>Người tạo</th>
@@ -196,6 +213,12 @@
                     <td>
                       <span v-if="voucher.bid_package">
                         {{ voucher.bid_package.code }} - {{ voucher.bid_package.name }}
+                      </span>
+                      <span v-else>-</span>
+                    </td>
+                    <td>
+                      <span v-if="voucher.payment_category">
+                        {{ voucher.payment_category.name }}
                       </span>
                       <span v-else>-</span>
                     </td>
@@ -264,6 +287,7 @@ const props = defineProps({
   contractors: Array,
   projects: Array,
   bidPackages: Array,
+  paymentCategories: Array,
   filters: Object,
   statuses: Object,
   totalPaymentCount: Number,
@@ -277,6 +301,7 @@ const filters = ref({
   contractor_id: props.filters.contractor_id || '',
   project_id: props.filters.project_id || '',
   bid_package_id: props.filters.bid_package_id || '',
+  payment_category_id: props.filters.payment_category_id || '',
   date_from: props.filters.date_from || '',
   date_to: props.filters.date_to || '',
   status: props.filters.status || ''
@@ -312,6 +337,7 @@ const applyFilters = () => {
       contractor_id: filters.value.contractor_id,
       project_id: filters.value.project_id,
       bid_package_id: filters.value.bid_package_id,
+      payment_category_id: filters.value.payment_category_id,
       date_from: filters.value.date_from,
       date_to: filters.value.date_to,
       status: filters.value.status
@@ -334,6 +360,7 @@ const resetFilters = () => {
     contractor_id: '',
     project_id: '',
     bid_package_id: '',
+    payment_category_id: '',
     date_from: '',
     date_to: '',
     status: ''

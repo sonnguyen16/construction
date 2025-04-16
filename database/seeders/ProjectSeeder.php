@@ -7,6 +7,7 @@ use App\Models\BidPackage;
 use App\Models\Bid;
 use App\Models\Contractor;
 use App\Models\Customer;
+use App\Models\ProjectCategory;
 use Illuminate\Database\Seeder;
 
 class ProjectSeeder extends Seeder
@@ -16,9 +17,10 @@ class ProjectSeeder extends Seeder
      */
     public function run(): void
     {
-        // Lấy danh sách nhà thầu
+        // Lấy danh sách nhà thầu, khách hàng và danh mục dự án
         $contractors = Contractor::all();
         $customers = Customer::all();
+        $projectCategories = ProjectCategory::all();
 
         if ($contractors->isEmpty()) {
             $this->command->info('Không có nhà thầu nào. Hãy chạy ContractorSeeder trước.');
@@ -30,12 +32,25 @@ class ProjectSeeder extends Seeder
             return;
         }
 
+        if ($projectCategories->isEmpty()) {
+            $this->command->info('Không có danh mục dự án nào. Hãy chạy ProjectCategorySeeder trước.');
+            return;
+        }
+
         // Tạo 5 dự án mẫu
         for ($i = 1; $i <= 5; $i++) {
+            // Chọn ngẫu nhiên một danh mục dự án
+            $projectCategory = $projectCategories->random();
+            $projectCode = 'PRJ-' . str_pad($i, 3, '0', STR_PAD_LEFT);
+
+            // Thêm tiền tố danh mục vào mã dự án
+            $projectCode = $projectCategory->name . '_' . $projectCode;
+
             $project = Project::create([
-                'code' => 'PRJ-' . str_pad($i, 3, '0', STR_PAD_LEFT),
+                'code' => $projectCode,
                 'name' => 'Dự án ' . $i,
                 'customer_id' => $customers->random()->id,
+                'project_category_id' => $projectCategory->id,
                 'description' => 'Mô tả chi tiết cho dự án ' . $i,
                 'status' => $i % 3 == 0 ? 'completed' : ($i % 3 == 1 ? 'active' : 'cancelled'),
             ]);

@@ -1,9 +1,0 @@
----
-description: 
-globs: 
-alwaysApply: true
----
-
-# Your rule content
-
-- Don't genarate command clear cache for route, view, config like php artisan view:clear...

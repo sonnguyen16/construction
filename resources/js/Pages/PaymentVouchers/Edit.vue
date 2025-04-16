@@ -95,6 +95,24 @@
                     <div class="invalid-feedback" v-if="form.errors.status">{{ form.errors.status }}</div>
                   </div>
 
+                  <div class="form-group">
+                    <label for="payment_category_id">Loại chi</label>
+                    <select
+                      class="form-control"
+                      id="payment_category_id"
+                      v-model="form.payment_category_id"
+                      :class="{ 'is-invalid': form.errors.payment_category_id }"
+                    >
+                      <option value="">Chọn loại chi</option>
+                      <option v-for="category in paymentCategories" :key="category.id" :value="category.id">
+                        {{ category.name }}
+                      </option>
+                    </select>
+                    <div class="invalid-feedback" v-if="form.errors.payment_category_id">
+                      {{ form.errors.payment_category_id }}
+                    </div>
+                  </div>
+
                   <div class="form-group" v-if="form.status === 'paid'">
                     <label for="payment_date">Ngày chi</label>
                     <input
@@ -150,6 +168,7 @@ const props = defineProps({
   contractors: Array,
   projects: Array,
   bidPackages: Array,
+  paymentCategories: Array,
   statuses: Object
 })
 
@@ -157,6 +176,7 @@ const form = useForm({
   contractor_id: props.paymentVoucher.contractor_id || '',
   project_id: props.paymentVoucher.project_id || '',
   bid_package_id: props.paymentVoucher.bid_package_id || '',
+  payment_category_id: props.paymentVoucher.payment_category_id || '',
   amount: formatCurrency(props.paymentVoucher.amount) || '',
   status: props.paymentVoucher.status || 'proposed',
   payment_date: props.paymentVoucher.payment_date

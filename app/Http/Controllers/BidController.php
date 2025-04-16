@@ -65,8 +65,8 @@ class BidController extends Controller
 
         if($bid->is_selected){
             $bidPackage = $bid->bidPackage;
-            $bidPackage->selected_contractor_id = $bid->contractor_id;
-            $bidPackage->client_price = $bid->price + $bidPackage->additional_price;
+            $bidPackage->selected_contractor_id = $validated['contractor_id'];
+            $bidPackage->client_price = $validated['price'] + $bidPackage->additional_price;
             $bidPackage->status = 'awarded';
             $bidPackage->save();
 

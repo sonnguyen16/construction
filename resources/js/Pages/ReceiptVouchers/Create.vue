@@ -82,6 +82,24 @@
                     <div class="invalid-feedback" v-if="form.errors.status">{{ form.errors.status }}</div>
                   </div>
 
+                  <div class="form-group">
+                    <label for="receipt_category_id">Loại thu</label>
+                    <select
+                      class="form-control"
+                      id="receipt_category_id"
+                      v-model="form.receipt_category_id"
+                      :class="{ 'is-invalid': form.errors.receipt_category_id }"
+                    >
+                      <option value="">Chọn loại thu</option>
+                      <option v-for="category in receiptCategories" :key="category.id" :value="category.id">
+                        {{ category.name }}
+                      </option>
+                    </select>
+                    <div class="invalid-feedback" v-if="form.errors.receipt_category_id">
+                      {{ form.errors.receipt_category_id }}
+                    </div>
+                  </div>
+
                   <div class="form-group" v-if="form.status === 'paid'">
                     <label for="payment_date">Ngày thu</label>
                     <input
@@ -136,6 +154,7 @@ const props = defineProps({
   customers: Array,
   projects: Array,
   bidPackages: Array,
+  receiptCategories: Array,
   statuses: Object,
   preselectedCustomerId: [String, Number],
   preselectedProjectId: [String, Number]
@@ -144,6 +163,7 @@ const props = defineProps({
 const form = useForm({
   customer_id: props.preselectedCustomerId || '',
   project_id: props.preselectedProjectId || '',
+  receipt_category_id: '',
   amount: '',
   status: 'unpaid',
   payment_date: '',
@@ -231,7 +251,7 @@ onBeforeUnmount(() => {
 
 const onStatusChange = () => {
   if (form.status === 'paid' && !form.payment_date) {
-    form.payment_date = new Date().toISOString().substr(0, 10)
+    form.payment_date = new Date().toISOString().substring(0, 10)
   }
 }
 

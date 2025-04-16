@@ -54,6 +54,25 @@
                 </div>
               </div>
               <div class="form-group">
+                <label for="project_category_id">Danh mục dự án</label>
+                <select
+                  class="form-control"
+                  id="project_category_id"
+                  v-model="form.project_category_id"
+                  @change="updateProjectCode"
+                  :class="{ 'is-invalid': form.errors.project_category_id }"
+                >
+                  <option value="">Chọn danh mục dự án</option>
+                  <option v-for="category in projectCategories" :key="category.id" :value="category.id">
+                    {{ category.name }}
+                  </option>
+                </select>
+                <div class="invalid-feedback" v-if="form.errors.project_category_id">
+                  {{ form.errors.project_category_id }}
+                </div>
+              </div>
+
+              <div class="form-group">
                 <label for="description">Ghi chú</label>
                 <textarea
                   class="form-control"
@@ -109,13 +128,15 @@ import { onMounted, onBeforeUnmount } from 'vue'
 
 const props = defineProps({
   project: Object,
-  customers: Array
+  customers: Array,
+  projectCategories: Array
 })
 
 const form = useForm({
   code: props.project.code,
   name: props.project.name,
   customer_id: props.project.customer_id || '',
+  project_category_id: props.project.project_category_id || '',
   description: props.project.description || '',
   status: props.project.status,
   _method: 'PUT'
@@ -165,6 +186,30 @@ onBeforeUnmount(() => {
     console.error('Lỗi khi hủy InputPicker:', e)
   }
 })
+
+// Cập nhật mã dự án khi thay đổi danh mục
+const updateProjectCode = () => {
+  if (form.project_category_id && form.code) {
+    const category = props.projectCategories.find((c) => c.id == form.project_category_id)
+    if (category) {
+      // Kiểm tra xem mã dự án đã có tiền tố danh mục chưa
+      const prefix = category.name + '_'
+      if (!form.code.startsWith(prefix)) {
+        // Xóa tiền tố cũ nếu có
+        const oldPrefix = props.projectCategories.find((c) => {
+          return c.id != category.id && form.code.startsWith(c.name + '_')
+        })
+
+        if (oldPrefix) {
+          form.code = form.code.substring((oldPrefix.name + '_').length)
+        }
+
+        // Thêm tiền tố mới
+        form.code = prefix + form.code
+      }
+    }
+  }
+}
 
 const submit = () => {
   form.customer_id = window.$('#customer_id').val()

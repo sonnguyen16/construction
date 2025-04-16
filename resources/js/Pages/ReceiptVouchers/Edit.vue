@@ -78,6 +78,24 @@
                     <div class="invalid-feedback" v-if="form.errors.status">{{ form.errors.status }}</div>
                   </div>
 
+                  <div class="form-group">
+                    <label for="receipt_category_id">Loại thu</label>
+                    <select
+                      class="form-control"
+                      id="receipt_category_id"
+                      v-model="form.receipt_category_id"
+                      :class="{ 'is-invalid': form.errors.receipt_category_id }"
+                    >
+                      <option value="">Chọn loại thu</option>
+                      <option v-for="category in receiptCategories" :key="category.id" :value="category.id">
+                        {{ category.name }}
+                      </option>
+                    </select>
+                    <div class="invalid-feedback" v-if="form.errors.receipt_category_id">
+                      {{ form.errors.receipt_category_id }}
+                    </div>
+                  </div>
+
                   <div class="form-group" v-if="form.status === 'paid'">
                     <label for="payment_date">Ngày thu</label>
                     <input
@@ -126,19 +144,21 @@
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { Link, useForm } from '@inertiajs/vue3'
 import { parseCurrency, showSuccess, formatCurrency, formatNumberInput } from '@/utils'
-import { onMounted, onBeforeUnmount } from 'vue'
+import { computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 
 const props = defineProps({
   receiptVoucher: Object,
   customers: Array,
   projects: Array,
   bidPackages: Array,
+  receiptCategories: Array,
   statuses: Object
 })
 
 const form = useForm({
   customer_id: props.receiptVoucher.customer_id || '',
   project_id: props.receiptVoucher.project_id || '',
+  receipt_category_id: props.receiptVoucher.receipt_category_id || '',
   amount: formatCurrency(props.receiptVoucher.amount || 0),
   status: props.receiptVoucher.status || 'unpaid',
   payment_date: props.receiptVoucher.payment_date
@@ -147,9 +167,10 @@ const form = useForm({
   description: props.receiptVoucher.description || ''
 })
 
-// InputPicker instances để có thể hủy khi component unmount
+// Khai báo các biến InputPicker
 let customerPicker = null
 let projectPicker = null
+let receiptCategoryPicker = null
 let statusPicker = null
 
 // Khởi tạo InputPicker sau khi component được mount
@@ -187,7 +208,7 @@ onMounted(() => {
 
   // Sự kiện thay đổi khách hàng
   window.$('#customer_id').on('change', function () {
-    form.customer_id = window.$(this).inputpicker('val')
+    form.customer_id = window.$(this).val()
   })
 
   // Khởi tạo InputPicker cho dự án
@@ -217,18 +238,102 @@ onMounted(() => {
     }
   }
 
+  window.$('#project_id').inputpicker('val', form.project_id)
+
   // Sự kiện thay đổi dự án
-  window.$('#project_id').on('change', function () {
-    form.project_id = window.$(this).inputpicker('val')
+  window.$('#project_id').on('change', async function () {
+    const newProjectId = window.$(this).val()
+    form.project_id = newProjectId
+
+    // Đợi Vue cập nhật DOM
+    await nextTick()
+
+    // Cập nhật mô tả nếu cần
+    if (newProjectId) {
+      const selectedProject = props.projects.find((p) => p.id == newProjectId)
+      if (selectedProject) {
+        // Có thể cập nhật mô tả dựa trên dự án đã chọn
+        form.description = `Thu tiền từ dự án ${selectedProject.name}`
+      }
+    }
+  })
+
+  // Khởi tạo InputPicker cho loại thu
+  receiptCategoryPicker = window.$('#receipt_category_id').inputpicker({
+    data: props.receiptCategories.map((category) => ({
+      value: category.id,
+      text: category.name
+    })),
+    fields: [{ name: 'text', text: 'Tên loại thu' }],
+    fieldText: 'text',
+    fieldValue: 'value',
+    filterOpen: false,
+    headShow: true,
+    autoOpen: true,
+    width: '100%'
+  })
+
+  // Đặt giá trị ban đầu cho loại thu
+  if (form.receipt_category_id) {
+    window.$('#receipt_category_id').inputpicker('val', form.receipt_category_id)
+  }
+
+  // Sự kiện thay đổi loại thu
+  window.$('#receipt_category_id').on('change', function () {
+    form.receipt_category_id = window.$(this).val()
   })
 })
+
+const safeDestroyInputPicker = (selector) => {
+  try {
+    const $el = window.$(selector)
+
+    // Kiểm tra xem phần tử có tồn tại không
+    if ($el.length === 0) return
+
+    // Hủy sự kiện trước
+    $el.off('change')
+
+    // Kiểm tra xem inputpicker đã được khởi tạo chưa
+    const instance = $el.data('inputpicker')
+    if (instance) {
+      // Hủy các dropdown mở
+      window.$('.inputpicker-div').remove()
+
+      // Xóa data
+      $el.removeData('inputpicker')
+
+      // Xóa các thuộc tính liên quan đến inputpicker
+      $el.removeAttr('data-inputpicker-uuid')
+      $el.removeAttr('data-value')
+    }
+  } catch (e) {
+    console.error(`Lỗi khi hủy InputPicker ${selector}:`, e)
+  }
+}
 
 // Hủy InputPicker khi component unmount
 onBeforeUnmount(() => {
   try {
-    if (customerPicker) window.$('#customer_id').inputpicker('destroy')
-    if (projectPicker) window.$('#project_id').inputpicker('destroy')
-    if (statusPicker) window.$('#status').inputpicker('destroy')
+    if (customerPicker) {
+      window.$('#customer_id').off('change')
+      window.$('#customer_id').inputpicker('destroy')
+    }
+
+    if (projectPicker) {
+      window.$('#project_id').off('change')
+      window.$('#project_id').inputpicker('destroy')
+    }
+
+    if (receiptCategoryPicker) {
+      window.$('#receipt_category_id').off('change')
+      window.$('#receipt_category_id').inputpicker('destroy')
+    }
+
+    if (statusPicker) {
+      window.$('#status').off('change')
+      window.$('#status').inputpicker('destroy')
+    }
   } catch (e) {
     console.error('Lỗi khi hủy InputPicker:', e)
   }
@@ -238,7 +343,7 @@ onBeforeUnmount(() => {
 const onStatusChange = () => {
   // Tự động đặt ngày thanh toán
   if (form.status === 'paid' && !form.payment_date) {
-    form.payment_date = new Date().toISOString().substr(0, 10)
+    form.payment_date = new Date().toISOString().substring(0, 10)
   }
 }
 
@@ -253,3 +358,16 @@ const submit = () => {
   })
 }
 </script>
+
+<style>
+/* Đảm bảo menu hiển thị trên các thành phần khác */
+.inputpicker-div {
+  z-index: 10000 !important;
+  overflow: auto !important;
+}
+
+/* Tránh xử lý sự kiện nhiều lần khi click */
+.inputpicker-div * {
+  pointer-events: auto;
+}
+</style>

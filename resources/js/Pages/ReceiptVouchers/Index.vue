@@ -120,6 +120,22 @@
 
               <div class="col-md-3">
                 <div class="form-group">
+                  <label for="receipt_category_id">Loại thu:</label>
+                  <select
+                    class="form-control"
+                    id="receipt_category_id"
+                    v-model="filters.receipt_category_id"
+                    @change="applyFilters"
+                  >
+                    <option value="">Tất cả loại thu</option>
+                    <option v-for="category in receiptCategories" :key="category.id" :value="category.id">
+                      {{ category.name }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="form-group">
                   <label for="status">Trạng thái:</label>
                   <select class="form-control" id="status" v-model="filters.status" @change="applyFilters">
                     <option value="">Tất cả trạng thái</option>
@@ -144,6 +160,7 @@
                     <th>Mã phiếu thu</th>
                     <th>Khách hàng</th>
                     <th>Dự án</th>
+                    <th>Loại thu</th>
                     <th>Số tiền</th>
                     <th>Trạng thái</th>
                     <th>Ngày tạo</th>
@@ -157,6 +174,12 @@
                     <td>
                       <span v-if="voucher.project">
                         {{ voucher.project.name }}
+                      </span>
+                      <span v-else>-</span>
+                    </td>
+                    <td>
+                      <span v-if="voucher.receipt_category">
+                        {{ voucher.receipt_category.name }}
                       </span>
                       <span v-else>-</span>
                     </td>
@@ -222,6 +245,7 @@ const props = defineProps({
   customers: Array,
   projects: Array,
   bidPackages: Array,
+  receiptCategories: Array,
   statuses: Object,
   filters: Object,
   totalReceiptCount: Number,
@@ -234,6 +258,7 @@ const filters = ref({
   customer_id: props.filters.customer_id || '',
   project_id: props.filters.project_id || '',
   bid_package_id: props.filters.bid_package_id || '',
+  receipt_category_id: props.filters.receipt_category_id || '',
   status: props.filters.status || '',
   date_from: props.filters.date_from || '',
   date_to: props.filters.date_to || ''
@@ -253,6 +278,7 @@ const applyFilters = () => {
       customer_id: filters.value.customer_id,
       project_id: filters.value.project_id,
       bid_package_id: filters.value.bid_package_id,
+      receipt_category_id: filters.value.receipt_category_id,
       status: filters.value.status,
       date_from: filters.value.date_from,
       date_to: filters.value.date_to
@@ -271,6 +297,7 @@ const resetFilters = () => {
     customer_id: '',
     project_id: '',
     bid_package_id: '',
+    receipt_category_id: '',
     status: '',
     date_from: '',
     date_to: ''

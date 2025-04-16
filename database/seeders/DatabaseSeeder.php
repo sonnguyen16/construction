@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             ContractorSeeder::class,
             CustomerSeeder::class,
+            ProjectCategorySeeder::class,
             ProjectSeeder::class,
             PaymentVoucherSeeder::class,
             ReceiptVoucherSeeder::class,
