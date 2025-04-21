@@ -299,7 +299,7 @@ const addItem = () => {
     form.items.push({
       product_id: currentItem.value.product_id,
       quantity: parseInt(currentItem.value.quantity),
-      export_price: currentItem.value.export_price
+      export_price: parseCurrency(currentItem.value.export_price)
     })
   }
 
