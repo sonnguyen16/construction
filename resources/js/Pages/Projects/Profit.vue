@@ -37,8 +37,8 @@
                   <td>{{ bidPackage.code }}</td>
                   <td>{{ bidPackage.name }}</td>
                   <td>{{ bidPackage.selected_contractor ? bidPackage.selected_contractor.name : '-' }}</td>
-                  <td>{{ formatCurrency(bidPackage.estimated_price || 0) }}</td>
-                  <td>{{ formatCurrency(bidPackage.client_price || 0) }}</td>
+                  <td>{{ formatCurrency(bidPackage.display_estimated_price || 0) }}</td>
+                  <td>{{ formatCurrency(bidPackage.display_client_price || 0) }}</td>
                   <td></td>
                   <td>{{ formatCurrency(getTotalPaymentAmount(bidPackage)) }}</td>
                   <!-- Lợi nhuận = giá dự thầu - giá giao thầu -->
@@ -81,49 +81,17 @@ const props = defineProps({
   project: Object
 })
 
-const profitPercentages = ref({})
-
-// Khởi tạo giá trị phần trăm lợi nhuận cho mỗi gói thầu
-onMounted(() => {
-  props.project.bid_packages.forEach((bidPackage) => {
-    // Nếu đã có tỷ lệ lợi nhuận được lưu, sử dụng nó
-    profitPercentages.value[bidPackage.id] = bidPackage.profit_percentage || 0 // Mặc định 10%
-  })
-})
-
-// Cập nhật phần trăm lợi nhuận cho gói thầu
-const updateProfitPercentage = (bidPackageId) => {
-  // Đảm bảo giá trị nằm trong khoảng từ 0-100
-  if (profitPercentages.value[bidPackageId] < 0) {
-    profitPercentages.value[bidPackageId] = 0
-  } else if (profitPercentages.value[bidPackageId] > 100) {
-    profitPercentages.value[bidPackageId] = 100
-  }
-
-  // Gọi API để cập nhật tỷ lệ lợi nhuận
-  router.patch(
-    route('bid-packages.update-profit-percentage', bidPackageId),
-    {
-      profit_percentage: profitPercentages.value[bidPackageId]
-    },
-    {
-      preserveState: true,
-      preserveScroll: true,
-      only: ['project']
-    }
-  )
-}
 
 // Tính lợi nhuận cho một gói thầu: Lợi nhuận = giá dự thầu - giá giao thầu
 const calculateProfit = (bidPackage) => {
-  const estimatedPrice = parseInt(bidPackage.estimated_price || 0)
-  const clientPrice = parseInt(bidPackage.client_price || 0)
+  const estimatedPrice = parseInt(bidPackage.display_estimated_price || 0)
+  const clientPrice = parseInt(bidPackage.display_client_price || 0)
   return estimatedPrice - clientPrice
 }
 
 // Tính phần trăm lợi nhuận cho một gói thầu: % = lợi nhuận / giá dự thầu * 100
 const calculateProfitPercentage = (bidPackage) => {
-  const estimatedPrice = parseInt(bidPackage.estimated_price || 0)
+  const estimatedPrice = parseInt(bidPackage.display_estimated_price || 0)
   if (estimatedPrice === 0) return 0
 
   const profit = calculateProfit(bidPackage)
@@ -134,14 +102,14 @@ const calculateProfitPercentage = (bidPackage) => {
 const totalContractAmount = computed(() => {
   return props.project.bid_packages.reduce((total, bidPackage) => {
     // Sử dụng formatCurrency để lấy giá trị đã được điều chỉnh (chia cho 100)
-    const amount = parseInt(bidPackage.client_price || 0)
+    const amount = parseInt(bidPackage.display_client_price || 0)
     return total + amount
   }, 0)
 })
 
 const totalEstimatedPrice = computed(() => {
   return props.project.bid_packages.reduce((total, bidPackage) => {
-    return total + parseInt(bidPackage.estimated_price || 0)
+    return total + parseInt(bidPackage.display_estimated_price || 0)
   }, 0)
 })
 
@@ -206,6 +174,7 @@ const totalReceiptAmount = computed(() => {
 
 .form-control[type='number'] {
   -moz-appearance: textfield;
+  appearance: textfield;
 }
 
 thead tr th {

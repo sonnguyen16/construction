@@ -93,161 +93,40 @@
         <!-- Sidebar Menu -->
         <nav class="mt-2">
           <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
-            <li class="nav-item">
-              <Link href="/" class="nav-link" :class="{ active: $page.url === '/' }">
-                <i class="nav-icon fas fa-tachometer-alt"></i>
-                <p>Bảng điều khiển</p>
-              </Link>
-            </li>
-            <li class="nav-item">
-              <Link
-                href="/projects"
-                class="nav-link"
-                :class="{
-                  active: $page.url.startsWith('/projects')
-                }"
-              >
-                <i class="nav-icon fas fa-project-diagram"></i>
-                <p>Quản lý dự án</p>
-              </Link>
-            </li>
-            <li class="nav-item">
-              <Link
-                href="/contractors"
-                class="nav-link"
-                :class="{
-                  active: $page.url.startsWith('/contractors')
-                }"
-              >
-                <i class="nav-icon fas fa-hard-hat"></i>
-                <p>Quản lý nhà thầu</p>
-              </Link>
-            </li>
+            <li v-for="(item, index) in menuItems" :key="index" class="nav-item" :class="{ 'menu-open': item.children && isMenuActive(item) }">
+              <!-- Menu có submenu -->
+              <template v-if="item.children">
+                <a href="#" class="nav-link" :class="{ active: isMenuActive(item) }">
+                  <i :class="['nav-icon', item.icon]"></i>
+                  <p>
+                    {{ item.label }}
+                    <i class="right fas fa-angle-left"></i>
+                  </p>
+                </a>
+                <ul class="nav nav-treeview">
+                  <li v-for="(child, childIndex) in item.children" :key="childIndex" class="nav-item">
+                    <Link
+                      :href="child.href"
+                      class="nav-link"
+                      :class="{ active: child.isActive($page) }"
+                      style="padding-left: 25px;"
+                    >
+                      <i :class="['nav-icon', child.icon]" style="font-size: 0.85em;"></i>
+                      <p style="margin-left: 5px;">{{ child.label }}</p>
+                    </Link>
+                  </li>
+                </ul>
+              </template>
 
-            <li class="nav-item">
+              <!-- Menu không có submenu -->
               <Link
-                :href="route('customers.index')"
+                v-else
+                :href="item.href"
                 class="nav-link"
-                :class="{ active: $page.component.startsWith('Customers/') }"
+                :class="{ active: item.isActive($page) }"
               >
-                <i class="fas fa-users nav-icon"></i>
-                <p>Quản lý khách hàng</p>
-              </Link>
-            </li>
-
-            <li class="nav-item">
-              <Link
-                :href="route('payment-vouchers.index')"
-                class="nav-link"
-                :class="{ active: $page.component.startsWith('PaymentVouchers/') }"
-              >
-                <i class="fas fa-money-check-alt nav-icon"></i>
-                <p>Quản lý phiếu chi</p>
-              </Link>
-            </li>
-            <li class="nav-item">
-              <Link
-                :href="route('receipt-vouchers.index')"
-                class="nav-link"
-                :class="{ active: $page.component.startsWith('ReceiptVouchers/') }"
-              >
-                <i class="fas fa-money-bill-wave nav-icon"></i>
-                <p>Quản lý phiếu thu</p>
-              </Link>
-            </li>
-
-            <li class="nav-item">
-              <Link
-                :href="route('receipt-categories.index')"
-                class="nav-link"
-                :class="{ active: $page.component.startsWith('ReceiptCategories/') }"
-              >
-                <i class="fas fa-tags nav-icon"></i>
-                <p>Loại thu</p>
-              </Link>
-            </li>
-            <li class="nav-item">
-              <Link
-                :href="route('payment-categories.index')"
-                class="nav-link"
-                :class="{ active: $page.component.startsWith('PaymentCategories/') }"
-              >
-                <i class="fas fa-tags nav-icon"></i>
-                <p>Loại chi</p>
-              </Link>
-            </li>
-
-            <li class="nav-item">
-              <Link
-                :href="route('project-categories.index')"
-                class="nav-link"
-                :class="{ active: $page.component.startsWith('ProjectCategories/') }"
-              >
-                <i class="fas fa-project-diagram nav-icon"></i>
-                <p>Danh mục dự án</p>
-              </Link>
-            </li>
-            <li class="nav-item">
-              <Link
-                :href="route('categories.index')"
-                class="nav-link"
-                :class="{ active: $page.component.startsWith('Categories/') }"
-              >
-                <i class="fas fa-tags nav-icon"></i>
-                <p>Loại sản phẩm</p>
-              </Link>
-            </li>
-            <li class="nav-item">
-              <Link
-                :href="route('units.index')"
-                class="nav-link"
-                :class="{ active: $page.component.startsWith('Units/') }"
-              >
-                <i class="fas fa-ruler nav-icon"></i>
-                <p>Đơn vị tính</p>
-              </Link>
-            </li>
-            <li class="nav-item">
-              <Link
-                :href="route('products.index')"
-                class="nav-link"
-                :class="{ active: $page.component.startsWith('Products/') }"
-              >
-                <i class="fas fa-boxes nav-icon"></i>
-                <p>Sản phẩm</p>
-              </Link>
-            </li>
-            <li class="nav-item">
-              <Link
-                :href="route('import-vouchers.index')"
-                class="nav-link"
-                :class="{ active: $page.component.startsWith('ImportVouchers/') }"
-              >
-                <i class="fas fa-file-import nav-icon"></i>
-                <p>Phiếu nhập kho</p>
-              </Link>
-            </li>
-            <li class="nav-item">
-              <Link
-                :href="route('export-vouchers.index')"
-                class="nav-link"
-                :class="{ active: $page.component.startsWith('ExportVouchers/') }"
-              >
-                <i class="fas fa-file-export nav-icon"></i>
-                <p>Phiếu xuất kho</p>
-              </Link>
-            </li>
-
-            <li class="nav-item">
-              <Link
-                href="/users"
-                class="nav-link"
-                :class="{
-                  active: $page.url.startsWith('/users')
-                }"
-              >
-                <i class="nav-icon fas fa-users"></i>
-                <p>Quản lý người dùng</p>
+                <i :class="['nav-icon', item.icon]"></i>
+                <p>{{ item.label }}</p>
               </Link>
             </li>
           </ul>
@@ -309,22 +188,147 @@
 
 <script setup>
 import { Link, router, usePage } from '@inertiajs/vue3'
-import { onMounted, watch, computed } from 'vue'
+import { onMounted, watch, computed, ref } from 'vue'
+
+// Định nghĩa các mục menu
+const menuItems = [
+  {
+    href: '/',
+    icon: 'fas fa-tachometer-alt',
+    label: 'Bảng điều khiển',
+    isActive: (page) => page.url === '/'
+  },
+  {
+    label: 'Quản lý dự án',
+    icon: 'fas fa-project-diagram',
+    isActive: (page) => page.url.startsWith('/projects') || page.component.startsWith('ProjectCategories/'),
+    children: [
+      {
+        href: '/projects',
+        icon: 'fas fa-list',
+        label: 'Danh sách dự án',
+        isActive: (page) => page.url.startsWith('/projects') && !page.component.startsWith('ProjectCategories/')
+      },
+      {
+        href: route('project-categories.index'),
+        icon: 'fas fa-tags',
+        label: 'Danh mục dự án',
+        isActive: (page) => page.component.startsWith('ProjectCategories/')
+      }
+    ]
+  },
+
+  {
+    label: 'Quản lý thu chi',
+    icon: 'fas fa-money-bill',
+    isActive: (page) =>
+      page.component.startsWith('PaymentVouchers/') ||
+      page.component.startsWith('ReceiptVouchers/') ||
+      page.component.startsWith('PaymentCategories/') ||
+      page.component.startsWith('ReceiptCategories/') ||
+      page.component.startsWith('Reports/Financial'),
+    children: [
+      {
+        href: route('payment-vouchers.index'),
+        icon: 'fas fa-money-check-alt',
+        label: 'Phiếu chi',
+        isActive: (page) => page.component.startsWith('PaymentVouchers/')
+      },
+      {
+        href: route('receipt-vouchers.index'),
+        icon: 'fas fa-money-bill-wave',
+        label: 'Phiếu thu',
+        isActive: (page) => page.component.startsWith('ReceiptVouchers/')
+      },
+      {
+        href: route('payment-categories.index'),
+        icon: 'fas fa-tags',
+        label: 'Loại chi',
+        isActive: (page) => page.component.startsWith('PaymentCategories/')
+      },
+      {
+        href: route('receipt-categories.index'),
+        icon: 'fas fa-tags',
+        label: 'Loại thu',
+        isActive: (page) => page.component.startsWith('ReceiptCategories/')
+      },
+      {
+        href: route('reports.financial'),
+        icon: 'fas fa-chart-pie',
+        label: 'Báo cáo thu chi',
+        isActive: (page) => page.component.startsWith('Reports/Financial')
+      }
+    ]
+  },
+  {
+    label: 'Quản lý kho',
+    icon: 'fas fa-warehouse',
+    isActive: (page) =>
+      page.component.startsWith('Products/') ||
+      page.url.includes('/categories') ||
+      page.component.startsWith('Units/') ||
+      page.component.startsWith('ImportVouchers/') ||
+      page.component.startsWith('ExportVouchers/'),
+    children: [
+      {
+        href: route('products.index'),
+        icon: 'fas fa-boxes',
+        label: 'Sản phẩm',
+        isActive: (page) => page.component.startsWith('Products/')
+      },
+      {
+        href: route('categories.index'),
+        icon: 'fas fa-tags',
+        label: 'Loại sản phẩm',
+        isActive: (page) => page.url.includes('/categories')
+      },
+      {
+        href: route('units.index'),
+        icon: 'fas fa-ruler',
+        label: 'Đơn vị tính',
+        isActive: (page) => page.component.startsWith('Units/')
+      },
+      {
+        href: route('import-vouchers.index'),
+        icon: 'fas fa-file-import',
+        label: 'Phiếu nhập kho',
+        isActive: (page) => page.component.startsWith('ImportVouchers/')
+      },
+      {
+        href: route('export-vouchers.index'),
+        icon: 'fas fa-file-export',
+        label: 'Phiếu xuất kho',
+        isActive: (page) => page.component.startsWith('ExportVouchers/')
+      }
+    ]
+  },
+  {
+    href: '/contractors',
+    icon: 'fas fa-hard-hat',
+    label: 'Quản lý nhà thầu',
+    isActive: (page) => page.url.startsWith('/contractors')
+  },
+  {
+    href: route('customers.index'),
+    icon: 'fas fa-users',
+    label: 'Quản lý khách hàng',
+    isActive: (page) => page.component.startsWith('Customers/')
+  },
+  {
+    href: '/users',
+    icon: 'fas fa-users',
+    label: 'Quản lý người dùng',
+    isActive: (page) => page.url.startsWith('/users')
+  }
+]
+
+// Kiểm tra xem menu có đang được kích hoạt không
+const isMenuActive = (item) => {
+  return item.isActive($page)
+}
 import { showSuccess, showError, showWarning } from '@/utils'
 
 const $page = usePage()
-
-// Kiểm tra xem menu kho có đang được kích hoạt không
-const isInventoryActive = computed(() => {
-  return (
-    $page.component.startsWith('Products/') ||
-    $page.component.startsWith('ImportVouchers/') ||
-    $page.component.startsWith('ExportVouchers/') ||
-    $page.component.startsWith('Categories/') ||
-    $page.component.startsWith('Units/') ||
-    $page.component.startsWith('ProjectCategories/')
-  )
-})
 
 const logout = () => {
   router.post('/logout')

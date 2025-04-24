@@ -19,6 +19,7 @@ use App\Http\Controllers\ExportVoucherController;
 use App\Http\Controllers\ReceiptCategoryController;
 use App\Http\Controllers\PaymentCategoryController;
 use App\Http\Controllers\ProjectCategoryController;
+use App\Http\Controllers\ReportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -49,9 +50,6 @@ Route::middleware('auth')->group(function () {
     Route::post('projects/{project}/bid-packages', [BidPackageController::class, 'store'])->name('bid-packages.store');
     Route::put('bid-packages/{bidPackage}', [BidPackageController::class, 'update'])->name('bid-packages.update');
     Route::delete('bid-packages/{bidPackage}', [BidPackageController::class, 'destroy'])->name('bid-packages.destroy');
-    // Thêm route cho hạng mục con (workItem)
-    Route::post('bid-packages/{parent}/work-items', [BidPackageController::class, 'storeWorkItem'])->name('bid-packages.work-items.store');
-
     // Quản lý giá dự thầu
     Route::post('bid-packages/{bidPackage}/bids', [BidController::class, 'store'])->name('bids.store');
     Route::put('bids/{bid}', [BidController::class, 'update'])->name('bids.update');
@@ -79,9 +77,6 @@ Route::middleware('auth')->group(function () {
     // Thêm route cập nhật giá trị phát sinh
     Route::patch('/bid-packages/{bidPackage}/update-additional-price', [BidPackageController::class, 'updateAdditionalPrice'])
         ->name('bid-packages.update-additional-price');
-    // Thêm route cập nhật tỷ lệ lợi nhuận
-    Route::patch('/bid-packages/{bidPackage}/update-profit-percentage', [BidPackageController::class, 'updateProfitPercentage'])
-        ->name('bid-packages.update-profit-percentage');
     // Cập nhật thứ tự gói thầu
     Route::post('/bid-packages/update-order', [BidPackageController::class, 'updateOrder'])
         ->name('bid-packages.update-order');
@@ -108,11 +103,10 @@ Route::middleware('auth')->group(function () {
 
     // Quản lý phiếu xuất kho
     Route::resource('export-vouchers', ExportVoucherController::class);
+    
+    // Báo cáo thu chi
+    Route::get('/reports/financial', [ReportController::class, 'financialReport'])->name('reports.financial');
 
-    // Deprecated: Quản lý hạng mục con của gói thầu (sử dụng BidPackage thay thế)
-    // Route::post('/bid-packages/{bidPackage}/work-items', [WorkItemController::class, 'store'])->name('work-items.store');
-    // Route::put('/work-items/{workItem}', [WorkItemController::class, 'update'])->name('work-items.update');
-    // Route::delete('/work-items/{workItem}', [WorkItemController::class, 'destroy'])->name('work-items.destroy');
 });
 
 // File Manager Routes

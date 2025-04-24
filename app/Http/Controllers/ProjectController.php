@@ -104,7 +104,6 @@ class ProjectController extends Controller
         // Lấy các gói thầu gốc (không phải hạng mục con)
         $bidPackages = $project->bidPackages()
             ->whereNull('deleted_at')
-            ->whereNull('parent_id')  // Chỉ lấy gói thầu gốc
             ->with([
                 'bids.contractor',
                 'selectedContractor',
@@ -248,7 +247,6 @@ class ProjectController extends Controller
         // Lấy các gói thầu gốc (không phải hạng mục con)
         $bidPackages = $project->bidPackages()
             ->whereNull('deleted_at')
-            ->whereNull('parent_id')  // Chỉ lấy gói thầu gốc
             ->with([
                 'bids.contractor',
                 'selectedContractor',

@@ -31,6 +31,13 @@ class BidPackage extends Model
         'additional_price',
         'profit_percentage',
         'order',
+        'auto_calculate',
+    ];
+
+    protected $appends = [
+        'display_estimated_price',
+        'display_client_price',
+        'display_additional_price',
     ];
 
     protected static function boot()
@@ -55,7 +62,7 @@ class BidPackage extends Model
      */
     public function project()
     {
-        return $this->belongsTo(Project::class);
+        return $this->belongsTo(Project::class)->whereNull('deleted_at');
     }
 
     /**
@@ -63,7 +70,7 @@ class BidPackage extends Model
      */
     public function selectedContractor()
     {
-        return $this->belongsTo(Contractor::class, 'selected_contractor_id');
+        return $this->belongsTo(Contractor::class, 'selected_contractor_id')->whereNull('deleted_at');
     }
 
     /**
@@ -91,7 +98,7 @@ class BidPackage extends Model
      */
     public function parent()
     {
-        return $this->belongsTo(BidPackage::class, 'parent_id');
+        return $this->belongsTo(BidPackage::class, 'parent_id')->whereNull('deleted_at');
     }
 
     /**
@@ -102,28 +109,87 @@ class BidPackage extends Model
         return $this->hasMany(BidPackage::class, 'parent_id')->whereNull('deleted_at');
     }
 
+
     /**
-     * Scope để lấy các gói thầu gốc (không có parent)
+     * Tính tổng giá dự toán của gói thầu (bao gồm cả các hạng mục con)
      */
-    public function scopeParents($query)
+    public function getTotalEstimatedPriceAttribute()
     {
-        return $query->whereNull('parent_id');
+        // Nếu là hạng mục con hoặc không có hạng mục con, trả về giá dự toán gốc
+        if ($this->is_work_item || $this->children()->count() === 0) {
+            return $this->estimated_price;
+        }
+
+        // Tính tổng giá dự toán của các hạng mục con
+        $childrenSum = $this->children()->sum('estimated_price');
+
+        // Trả về tổng giá dự toán = giá dự toán gốc + tổng giá dự toán của các hạng mục con
+        return $childrenSum;
     }
 
     /**
-     * Scope để lấy các hạng mục con
+     * Tính tổng giá phát sinh của gói thầu (bao gồm cả các hạng mục con)
      */
-    public function scopeWorkItems($query)
+    public function getTotalAdditionalPriceAttribute()
     {
-        return $query->where('is_work_item', true);
+        // Nếu là hạng mục con hoặc không có hạng mục con, trả về giá phát sinh gốc
+        if ($this->is_work_item || $this->children()->count() === 0) {
+            return $this->additional_price;
+        }
+
+        // Tính tổng giá phát sinh của các hạng mục con
+        $childrenSum = $this->children()->sum('additional_price');
+
+        // Trả về tổng giá phát sinh = giá phát sinh gốc + tổng giá phát sinh của các hạng mục con
+        return $childrenSum;
     }
 
     /**
-     * Quan hệ với hạng mục
-     * @deprecated Sử dụng children() thay thế
+     * Tính tổng giá giao thầu của gói thầu (bao gồm cả các hạng mục con)
      */
-    public function work_items()
+    public function getTotalClientPriceAttribute()
     {
-        return $this->hasMany(WorkItem::class, 'bid_package_id')->whereNull('deleted_at');
+        // Nếu là hạng mục con hoặc không có hạng mục con, trả về giá giao thầu gốc
+        if ($this->is_work_item || $this->children()->count() === 0) {
+            return $this->client_price;
+        }
+
+        // Tính tổng giá giao thầu của các hạng mục con
+        $childrenClientPrice = 0;
+        foreach ($this->children()->get() as $child) {
+            $childSelectedBid = $child->bidPriceSelected;
+            if ($childSelectedBid) {
+                $childrenClientPrice += $childSelectedBid->price + ($child->additional_price ?? 0);
+            } else {
+                $childrenClientPrice += $child->additional_price ?? 0;
+            }
+        }
+
+        // Trả về tổng giá giao thầu = giá dự thầu đã chọn + giá phát sinh gốc + tổng giá giao thầu của các hạng mục con
+        return $childrenClientPrice;
+    }
+
+    /**
+     * Trả về giá dự toán hiển thị dựa trên tùy chọn auto_calculate
+     */
+    public function getDisplayEstimatedPriceAttribute()
+    {
+        return $this->auto_calculate && !$this->is_work_item ? $this->getTotalEstimatedPriceAttribute() : $this->estimated_price;
+    }
+
+    /**
+     * Trả về giá phát sinh hiển thị dựa trên tùy chọn auto_calculate
+     */
+    public function getDisplayAdditionalPriceAttribute()
+    {
+        return $this->auto_calculate && !$this->is_work_item ? $this->getTotalAdditionalPriceAttribute() : $this->additional_price;
+    }
+
+    /**
+     * Trả về giá giao thầu hiển thị dựa trên tùy chọn auto_calculate
+     */
+    public function getDisplayClientPriceAttribute()
+    {
+        return $this->auto_calculate && !$this->is_work_item ? $this->getTotalClientPriceAttribute() : $this->client_price;
     }
 }

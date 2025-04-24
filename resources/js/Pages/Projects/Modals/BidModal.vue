@@ -119,7 +119,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['submit', 'update:contractor-id', 'update:selected-contractor'])
+const emit = defineEmits(['submit'])
 
 // Local state
 const form = ref({
@@ -192,7 +192,7 @@ const initInputPicker = async () => {
 
     // Khởi tạo InputPicker
     const $input = window.$(`#${contractorInputId}`)
-    
+
     // Đảm bảo element đã được jQuery chọn đúng
     if ($input.length === 0) {
       console.error(`jQuery không thể tìm thấy element với id ${contractorInputId}`)
@@ -235,17 +235,14 @@ const initInputPicker = async () => {
     $input.on('change', function () {
       const contractorId = window.$(this).val()
       form.value.contractor_id = contractorId
-      emit('update:contractor-id', contractorId)
 
       if (contractorId) {
         const contractor = props.contractors.find((c) => c.id == contractorId)
         if (contractor) {
           selectedContractor.value = contractor
-          emit('update:selected-contractor', contractor)
         }
       } else {
         selectedContractor.value = null
-        emit('update:selected-contractor', null)
       }
     })
   } catch (error) {
@@ -282,11 +279,11 @@ const submitForm = () => {
 // Thiết lập sự kiện modal
 const setupModalEvents = () => {
   const $modal = window.$(`#${props.modalId}`)
-  
+
   // Xóa tất cả sự kiện cũ
   $modal.off('show.bs.modal')
   $modal.off('shown.bs.modal')
-  
+
   // Xử lý sự kiện khi modal hiển thị
   $modal.on('show.bs.modal', () => {
     // Đảm bảo form được reset trước khi hiển thị modal nếu không phải chế độ chỉnh sửa
@@ -313,7 +310,7 @@ onBeforeUnmount(() => {
   // Hủy tất cả sự kiện khi component bị hủy
   window.$(`#${props.modalId}`).off('shown.bs.modal')
   window.$(`#${props.modalId}`).off('show.bs.modal')
-  
+
   // Không hủy InputPicker khi component bị hủy, chỉ xóa sự kiện
   if (inputpickerInstance) {
     inputpickerInstance.off('change')

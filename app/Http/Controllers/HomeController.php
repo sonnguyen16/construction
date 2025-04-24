@@ -24,20 +24,33 @@ class HomeController extends Controller
         $completedProjects = Project::whereNull('deleted_at')->where('status', 'completed')->count();
         $inProgressProjects = Project::whereNull('deleted_at')->where('status', 'active')->count();
 
-        // Tính toán doanh thu (tổng giá dự thầu - estimated_price)
-        $totalRevenue = BidPackage::whereNull('deleted_at')->sum('estimated_price');
+        // Lấy các gói thầu gốc (không có parent_id hoặc parent_id = null)
+        $rootBidPackages = BidPackage::whereNull('deleted_at')
+            ->whereNull('parent_id')
+            ->get();
+            
+        // Tính toán doanh thu (tổng giá dự thầu hiển thị - display_estimated_price)
+        $totalRevenue = $rootBidPackages->sum(function ($bidPackage) {
+            return $bidPackage->display_estimated_price;
+        });
 
         // Tính toán tổng thu (phiếu thu có trạng thái paid)
-        $totalReceiptAmount = ReceiptVoucher::whereNull('deleted_at')->where('status', 'paid')->sum('amount');
+        $totalReceiptAmount = ReceiptVoucher::whereNull('deleted_at')
+            ->where('status', 'paid')
+            ->sum('amount');
 
         // Tính toán phải thu (tổng giá dự thầu - tổng thu)
         $receivables = $totalRevenue - $totalReceiptAmount;
 
-        // Tính toán chi phí (tổng giá giao thầu - client_price)
-        $totalExpense = BidPackage::whereNull('deleted_at')->sum('client_price');
+        // Tính toán chi phí (tổng giá giao thầu hiển thị - display_client_price)
+        $totalExpense = $rootBidPackages->sum(function ($bidPackage) {
+            return $bidPackage->display_client_price;
+        });
 
         // Tính toán tổng chi (phiếu chi có trạng thái paid)
-        $totalPaymentAmount = PaymentVoucher::whereNull('deleted_at')->where('status', 'paid')->sum('amount');
+        $totalPaymentAmount = PaymentVoucher::whereNull('deleted_at')
+            ->where('status', 'paid')
+            ->sum('amount');
 
         // Tính toán phải chi (tổng giá giao thầu - tổng chi)
         $payables = $totalExpense - $totalPaymentAmount;

@@ -69,13 +69,6 @@ class BidController extends Controller
             $bidPackage->client_price = $validated['price'] + $bidPackage->additional_price;
             $bidPackage->status = 'awarded';
             $bidPackage->save();
-
-            if ($bidPackage->is_work_item) {
-                $parent = $bidPackage->parent;
-                $bidParent = $parent->bidPriceSelected;
-                $parent->client_price = $bidParent->price + $parent->additional_price + $bidPackage->client_price;
-                $parent->save();
-            }
         }
 
         $bid->update($validated);
@@ -93,11 +86,7 @@ class BidController extends Controller
         // Nếu giá dự thầu này đã được chọn, cập nhật gói thầu
         if ($bid->is_selected) {
             $bidPackage = $bid->bidPackage;
-            if ($bidPackage->is_work_item) {
-                $parent = $bidPackage->parent;
-                $parent->client_price -= $bidPackage->client_price;
-                $parent->save();
-            }
+
             $bidPackage->selected_contractor_id = null;
             $bidPackage->client_price = null;
             $bidPackage->status = 'open';
@@ -130,13 +119,6 @@ class BidController extends Controller
         $bidPackage->client_price = $bid->price + $bidPackage->additional_price;
         $bidPackage->status = 'awarded';
         $bidPackage->save();
-
-        if ($bidPackage->is_work_item) {
-            $parent = $bidPackage->parent;
-            $bidParent = $parent->bidPriceSelected;
-            $parent->client_price = $bidParent->price + $parent->additional_price + $bidPackage->client_price;
-            $parent->save();
-        }
 
         return redirect()->route('projects.show', $bidPackage->project_id)
             ->with('success', 'Đã chọn nhà thầu thành công.');

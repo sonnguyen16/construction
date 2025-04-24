@@ -34,23 +34,23 @@
           <div class="card-body p-0 position-relative" style="overflow: auto; max-height: calc(100vh - 250px)">
             <!-- View rút gọn -->
             <div v-if="viewMode === 'summary'">
-              <BidPackageSummaryTable :bid-packages="bidPackages" />
+              <BidPackageSummaryTable :bid-packages="bidPackages" :is-compact="true" />
             </div>
 
             <!-- View chi tiết -->
             <div v-else>
               <!-- Header -->
-              <div class="grid grid-cols-24 bg-light bid-package-header font-weight-bold py-2">
+              <div class="grid grid-cols-25 bg-light bid-package-header font-weight-bold py-2">
                 <div class="col-span-1 px-2 text-center"><i class="fas fa-sort"></i></div>
                 <div class="col-span-1 px-2 text-center"></div>
                 <div class="col-span-1 px-2">STT</div>
                 <div class="col-span-2 px-2">Mã</div>
                 <div class="col-span-3 px-2">Tên gói thầu</div>
-                <div class="col-span-3 px-2 text-right">Giá dự thầu</div>
+                <div class="col-span-3 px-2 text-right">Giá dự toán</div>
                 <div class="col-span-3 px-2">Phát sinh</div>
                 <div class="col-span-3 px-2 text-right">Giá giao thầu</div>
                 <div class="col-span-12 px-2">Danh sách nhà thầu</div>
-                <div class="col-span-3 px-2 text-center">Thao tác</div>
+                <div class="col-span-4 px-2 text-center">Thao tác</div>
               </div>
 
               <!-- Danh sách gói thầu -->
@@ -66,7 +66,7 @@
                     <!-- Dòng gói thầu -->
                     <div
                       :class="[
-                        'grid grid-cols-24 gap-1 bid-package-row py-2',
+                        'grid grid-cols-25 gap-1 bid-package-row py-2',
                         { 'text-danger': isPackageLosing(bidPackage) },
                         { expanded: expandedPackages.includes(bidPackage.id) }
                       ]"
@@ -88,15 +88,16 @@
                       <div class="col-span-2 px-2">{{ bidPackage.code }}</div>
                       <div class="col-span-3 px-2">{{ bidPackage.name }}</div>
                       <div class="col-span-3 px-2 text-right">
-                        {{ formatCurrency(bidPackage.estimated_price || 0) }}
+                        {{ formatCurrency(bidPackage.display_estimated_price || 0) }}
                       </div>
                       <div class="col-span-3 px-2">
-                        <div class="d-flex justify-between">
+                        <div class="d-flex justify-between align-items-center">
                           <button
                             v-if="bidPackage.selected_contractor_id"
                             @click="openAdditionalPriceModal(bidPackage)"
                             class="btn btn-sm btn-primary me-2"
                             title="Cập nhật giá phát sinh"
+                            :disabled="bidPackage.auto_calculate && !bidPackage.is_work_item"
                           >
                             <i class="fas fa-edit"></i>
                           </button>
@@ -108,13 +109,16 @@
                           >
                             <i class="fas fa-edit"></i>
                           </button>
-                          {{ formatCurrency(bidPackage.additional_price || 0) }}
+                          {{ formatCurrency(bidPackage.display_additional_price || 0) }}
                         </div>
                       </div>
-                      <div class="col-span-3 px-2 text-right">{{ formatCurrency(bidPackage.client_price || 0) }}</div>
+                      <div class="col-span-3 px-2 text-right">{{ formatCurrency(bidPackage.display_client_price || 0) }}</div>
 
                       <!-- Danh sách nhà thầu -->
-                      <div class="col-span-12 px-2 bid-contractor-list">
+                      <div class="col-span-12 px-2 bid-contractor-list" :class="{ 'opacity-50': bidPackage.auto_calculate && !bidPackage.is_work_item }">
+                        <div v-if="bidPackage.auto_calculate && !bidPackage.is_work_item" class="alert alert-info mb-2">
+                          <i class="fas fa-info-circle mr-2"></i> Gói thầu này đang được cấu hình để tính toán tự động từ các gói thầu con. Bạn cần tắt tính năng này để có thể chọn nhà thầu.
+                        </div>
                         <div class="bid-contractors-scroll">
                           <div v-if="bidPackage.bids && bidPackage.bids.length > 0" class="bid-contractors">
                             <div v-for="bid in bidPackage.bids" :key="bid.id" class="contractor-item">
@@ -126,14 +130,21 @@
                                     :name="`bidder_${bidPackage.id}`"
                                     :checked="isSelectedContractor(bidPackage, bid)"
                                     @change="selectContractor(bid)"
+                                    :disabled="bidPackage.auto_calculate && !bidPackage.is_work_item"
                                   />
-                                  <button @click="confirmDeleteBid(bid)" class="btn btn-sm btn-danger" title="Xóa">
+                                  <button
+                                    @click="confirmDeleteBid(bid)"
+                                    class="btn btn-sm btn-danger"
+                                    title="Xóa"
+                                    :disabled="bidPackage.auto_calculate && !bidPackage.is_work_item"
+                                  >
                                     <i class="fas fa-trash-alt"></i>
                                   </button>
                                   <button
                                     @click="openEditBidModal(bid)"
                                     class="btn btn-sm btn-warning"
                                     title="Sửa giá dự thầu"
+                                    :disabled="bidPackage.auto_calculate && !bidPackage.is_work_item"
                                   >
                                     <i class="fas fa-edit"></i>
                                   </button>
@@ -145,7 +156,11 @@
                               </div>
                             </div>
                             <div class="add-contractor-button">
-                              <button @click="openAddBidModal(bidPackage)" class="btn btn-sm btn-success">
+                              <button
+                                @click="openAddBidModal(bidPackage)"
+                                class="btn btn-sm btn-success"
+                                :disabled="bidPackage.auto_calculate && !bidPackage.is_work_item"
+                              >
                                 <i class="fas fa-plus me-1"></i> Thêm
                               </button>
                             </div>
@@ -157,7 +172,7 @@
                       </div>
 
                       <!-- Thao tác -->
-                      <div class="col-span-3 px-2 text-center">
+                      <div class="col-span-4 px-2 text-center">
                         <div class="action-buttons">
                           <button
                             class="btn btn-sm btn-info mb-1"
@@ -204,7 +219,7 @@
 
                       <!-- Hiển thị hạng mục con bằng table thay vì grid -->
                       <div class="table-responsive">
-                        <table class="table table-bordered table-hover">
+                        <table class="table table-hover">
                           <thead class="bg-light">
                             <tr>
                               <th style="width: 50px" class="text-center">STT</th>
@@ -302,7 +317,7 @@
                                 <div class="action-buttons">
                                   <button
                                     class="btn btn-sm btn-info mb-1"
-                                    @click="openEditBidPackageModal(workItem)"
+                                    @click="openEditWorkItemModal(workItem)"
                                     title="Sửa"
                                   >
                                     <i class="fas fa-edit"></i>
@@ -347,7 +362,7 @@
             </div>
 
             <!-- Footer với tổng cộng -->
-            <div class="grid grid-cols-24 bg-light font-weight-bold py-2 mt-2 sticky-bottom">
+            <div v-if="viewMode === 'detailed'" class="grid grid-cols-25 bg-light font-weight-bold py-2 mt-2 sticky-bottom">
               <div class="col-span-8 text-right px-1">Tổng cộng:</div>
               <div class="col-span-3 text-right px-1">{{ formatCurrency(totalEstimatedPrice) }}</div>
               <div class="col-span-3 text-right px-2">{{ formatCurrency(totalAdditionalPrice) }}</div>
@@ -383,33 +398,26 @@
       ref="additionalPriceModalRef"
     />
 
-    <!-- Modal tạo gói thầu mới -->
-    <BidPackageModal
-      :project="project"
-      :is-submitting="isSubmitting"
-      :is-editing="false"
-      modal-id="createBidPackageModal"
-      @submit="handleCreateBidPackageSubmit"
-      ref="createBidPackageModalRef"
-    />
-
-    <!-- Modal chỉnh sửa gói thầu -->
+    <!-- Modal tạo/chỉnh sửa gói thầu -->
     <BidPackageModal
       :project="project"
       :bid-package="selectedBidPackage"
       :is-submitting="isSubmitting"
-      :is-editing="true"
-      modal-id="editBidPackageModal"
-      @submit="handleEditBidPackageSubmit"
-      ref="editBidPackageModalRef"
+      :is-editing="isBidPackageEditing"
+      modal-id="bidPackageModal"
+      @submit="handleBidPackageSubmit"
+      ref="bidPackageModalRef"
     />
 
     <!-- Modal quản lý hạng mục -->
-    <WorkItemModal
-      :bid-package="selectedBidPackage"
-      :work-item="selectedWorkItem"
+    <BidPackageModal
+      :project="project"
+      :bid-package="selectedWorkItem"
+      :parent-bid-package="selectedBidPackage"
       :is-submitting="isSubmitting"
       :is-editing="isEditingWorkItem"
+      :is-work-item="true"
+      modal-id="workItemModal"
       @submit="handleWorkItemSubmit"
       ref="workItemModalRef"
     />
@@ -419,15 +427,14 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { Link, router } from '@inertiajs/vue3'
-import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
+import { ref, computed, onBeforeUnmount, nextTick, watch } from 'vue'
 import axios from 'axios'
 import draggable from 'vuedraggable'
-import { showConfirm, showSuccess, showError, formatCurrency, parseCurrency, formatNumberInput } from '@/utils'
-
+import { showConfirm, showSuccess, showError, formatCurrency } from '@/utils'
 // Import các component modal
 import BidModal from './Modals/BidModal.vue'
 import BidPackageModal from './Modals/BidPackageModal.vue'
-import WorkItemModal from './Modals/WorkItemModal.vue'
+// WorkItemModal đã được gộp vào BidPackageModal
 import AdditionalPriceModal from './Modals/AdditionalPriceModal.vue'
 import BidPackageSummaryTable from './Components/BidPackageSummaryTable.vue'
 
@@ -501,75 +508,14 @@ const togglePackageExpand = (packageId) => {
 }
 
 const selectedBidPackage = ref(null)
-const bidForm = ref({
-  contractor_id: '',
-  price: '',
-  notes: ''
-})
-const bidFormErrors = ref({})
 const isSubmitting = ref(false)
 const selectedContractor = ref(null)
-const additionalPriceForm = ref({
-  additional_price: ''
-})
-const additionalPriceFormErrors = ref({})
-const bidPackageForm = ref({
-  code: '',
-  name: '',
-  description: '',
-  estimated_price: '',
-  client_price: '',
-  status: 'open'
-})
-const bidPackageFormErrors = ref({})
 const selectedBid = ref(null)
-const editBidForm = ref({
-  contractor_id: '',
-  price: '',
-  notes: ''
-})
-const editBidFormErrors = ref({})
 const editSelectedContractor = ref(null)
-let editInputpickerInstance = null
-
-// Chế độ của modal giá dự thầu: 'add' hoặc 'edit'
 const bidModalMode = ref('add')
 const bidModalRef = ref(null)
-
-// Thêm các biến cho workItem
-const workItemForm = ref({
-  name: '',
-  code: '',
-  price: '',
-  description: '',
-  status: 'pending',
-  is_work_item: true,
-  parent_id: ''
-})
-const workItemFormErrors = ref({})
 const isEditingWorkItem = ref(false)
 const selectedWorkItem = ref(null)
-
-const confirmDeleteBidPackage = (bidPackage) => {
-  showConfirm('Xác nhận xóa', `Bạn có chắc chắn muốn xóa gói thầu "${bidPackage.name}" không?`, 'Xóa', 'Hủy').then(
-    (result) => {
-      if (result.isConfirmed) {
-        deleteBidPackage(bidPackage)
-      }
-    }
-  )
-}
-
-const deleteBidPackage = (bidPackage) => {
-  router.delete(route('bid-packages.destroy', bidPackage.id), {
-    onSuccess: () => {
-      showSuccess('Gói thầu đã được xóa thành công.')
-    },
-    onError: (errors) => {
-      showError('Không thể xóa gói thầu. Vui lòng thử lại sau.')
-    }
-  })
-}
 
 const selectContractor = (bid) => {
   // Lưu trạng thái của radio button hiện tại để khôi phục nếu user hủy
@@ -631,19 +577,12 @@ const openAddBidModal = (bidPackage) => {
   bidModalMode.value = 'add'
   selectedBidPackage.value = bidPackage
   selectedBid.value = null
-  
-  // Reset form trước khi mở modal
-  bidForm.value = {
-    contractor_id: '',
-    price: '',
-    notes: ''
-  }
-  
+
   // Đảm bảo các giá trị được làm mới
   if (bidModalRef.value) {
     bidModalRef.value.resetForm()
   }
-  
+
   // Đảm bảo modal được hiển thị sau khi các giá trị đã được chuẩn bị
   nextTick(() => {
     window.$('#addBidModal').modal('show')
@@ -655,8 +594,6 @@ const handleBidSubmit = (formData) => {
   if (isSubmitting.value) return
 
   if (bidModalMode.value === 'add') {
-    // Thêm mới giá dự thầu
-    bidFormErrors.value = {}
     isSubmitting.value = true
 
     router.post(route('bids.store', selectedBidPackage.value.id), formData, {
@@ -671,7 +608,6 @@ const handleBidSubmit = (formData) => {
         if (bidModalRef.value) {
           bidModalRef.value.setErrors(errors)
         }
-        bidFormErrors.value = errors
       },
       onFinish: () => {
         isSubmitting.value = false
@@ -681,7 +617,6 @@ const handleBidSubmit = (formData) => {
     // Sửa giá dự thầu
     if (!selectedBid.value) return
 
-    editBidFormErrors.value = {}
     isSubmitting.value = true
 
     router.put(route('bids.update', selectedBid.value.id), formData, {
@@ -696,7 +631,6 @@ const handleBidSubmit = (formData) => {
         if (bidModalRef.value) {
           bidModalRef.value.setErrors(errors)
         }
-        editBidFormErrors.value = errors
       },
       onFinish: () => {
         isSubmitting.value = false
@@ -704,203 +638,6 @@ const handleBidSubmit = (formData) => {
     })
   }
 }
-
-// Cập nhật contractor_id khi thay đổi trong modal
-const updateBidContractorId = (contractorId) => {
-  if (bidModalMode.value === 'add') {
-    bidForm.value.contractor_id = contractorId
-  } else {
-    editBidForm.value.contractor_id = contractorId
-  }
-}
-
-// Cập nhật selectedContractor khi thay đổi trong modal
-const updateBidSelectedContractor = (contractor) => {
-  if (bidModalMode.value === 'add') {
-    selectedContractor.value = contractor
-  } else {
-    editSelectedContractor.value = contractor
-  }
-}
-
-// Xử lý khi component bị hủy
-onBeforeUnmount(() => {
-  // Hủy sự kiện khi modal đóng
-  window.$('#addBidModal').off('hidden.bs.modal')
-  window.$('#editBidModal').off('hidden.bs.modal')
-  window.$('#workItemModal').off('hidden.bs.modal')
-
-  // Hủy InputPicker nếu còn tồn tại
-  try {
-    if (inputpickerInstance) {
-      window.$('#contractor_id').inputpicker('destroy')
-      window.$('#contractor_id').off('change')
-      inputpickerInstance = null
-    }
-
-    if (editInputpickerInstance) {
-      window.$('#edit_contractor_id').inputpicker('destroy')
-      window.$('#edit_contractor_id').off('change')
-      editInputpickerInstance = null
-    }
-
-    window.$('#work_item_contractor_id').inputpicker('destroy')
-    window.$('#work_item_contractor_id').off('change')
-  } catch (e) {
-    console.log('Không thể hủy InputPicker khi hủy component:', e)
-  }
-})
-
-// Lấy danh sách nhà thầu khi component được tạo
-const getBidderAtIndex = (bidPackage, index) => {
-  if (!bidPackage.bids || bidPackage.bids.length <= index) {
-    return null
-  }
-  return bidPackage.bids[index]
-}
-
-// Kiểm tra xem nhà thầu có phải là nhà thầu được chọn không
-const isSelectedContractor = (bidPackage, bid) => {
-  return bid && bid.is_selected
-}
-
-// Mở modal giá phát sinh
-const openAdditionalPriceModal = (bidPackage) => {
-  selectedBidPackage.value = bidPackage
-  additionalPriceForm.value = {
-    additional_price: formatCurrency(bidPackage.additional_price || 0)
-  }
-  additionalPriceFormErrors.value = {}
-  window.$('#additionalPriceModal').modal('show')
-}
-
-// Xử lý khi form cập nhật giá phát sinh được submit
-const handleAdditionalPriceSubmit = (formData) => {
-  if (isSubmitting.value) return
-
-  additionalPriceFormErrors.value = {}
-  isSubmitting.value = true
-
-  router.patch(
-    route('bid-packages.update-additional-price', selectedBidPackage.value.id),
-    {
-      additional_price: formData.additional_price
-    },
-    {
-      onSuccess: () => {
-        window.$('#additionalPriceModal').modal('hide')
-        selectedBidPackage.value = null
-        showSuccess('Giá phát sinh đã được cập nhật thành công.')
-      },
-      onError: (errors) => {
-        // Truyền lỗi vào component modal
-        if (additionalPriceModalRef.value) {
-          additionalPriceModalRef.value.setErrors(errors)
-        }
-        additionalPriceFormErrors.value = errors
-      },
-      onFinish: () => {
-        isSubmitting.value = false
-      }
-    }
-  )
-}
-
-// Reference đến component modal giá phát sinh
-const additionalPriceModalRef = ref(null)
-
-// Mở modal tạo gói thầu mới
-const openCreateBidPackageModal = () => {
-  bidPackageForm.value = {
-    code: '',
-    name: '',
-    description: '',
-    estimated_price: '',
-    client_price: '',
-    status: 'open'
-  }
-  bidPackageFormErrors.value = {}
-  window.$('#createBidPackageModal').modal('show')
-}
-
-// Xử lý khi form tạo gói thầu mới được submit
-const handleCreateBidPackageSubmit = (formData) => {
-  if (isSubmitting.value) return
-
-  bidPackageFormErrors.value = {}
-  isSubmitting.value = true
-
-  let url =
-    formData.is_work_item && selectedBidPackage.value
-      ? route('bid-packages.work-items.store', selectedBidPackage.value.id)
-      : route('bid-packages.store', props.project.id)
-
-  router.post(url, formData, {
-    onSuccess: () => {
-      window.$('#createBidPackageModal').modal('hide')
-      showSuccess(formData.is_work_item ? 'Hạng mục đã được tạo thành công.' : 'Gói thầu đã được tạo thành công.')
-      router.reload({ preserveState: true })
-    },
-    onError: (errors) => {
-      // Truyền lỗi vào component modal
-      if (createBidPackageModalRef.value) {
-        createBidPackageModalRef.value.setErrors(errors)
-      }
-      bidPackageFormErrors.value = errors
-    },
-    onFinish: () => {
-      isSubmitting.value = false
-    }
-  })
-}
-
-// Reference đến component modal tạo gói thầu
-const createBidPackageModalRef = ref(null)
-
-// Mở modal chỉnh sửa gói thầu
-const openEditBidPackageModal = (bidPackage) => {
-  selectedBidPackage.value = bidPackage
-  bidPackageForm.value = {
-    code: bidPackage.code || '',
-    name: bidPackage.name || '',
-    description: bidPackage.description || '',
-    estimated_price: formatCurrency(bidPackage.estimated_price || 0),
-    client_price: formatCurrency(bidPackage.client_price || 0),
-    status: bidPackage.status || 'open'
-  }
-  bidPackageFormErrors.value = {}
-  window.$('#editBidPackageModal').modal('show')
-}
-
-// Gửi form chỉnh sửa gói thầu
-// Xử lý khi form chỉnh sửa gói thầu được submit
-const handleEditBidPackageSubmit = (formData) => {
-  if (isSubmitting.value || !selectedBidPackage.value) return
-
-  bidPackageFormErrors.value = {}
-  isSubmitting.value = true
-
-  router.put(route('bid-packages.update', selectedBidPackage.value.id), formData, {
-    onSuccess: () => {
-      window.$('#editBidPackageModal').modal('hide')
-      selectedBidPackage.value = null
-      showSuccess('Gói thầu đã được cập nhật thành công.')
-    },
-    onError: (errors) => {
-      // Truyền lỗi vào component modal
-      if (editBidPackageModalRef.value) {
-        editBidPackageModalRef.value.setErrors(errors)
-      }
-      bidPackageFormErrors.value = errors
-    },
-    onFinish: () => {
-      isSubmitting.value = false
-    }
-  })
-}
-
-// Reference đến component modal chỉnh sửa gói thầu
-const editBidPackageModalRef = ref(null)
 
 const confirmDeleteBid = (bid) => {
   showConfirm(
@@ -928,51 +665,164 @@ const deleteBid = (bid) => {
   })
 }
 
-// Tính tổng cho các cột
-const totalEstimatedPrice = computed(() => {
-  return bidPackages.value.reduce((total, bidPackage) => {
-    return total + (parseInt(bidPackage.estimated_price) || 0)
-  }, 0)
-})
+const openEditBidModal = (bid) => {
+  bidModalMode.value = 'edit'
+  selectedBid.value = bid
 
-const totalAdditionalPrice = computed(() => {
-  return bidPackages.value.reduce((total, bidPackage) => {
-    return total + (parseInt(bidPackage.additional_price) || 0)
-  }, 0)
-})
+  editSelectedContractor.value = bid.contractor_id
+    ? props.contractors.find((c) => c.id == bid.contractor_id)
+    : null
 
-const totalClientPrice = computed(() => {
-  return bidPackages.value.reduce((total, bidPackage) => {
-    return total + (parseInt(bidPackage.client_price) || 0)
-  }, 0)
-})
+  // Đảm bảo modal được hiển thị sau khi các giá trị đã được chuẩn bị
+  nextTick(() => {
+    window.$('#editBidModal').modal('show')
+  })
+}
+
+// Kiểm tra xem nhà thầu có phải là nhà thầu được chọn không
+const isSelectedContractor = (bidPackage, bid) => {
+  return bid && bid.is_selected
+}
+
+// Mở modal giá phát sinh
+const openAdditionalPriceModal = (bidPackage) => {
+  selectedBidPackage.value = bidPackage
+
+  // Truyền trạng thái auto_calculate vào modal
+  if (additionalPriceModalRef.value) {
+    additionalPriceModalRef.value.isAutoCalculate = bidPackage.auto_calculate && !bidPackage.is_work_item
+  }
+
+  window.$('#additionalPriceModal').modal('show')
+}
+
+// Xử lý khi form cập nhật giá phát sinh được submit
+const handleAdditionalPriceSubmit = (formData) => {
+  if (isSubmitting.value) return
+
+  isSubmitting.value = true
+
+  router.patch(
+    route('bid-packages.update-additional-price', selectedBidPackage.value.id),
+    {
+      additional_price: formData.additional_price
+    },
+    {
+      onSuccess: () => {
+        window.$('#additionalPriceModal').modal('hide')
+        selectedBidPackage.value = null
+        showSuccess('Giá phát sinh đã được cập nhật thành công.')
+      },
+      onError: (errors) => {
+        // Truyền lỗi vào component modal
+        if (additionalPriceModalRef.value) {
+          additionalPriceModalRef.value.setErrors(errors)
+        }
+      },
+      onFinish: () => {
+        isSubmitting.value = false
+      }
+    }
+  )
+}
+
+// Reference đến component modal giá phát sinh
+const additionalPriceModalRef = ref(null)
+
+const isBidPackageEditing = ref(false)
+
+// Reference đến component modal gói thầu
+const bidPackageModalRef = ref(null)
+
+// Mở modal tạo gói thầu mới
+const openCreateBidPackageModal = () => {
+  selectedBidPackage.value = null
+  isBidPackageEditing.value = false
+
+  if (bidPackageModalRef.value) {
+    bidPackageModalRef.value.resetForm()
+  }
+
+  window.$('#bidPackageModal').modal('show')
+}
+
+// Mở modal chỉnh sửa gói thầu
+const openEditBidPackageModal = (bidPackage) => {
+  selectedBidPackage.value = bidPackage
+  isBidPackageEditing.value = true
+  window.$('#bidPackageModal').modal('show')
+}
+
+// Xử lý khi form gói thầu được submit (tạo mới hoặc chỉnh sửa)
+const handleBidPackageSubmit = (formData) => {
+  if (isSubmitting.value) return
+
+  isSubmitting.value = true
+
+  if (isBidPackageEditing.value && selectedBidPackage.value) {
+    // Chỉnh sửa gói thầu
+    router.put(route('bid-packages.update', selectedBidPackage.value.id), formData, {
+      onSuccess: () => {
+        window.$('#bidPackageModal').modal('hide')
+        selectedBidPackage.value = null
+        showSuccess('Gói thầu đã được cập nhật thành công.')
+      },
+      onError: (errors) => {
+        if (bidPackageModalRef.value) {
+          bidPackageModalRef.value.setErrors(errors)
+        }
+      },
+      onFinish: () => {
+        isSubmitting.value = false
+      }
+    })
+  } else {
+    // Tạo gói thầu mới
+    let url = route('bid-packages.store', props.project.id)
+
+    router.post(url, formData, {
+      onSuccess: () => {
+        window.$('#bidPackageModal').modal('hide')
+        showSuccess('Gói thầu đã được tạo thành công.')
+        router.reload({ preserveState: true })
+      },
+      onError: (errors) => {
+        if (bidPackageModalRef.value) {
+          bidPackageModalRef.value.setErrors(errors)
+        }
+      },
+      onFinish: () => {
+        isSubmitting.value = false
+      }
+    })
+  }
+}
+
+const confirmDeleteBidPackage = (bidPackage) => {
+  showConfirm('Xác nhận xóa', `Bạn có chắc chắn muốn xóa gói thầu "${bidPackage.name}" không?`, 'Xóa', 'Hủy').then(
+    (result) => {
+      if (result.isConfirmed) {
+        deleteBidPackage(bidPackage)
+      }
+    }
+  )
+}
+
+const deleteBidPackage = (bidPackage) => {
+  router.delete(route('bid-packages.destroy', bidPackage.id), {
+    onSuccess: () => {
+      showSuccess('Gói thầu đã được xóa thành công.')
+    },
+    onError: (errors) => {
+      showError('Không thể xóa gói thầu. Vui lòng thử lại sau.')
+    }
+  })
+}
 
 // Lấy gói thầu chứa bid
 const getBidPackageForBid = (bid) => {
   if (!bid) return null
   return bidPackages.value.find((bp) => bp.bids.some((b) => b.id === bid.id))
-}
-
-const openEditBidModal = (bid) => {
-  bidModalMode.value = 'edit'
-  selectedBid.value = bid
-  
-  // Chuẩn bị dữ liệu form
-  editBidForm.value = {
-    contractor_id: bid.contractor_id,
-    price: formatCurrency(bid.price || 0),
-    notes: bid.notes || ''
-  }
-  
-  editBidFormErrors.value = {}
-  editSelectedContractor.value = editBidForm.value.contractor_id
-    ? props.contractors.find((c) => c.id == editBidForm.value.contractor_id)
-    : null
-  
-  // Đảm bảo modal được hiển thị sau khi các giá trị đã được chuẩn bị
-  nextTick(() => {
-    window.$('#editBidModal').modal('show')
-  })
 }
 
 // Kiểm tra xem gói thầu có bị lỗ không (giá giao thầu > giá dự thầu)
@@ -981,6 +831,9 @@ const isPackageLosing = (bidPackage) => {
   const estimatedPrice = parseInt(bidPackage.estimated_price) || 0
   return clientPrice > estimatedPrice
 }
+
+// Reference đến component modal hạng mục
+const workItemModalRef = ref(null)
 
 // Mở modal thêm hạng mục
 const openCreateWorkItemModal = (bidPackage) => {
@@ -996,20 +849,7 @@ const openCreateWorkItemModal = (bidPackage) => {
   selectedBidPackage.value = bidPackage
   selectedWorkItem.value = null
   isEditingWorkItem.value = false
-  
-  // Reset form
-  workItemForm.value = {
-    name: '',
-    code: '',
-    price: '',
-    description: '',
-    status: 'open',
-    is_work_item: true,
-    parent_id: bidPackage.id
-  }
-  workItemFormErrors.value = {}
 
-  // Reset form trong component
   if (workItemModalRef.value) {
     workItemModalRef.value.resetForm()
   }
@@ -1032,20 +872,9 @@ const openEditWorkItemModal = (workItem) => {
   }
 
   selectedWorkItem.value = workItem
-  selectedBidPackage.value = props.project.bid_packages.find((bp) => bp.id === workItem.bid_package_id)
-  workItemForm.value = {
-    name: workItem.name,
-    code: workItem.code || '',
-    price: workItem.price ? formatCurrency(workItem.price) : '',
-    description: workItem.description || '',
-    status: workItem.status || 'open',
-    is_work_item: true,
-    parent_id: workItem.parent_id
-  }
-  workItemFormErrors.value = {}
+  selectedBidPackage.value = props.project.bid_packages.find((bp) => bp.id === workItem.parent_id)
   isEditingWorkItem.value = true
 
-  // Reset form
   if (workItemModalRef.value) {
     workItemModalRef.value.resetForm()
   }
@@ -1060,13 +889,12 @@ const openEditWorkItemModal = (workItem) => {
 const handleWorkItemSubmit = (formData) => {
   if (isSubmitting.value) return
 
-  workItemFormErrors.value = {}
   isSubmitting.value = true
 
   try {
     if (isEditingWorkItem.value) {
       // Cập nhật hạng mục
-      router.put(route('work-items.update', selectedWorkItem.value.id), formData, {
+      router.put(route('bid-packages.update', selectedWorkItem.value.id), formData, {
         onSuccess: () => {
           window.$('#workItemModal').modal('hide')
           selectedWorkItem.value = null
@@ -1078,7 +906,6 @@ const handleWorkItemSubmit = (formData) => {
           if (workItemModalRef.value) {
             workItemModalRef.value.setErrors(errors)
           }
-          workItemFormErrors.value = errors
         },
         onFinish: () => {
           isSubmitting.value = false
@@ -1086,7 +913,7 @@ const handleWorkItemSubmit = (formData) => {
       })
     } else {
       // Thêm hạng mục mới
-      router.post(route('bid-packages.work-items.store', selectedBidPackage.value.id), formData, {
+      router.post(route('bid-packages.store', props.project.id), formData, {
         onSuccess: () => {
           window.$('#workItemModal').modal('hide')
           selectedBidPackage.value = null
@@ -1097,7 +924,6 @@ const handleWorkItemSubmit = (formData) => {
           if (workItemModalRef.value) {
             workItemModalRef.value.setErrors(errors)
           }
-          workItemFormErrors.value = errors
         },
         onFinish: () => {
           isSubmitting.value = false
@@ -1111,40 +937,35 @@ const handleWorkItemSubmit = (formData) => {
   }
 }
 
-// Cập nhật contractor_id khi thay đổi trong modal hạng mục
-const updateWorkItemContractorId = (contractorId) => {
-  workItemForm.value.contractor_id = contractorId
-}
+// Tính tổng cho các cột
+const totalEstimatedPrice = computed(() => {
+  return bidPackages.value.reduce((total, bidPackage) => {
+    return total + (parseInt(bidPackage.display_estimated_price) || 0)
+  }, 0)
+})
 
-// Reference đến component modal hạng mục
-const workItemModalRef = ref(null)
+const totalAdditionalPrice = computed(() => {
+  return bidPackages.value.reduce((total, bidPackage) => {
+    return total + (parseInt(bidPackage.display_additional_price) || 0)
+  }, 0)
+})
 
-// Xóa hạng mục
-const deleteWorkItem = (workItem) => {
-  router.delete(route('work-items.destroy', workItem.id), {
-    onSuccess: () => {
-      showSuccess('Hạng mục đã được xóa thành công.')
-    },
-    onError: (errors) => {
-      showError('Không thể xóa hạng mục. Vui lòng thử lại sau.')
-    }
-  })
-}
+const totalClientPrice = computed(() => {
+  return bidPackages.value.reduce((total, bidPackage) => {
+    return total + (parseInt(bidPackage.display_client_price) || 0)
+  }, 0)
+})
+
+// Xử lý khi component bị hủy
+onBeforeUnmount(() => {
+  // Hủy sự kiện khi modal đóng
+  window.$('#addBidModal').off('hidden.bs.modal')
+  window.$('#editBidModal').off('hidden.bs.modal')
+  window.$('#workItemModal').off('hidden.bs.modal')
+})
 </script>
 
 <style scoped>
-/* Thêm CSS cho phần tên dự án và nút thêm gói thầu cố định */
-.fixed-header {
-  position: sticky;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 100;
-  width: 100%;
-  background-color: #f4f6f9;
-  padding: 10px 5px;
-}
-
 /* Cải thiện CSS cho header sticky */
 .card-body {
   overflow: auto;
@@ -1311,9 +1132,9 @@ tbody tr:first-child td {
 }
 
 /* Tailwind Grid System với 24 cột */
-.grid-cols-24 {
+.grid-cols-25 {
   display: grid;
-  grid-template-columns: repeat(32, minmax(0, 1fr));
+  grid-template-columns: repeat(33, minmax(0, 1fr));
 }
 
 .col-span-1 {

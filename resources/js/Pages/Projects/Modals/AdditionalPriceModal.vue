@@ -16,8 +16,11 @@
           </button>
         </div>
         <div class="modal-body">
+          <div v-if="isAutoCalculate" class="alert alert-info">
+            <i class="fas fa-info-circle mr-2"></i> Gói thầu này đang được cấu hình để tính toán tự động từ các gói thầu con. Bạn cần tắt tính năng này để có thể nhập giá phát sinh thủ công.
+          </div>
           <form @submit.prevent="submitForm">
-            <div class="form-group">
+            <div class="form-group" :class="{ 'opacity-50': isAutoCalculate }">
               <label for="additional_price">Giá phát sinh (VNĐ) <span class="text-danger">*</span></label>
               <input
                 type="text"
@@ -27,6 +30,7 @@
                 v-model="form.additional_price"
                 :class="{ 'is-invalid': formErrors.additional_price }"
                 @input="formatNumberInput($event)"
+                :disabled="isAutoCalculate"
               />
               <div class="invalid-feedback" v-if="formErrors.additional_price">
                 {{ formErrors.additional_price }}
@@ -65,8 +69,11 @@ import { formatNumberInput, parseCurrency, formatCurrency } from '@/utils'
 
 const props = defineProps({
   bidPackage: Object,
-  bid: Object,
-  isSubmitting: Boolean
+  isSubmitting: Boolean,
+  isAutoCalculate: {
+    type: Boolean,
+    default: false
+  }
 })
 
 const emit = defineEmits(['submit'])
@@ -78,6 +85,9 @@ const form = ref({
 })
 
 const formErrors = ref({})
+
+// Trạng thái tính toán tự động
+const isAutoCalculate = ref(props.isAutoCalculate)
 
 // Reset form
 const resetForm = () => {
@@ -120,6 +130,9 @@ defineExpose({
   resetForm,
   setErrors: (errors) => {
     formErrors.value = errors
+  },
+  set isAutoCalculate(value) {
+    isAutoCalculate.value = value
   }
 })
 </script>

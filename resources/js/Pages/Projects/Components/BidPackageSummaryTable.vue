@@ -1,8 +1,8 @@
 <template>
   <div class="bid-package-summary-table">
-    <div class="table-responsive">
+    <div class="table-responsive sticky-table-container">
       <table class="table table-bordered table-hover">
-        <thead class="thead-light">
+        <thead class="thead-light sticky-header">
           <tr>
             <th style="width: 50px">STT</th>
             <th style="width: 100px">Mã</th>
@@ -21,8 +21,8 @@
               <td>{{ index + 1 }}</td>
               <td>{{ bidPackage.code }}</td>
               <td>{{ bidPackage.name }}</td>
-              <td class="text-right">{{ formatCurrency(bidPackage.estimated_price) }}</td>
-              <td class="text-right">{{ formatCurrency(bidPackage.additional_price) }}</td>
+              <td class="text-right">{{ formatCurrency(bidPackage.display_estimated_price) }}</td>
+              <td class="text-right">{{ formatCurrency(bidPackage.display_additional_price) }}</td>
               <td>
                 {{ getWinningBidContractor(bidPackage) }}
               </td>
@@ -40,8 +40,8 @@
                 <td></td>
                 <td>+ {{ workItem.code || `HM${wIndex + 1}` }}</td>
                 <td>{{ workItem.name }}</td>
-                <td class="text-right">{{ formatCurrency(workItem.estimated_price) }}</td>
-                <td class="text-right">{{ formatCurrency(workItem.additional_price) }}</td>
+                <td class="text-right">{{ formatCurrency(workItem.display_estimated_price) }}</td>
+                <td class="text-right">{{ formatCurrency(workItem.display_additional_price) }}</td>
                 <td>{{ getSelectedContractorName(workItem) }}</td>
                 <td>
                   <span :class="getWorkItemStatusBadgeClass(workItem.status)">
@@ -53,6 +53,21 @@
             </template>
           </template>
         </tbody>
+        <tfoot class="sticky-footer">
+          <tr class="table-secondary font-weight-bold">
+            <td colspan="3" class="text-right">Tổng cộng:</td>
+            <td class="text-right">{{ formatCurrency(totalEstimatedPrice) }}</td>
+            <td class="text-right">{{ formatCurrency(totalAdditionalPrice) }}</td>
+            <td></td>
+            <td></td>
+            <td></td>
+          </tr>
+          <tr v-if="isCompact" class="table-info font-weight-bold">
+            <td colspan="3" class="text-right">Tổng giá trị (Dự thầu + Phát sinh):</td>
+            <td colspan="2" class="text-right">{{ formatCurrency(totalEstimatedPrice + totalAdditionalPrice) }}</td>
+            <td colspan="3"></td>
+          </tr>
+        </tfoot>
       </table>
     </div>
   </div>
@@ -62,10 +77,32 @@
 import { computed } from 'vue'
 import { formatCurrency } from '@/utils'
 
+// Tính tổng giá dự thầu
+const totalEstimatedPrice = computed(() => {
+  let total = 0
+  props.bidPackages.forEach(bidPackage => {
+    total += parseInt(bidPackage.display_estimated_price) || 0
+  })
+  return total
+})
+
+// Tính tổng giá phát sinh
+const totalAdditionalPrice = computed(() => {
+  let total = 0
+  props.bidPackages.forEach(bidPackage => {
+    total += parseInt(bidPackage.display_additional_price) || 0
+  })
+  return total
+})
+
 const props = defineProps({
   bidPackages: {
     type: Array,
     required: true
+  },
+  isCompact: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -159,16 +196,54 @@ const getWorkItemStatusText = (status) => {
 </script>
 
 <style scoped>
-.bid-package-summary-table {
-  margin-bottom: 2rem;
-}
-
 .work-item-row {
   background-color: #f8f9fa;
 }
 
-.work-item-row td {
-  padding-left: 1.5rem;
+/* CSS cho sticky header và footer */
+.sticky-table-container {
+  max-height: calc(100vh - 250px);
+  overflow-y: auto;
+  position: relative;
+}
+
+.sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: #f8f9fa;
+}
+
+.sticky-header th {
+  position: sticky;
+  top: 0;
+  background-color: #f8f9fa;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.sticky-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+}
+
+.sticky-footer td {
+  position: sticky;
+  bottom: 0;
+  background-color: #fff;
+  box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.sticky-footer tr:last-child td {
+  position: sticky;
+  bottom: 0;
+  background-color: #e2f0fb;
+}
+
+.sticky-footer tr:first-child td {
+  position: sticky;
+  bottom: 38px; /* Chiều cao của dòng cuối cùng */
+  background-color: #e9ecef;
 }
 
 .table td.text-right {

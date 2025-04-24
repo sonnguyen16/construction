@@ -160,7 +160,7 @@ const selectedProject = ref(null)
 const getTotalEstimatedPrice = (project) => {
   if (!project.bid_packages || project.bid_packages.length === 0) return 0
   return project.bid_packages.reduce((total, pkg) => {
-    return total + (parseInt(pkg.estimated_price) || 0)
+    return total + (parseInt(pkg.display_estimated_price) || 0)
   }, 0)
 }
 
@@ -168,7 +168,7 @@ const getTotalEstimatedPrice = (project) => {
 const getTotalAdditionalPrice = (project) => {
   if (!project.bid_packages || project.bid_packages.length === 0) return 0
   return project.bid_packages.reduce((total, pkg) => {
-    return total + (parseInt(pkg.additional_price) || 0)
+    return total + (parseInt(pkg.display_additional_price) || 0)
   }, 0)
 }
 
@@ -176,7 +176,7 @@ const getTotalAdditionalPrice = (project) => {
 const getTotalClientPrice = (project) => {
   if (!project.bid_packages || project.bid_packages.length === 0) return 0
   return project.bid_packages.reduce((total, pkg) => {
-    return total + (parseInt(pkg.client_price) || 0)
+    return total + (parseInt(pkg.display_client_price) || 0)
   }, 0)
 }
 

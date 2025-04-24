@@ -42,7 +42,7 @@ class Project extends Model
      */
     public function bidPackages()
     {
-        return $this->hasMany(BidPackage::class)->whereNull('deleted_at');
+        return $this->hasMany(BidPackage::class)->whereNull('deleted_at')->whereNull('parent_id');
     }
 
     /**
