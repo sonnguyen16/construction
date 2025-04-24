@@ -72,6 +72,8 @@ Route::middleware('auth')->group(function () {
     // Thêm route cho các trang chi phí và lợi nhuận
     Route::get('/projects/{project}/expenses', [ProjectController::class, 'expenses'])->name('projects.expenses');
     Route::get('/projects/{project}/profit', [ProjectController::class, 'profit'])->name('projects.profit');
+    // Route cập nhật % hoa hồng
+    Route::put('/projects/{project}/update-commission', [ProjectController::class, 'updateCommission'])->name('projects.update-commission');
     // API để lấy danh sách gói thầu
     Route::get('/projects/{project}/bid-packages', [ProjectController::class, 'getBidPackages'])->name('projects.bid-packages');
     // Thêm route cập nhật giá trị phát sinh

@@ -41,12 +41,12 @@
 
                   <!-- Select cho dự án -->
                   <div class="form-group">
-                    <label for="project_id">Dự án</label>
+                    <label for="project_id">Dự án <small class="text-muted">(không bắt buộc)</small></label>
                     <input
                       type="text"
                       class="form-control"
                       id="project_id"
-                      placeholder="Chọn dự án"
+                      placeholder="Chọn dự án hoặc để trống nếu là chi ngoài dự án"
                       data-role="inputpicker"
                       :class="{ 'is-invalid': form.errors.project_id }"
                     />
@@ -55,12 +55,12 @@
 
                   <!-- Select cho gói thầu -->
                   <div class="form-group" v-if="form.project_id">
-                    <label for="bid_package_id">Gói thầu</label>
+                    <label for="bid_package_id">Gói thầu <small class="text-muted">(không bắt buộc)</small></label>
                     <input
                       type="text"
                       class="form-control"
                       id="bid_package_id"
-                      placeholder="Chọn gói thầu"
+                      placeholder="Chọn gói thầu hoặc để trống"
                       data-role="inputpicker"
                       :class="{ 'is-invalid': form.errors.bid_package_id }"
                     />
@@ -178,7 +178,8 @@ const props = defineProps({
   statuses: Object,
   preselectedContractorId: [String, Number],
   preselectedProjectId: [String, Number],
-  preselectedBidPackageId: [String, Number]
+  preselectedBidPackageId: [String, Number],
+  redirectToExpenses: Boolean
 })
 
 const form = useForm({
@@ -190,7 +191,8 @@ const form = useForm({
   amount: '',
   status: 'proposed',
   payment_date: null,
-  description: ''
+  description: '',
+  redirect_to_expenses: props.redirectToExpenses ? true : false
 })
 
 // Lọc gói thầu theo dự án đã chọn
@@ -225,6 +227,12 @@ const onStatusChange = () => {
 }
 
 const submit = () => {
+  // Kiểm tra nếu đã chọn project thì phải chọn bid_package
+  if (form.project_id && !form.bid_package_id) {
+    alert('Vui lòng chọn gói thầu cho dự án đã chọn')
+    return
+  }
+  
   // Chuyển đổi số tiền từ định dạng tiền tệ sang số
   form.amount = parseCurrency(form.amount)
 

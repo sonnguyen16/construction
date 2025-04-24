@@ -3,6 +3,58 @@
     <template #header>{{ project.name }}</template>
     <template #breadcrumb>Lợi nhuận dự án</template>
 
+    <!-- Thông tin hoa hồng dự án -->
+    <div class="row mb-3">
+      <div class="col-md-12">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Thông tin hoa hồng</h3>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-4">
+                <div class="form-group">
+                  <label>Phần trăm hoa hồng (%)</label>
+                  <div class="input-group">
+                    <input 
+                      type="number" 
+                      class="form-control" 
+                      v-model="commissionPercentage" 
+                      min="0" 
+                      max="100" 
+                      step="0.01"
+                    />
+                    <div class="input-group-append">
+                      <span class="input-group-text">%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-group">
+                  <label>Tổng doanh thu dự án</label>
+                  <input type="text" class="form-control" :value="formatCurrency(totalRevenue)" disabled />
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-group">
+                  <label>Giá trị hoa hồng</label>
+                  <input type="text" class="form-control" :value="formatCurrency(commissionAmount)" disabled />
+                </div>
+              </div>
+            </div>
+            <div class="row mt-2">
+              <div class="col-md-12">
+                <button @click="updateCommissionPercentage" class="btn btn-primary" :disabled="isUpdatingCommission">
+                  <i class="fas fa-save mr-1"></i> Cập nhật hoa hồng
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
     <!-- Thông tin dự án -->
     <div class="row">
       <div class="col-md-12">
@@ -74,12 +126,36 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { Link, router } from '@inertiajs/vue3'
+import { showSuccess, showError } from '@/utils'
 import { ref, computed, onMounted } from 'vue'
 import { formatCurrency, parseCurrency } from '@/utils'
 
 const props = defineProps({
   project: Object
 })
+
+// Biến lưu trữ % hoa hồng
+const commissionPercentage = ref(props.project.commission_percentage || 0)
+const isUpdatingCommission = ref(false)
+
+// Tổng doanh thu dự án (tổng giá dự thầu - tổng giá giao thầu)
+const totalRevenue = computed(() => {
+  return totalEstimatedPrice.value - totalContractAmount.value
+})
+
+// Tính giá trị hoa hồng
+const commissionAmount = computed(() => {
+  return (totalRevenue.value * commissionPercentage.value) / 100
+})
+
+// Cập nhật % hoa hồng
+const updateCommissionPercentage = () => {
+  isUpdatingCommission.value = true
+  
+  router.put(route('projects.update-commission', props.project.id), {
+    commission_percentage: commissionPercentage.value
+  })
+}
 
 
 // Tính lợi nhuận cho một gói thầu: Lợi nhuận = giá dự thầu - giá giao thầu
@@ -135,7 +211,7 @@ const getProfitClass = (profit) => {
 // Tính tổng chi cho một gói thầu
 const getTotalPaymentAmount = (bidPackage) => {
   const totalPaid = bidPackage.payment_vouchers
-    ? bidPackage.payment_vouchers.reduce((total, voucher) => total + parseInt(voucher.amount || 0), 0)
+    ? bidPackage.payment_vouchers.filter(voucher => voucher.status === 'paid').reduce((total, voucher) => total + parseInt(voucher.amount || 0), 0)
     : 0
   return totalPaid
 }
@@ -150,7 +226,7 @@ const totalPaidAmount = computed(() => {
 // Tính tổng thu từ phiếu thu của dự án
 const getTotalReceiptAmount = () => {
   if (!props.project.receipt_vouchers) return 0
-  return props.project.receipt_vouchers.reduce((total, receipt) => {
+  return props.project.receipt_vouchers.filter(receipt => receipt.status === 'paid').reduce((total, receipt) => {
     return total + parseInt(receipt.amount || 0)
   }, 0)
 }

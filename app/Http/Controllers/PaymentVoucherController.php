@@ -51,15 +51,29 @@ class PaymentVoucherController extends Controller
         }
 
         // Lọc theo dự án
-        if ($request->has('project_id') && $request->project_id) {
-            $query->where('project_id', $request->project_id);
-            $statsQuery->where('project_id', $request->project_id);
+        if ($request->has('project_id')) {
+            if ($request->project_id === 'null') {
+                // Lọc các phiếu chi ngoài dự án (project_id = null)
+                $query->whereNull('project_id');
+                $statsQuery->whereNull('project_id');
+            } else if ($request->project_id) {
+                // Lọc theo dự án cụ thể
+                $query->where('project_id', $request->project_id);
+                $statsQuery->where('project_id', $request->project_id);
+            }
         }
 
         // Lọc theo gói thầu
-        if ($request->has('bid_package_id') && $request->bid_package_id) {
-            $query->where('bid_package_id', $request->bid_package_id);
-            $statsQuery->where('bid_package_id', $request->bid_package_id);
+        if ($request->has('bid_package_id')) {
+            if ($request->bid_package_id === 'null') {
+                // Lọc các phiếu chi không thuộc gói thầu nào (bid_package_id = null)
+                $query->whereNull('bid_package_id');
+                $statsQuery->whereNull('bid_package_id');
+            } else if ($request->bid_package_id) {
+                // Lọc theo gói thầu cụ thể
+                $query->where('bid_package_id', $request->bid_package_id);
+                $statsQuery->where('bid_package_id', $request->bid_package_id);
+            }
         }
 
         if ($request->has('payment_category_id') && $request->payment_category_id) {
@@ -155,7 +169,8 @@ class PaymentVoucherController extends Controller
             'statuses' => $this->getStatuses(),
             'preselectedContractorId' => request('contractor_id'),
             'preselectedProjectId' => request('project_id'),
-            'preselectedBidPackageId' => request('bid_package_id')
+            'preselectedBidPackageId' => request('bid_package_id'),
+            'redirectToExpenses' => request('redirect_to_expenses') === 'true'
         ]);
     }
 
@@ -164,16 +179,23 @@ class PaymentVoucherController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $rules = [
             'contractor_id' => 'required|exists:contractors,id',
-            'project_id' => 'required|exists:projects,id',
-            'bid_package_id' => 'required|exists:bid_packages,id',
+            'project_id' => 'nullable|exists:projects,id',
+            'bid_package_id' => 'nullable|exists:bid_packages,id',
             'payment_category_id' => 'nullable|exists:payment_categories,id',
             'amount' => 'required|numeric|min:0',
             'description' => 'nullable|string',
             'status' => 'required',
             'payment_date' => 'nullable|date'
-        ]);
+        ];
+
+        // Nếu đã chọn project thì phải chọn bid_package
+        if ($request->filled('project_id')) {
+            $rules['bid_package_id'] = 'required|exists:bid_packages,id';
+        }
+
+        $validated = $request->validate($rules);
 
         // Kiểm tra logic payment_date
         if ($validated['status'] === 'completed' && empty($validated['payment_date'])) {
@@ -181,9 +203,18 @@ class PaymentVoucherController extends Controller
         }
 
         $paymentVoucher = PaymentVoucher::create($validated);
+        $successMessage = 'Phiếu chi đã được tạo thành công.';
 
-        return redirect()->route('projects.expenses', $paymentVoucher->project_id)
-            ->with('success', 'Phiếu chi đã được tạo thành công.');
+        // Kiểm tra tham số redirect_to_expenses được gửi lên từ form
+        if ($request->has('redirect_to_expenses') && $request->redirect_to_expenses && $paymentVoucher->project_id) {
+            // Nếu được tạo từ trang expenses của project, quay về trang đó
+            return redirect()->route('projects.expenses', $paymentVoucher->project_id)
+                ->with('success', $successMessage);
+        } else {
+            // Ngược lại, quay về trang danh sách phiếu chi
+            return redirect()->route('payment-vouchers.index')
+                ->with('success', $successMessage);
+        }
     }
 
     /**
@@ -226,16 +257,23 @@ class PaymentVoucherController extends Controller
      */
     public function update(Request $request, PaymentVoucher $paymentVoucher)
     {
-        $validated = $request->validate([
+        $rules = [
             'contractor_id' => 'required|exists:contractors,id',
-            'project_id' => 'required|exists:projects,id',
-            'bid_package_id' => 'required|exists:bid_packages,id',
+            'project_id' => 'nullable|exists:projects,id',
+            'bid_package_id' => 'nullable|exists:bid_packages,id',
             'payment_category_id' => 'nullable|exists:payment_categories,id',
             'amount' => 'required|numeric|min:0',
             'description' => 'nullable|string',
             'status' => 'required',
             'payment_date' => 'nullable|date'
-        ]);
+        ];
+
+        // Nếu đã chọn project thì phải chọn bid_package
+        if ($request->filled('project_id')) {
+            $rules['bid_package_id'] = 'required|exists:bid_packages,id';
+        }
+
+        $validated = $request->validate($rules);
 
         // Kiểm tra logic payment_date
         if ($validated['status'] === 'paid' && empty($validated['payment_date'])) {
@@ -243,9 +281,21 @@ class PaymentVoucherController extends Controller
         }
 
         $paymentVoucher->update($validated);
+        $successMessage = 'Phiếu chi đã được cập nhật thành công.';
 
-        return redirect()->route('projects.expenses', $paymentVoucher->project_id)
-            ->with('success', 'Phiếu chi đã được cập nhật thành công.');
+        // Kiểm tra xem phiếu được cập nhật từ trang expenses của project hay không
+        $referer = request()->headers->get('referer');
+        $isFromExpenses = $paymentVoucher->project_id && strpos($referer, 'projects/' . $paymentVoucher->project_id . '/expenses') !== false;
+
+        if ($isFromExpenses) {
+            // Nếu được cập nhật từ trang expenses của project, quay về trang đó
+            return redirect()->route('projects.expenses', $paymentVoucher->project_id)
+                ->with('success', $successMessage);
+        } else {
+            // Ngược lại, quay về trang danh sách phiếu chi
+            return redirect()->route('payment-vouchers.index')
+                ->with('success', $successMessage);
+        }
     }
 
     /**

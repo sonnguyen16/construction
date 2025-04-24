@@ -3,6 +3,7 @@
     <template #header>{{ project.name }}</template>
     <template #breadcrumb>Chi phí dự án</template>
 
+
     <!-- Thông tin dự án -->
     <div class="row">
       <div class="col-md-12">
@@ -399,6 +400,8 @@ const props = defineProps({
   project: Object
 })
 
+
+
 const selectedPaymentVoucher = ref(null)
 const selectedBidPackage = ref(null)
 const bidPackageForm = ref({
@@ -481,7 +484,8 @@ const goToCreatePaymentVoucher = (bidPackage) => {
   }
 
   // Chuyển hướng đến trang tạo phiếu chi với thông tin gói thầu và nhà thầu được chọn
-  const url = `/payment-vouchers/create?project_id=${props.project.id}&bid_package_id=${bidPackage.id}&contractor_id=${bidPackage.selected_contractor_id}`
+  // Thêm tham số redirect_to_expenses=true để đánh dấu phiếu được tạo từ trang expenses
+  const url = `/payment-vouchers/create?project_id=${props.project.id}&bid_package_id=${bidPackage.id}&contractor_id=${bidPackage.selected_contractor_id}&redirect_to_expenses=true`
   router.visit(url)
 }
 

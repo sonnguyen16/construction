@@ -39,12 +39,12 @@
                   </div>
 
                   <div class="form-group">
-                    <label for="project_id">Dự án</label>
+                    <label for="project_id">Dự án <small class="text-muted">(không bắt buộc)</small></label>
                     <input
                       type="text"
                       class="form-control"
                       id="project_id"
-                      placeholder="Chọn dự án"
+                      placeholder="Chọn dự án hoặc để trống nếu là thu ngoài dự án"
                       data-role="inputpicker"
                       :class="{ 'is-invalid': form.errors.project_id }"
                     />

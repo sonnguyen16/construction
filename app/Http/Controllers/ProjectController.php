@@ -267,4 +267,21 @@ class ProjectController extends Controller
             'bid_packages' => $bidPackages
         ]);
     }
+
+    /**
+     * Cập nhật phần trăm hoa hồng cho dự án
+     */
+    public function updateCommission(Request $request, Project $project)
+    {
+        $validated = $request->validate([
+            'commission_percentage' => 'required|numeric|min:0|max:100',
+        ]);
+
+        $project->update([
+            'commission_percentage' => $validated['commission_percentage']
+        ]);
+
+        return redirect()->route('projects.profit', $project->id)
+            ->with('success', 'Cập nhật phần trăm hoa hồng thành công');
+    }
 }

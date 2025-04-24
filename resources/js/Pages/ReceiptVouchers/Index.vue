@@ -87,6 +87,7 @@
                   <label for="project_id">Dự án:</label>
                   <select class="form-control" id="project_id" v-model="filters.project_id" @change="applyFilters">
                     <option value="">Tất cả dự án</option>
+                    <option value="null">Ngoài dự án</option>
                     <option v-for="project in projects" :key="project.id" :value="project.id">
                       {{ project.name }}
                     </option>
@@ -198,20 +199,20 @@
                     <td>
                       <div class="btn-group">
                         <Link :href="route('receipt-vouchers.show', voucher.id)" class="btn btn-xs btn-info">
-                          <i class="fas fa-eye"></i> Xem
+                          <i class="fas fa-eye"></i>
                         </Link>
                         <Link :href="route('receipt-vouchers.edit', voucher.id)" class="btn btn-xs btn-primary">
-                          <i class="fas fa-edit"></i> Sửa
+                          <i class="fas fa-edit"></i>
                         </Link>
                         <button @click="confirmDelete(voucher)" class="btn btn-xs btn-danger">
-                          <i class="fas fa-trash"></i> Xóa
+                          <i class="fas fa-trash"></i>
                         </button>
                         <a
                           :href="`/receipt-vouchers/${voucher.id}/print`"
                           target="_blank"
                           class="btn btn-xs btn-secondary"
                         >
-                          <i class="fas fa-print"></i> In
+                          <i class="fas fa-print"></i>
                         </a>
                       </div>
                     </td>

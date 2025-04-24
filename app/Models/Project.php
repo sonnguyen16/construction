@@ -14,6 +14,7 @@ class Project extends Model
         'name',
         'description',
         'status',
+        'commission_percentage',
         'customer_id',
         'project_category_id',
         'created_by',

@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('code');
             $table->text('description')->nullable();
             $table->foreignId('customer_id')->constrained('customers');
-            $table->foreignId('project_id')->constrained('projects');
+            $table->foreignId('project_id')->nullable()->constrained('projects');
             $table->unsignedBigInteger('amount');
             $table->enum('status', ['paid', 'unpaid'])->default('unpaid');
             $table->date('payment_date')->nullable();

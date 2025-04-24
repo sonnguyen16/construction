@@ -52,9 +52,16 @@ class ReceiptVoucherController extends Controller
         }
 
         // Lọc theo dự án
-        if ($request->has('project_id') && $request->project_id) {
-            $query->where('project_id', $request->project_id);
-            $statsQuery->where('project_id', $request->project_id);
+        if ($request->has('project_id')) {
+            if ($request->project_id === 'null') {
+                // Lọc các phiếu thu ngoài dự án (project_id = null)
+                $query->whereNull('project_id');
+                $statsQuery->whereNull('project_id');
+            } else if ($request->project_id) {
+                // Lọc theo dự án cụ thể
+                $query->where('project_id', $request->project_id);
+                $statsQuery->where('project_id', $request->project_id);
+            }
         }
 
         if ($request->has('receipt_category_id') && $request->receipt_category_id) {
@@ -141,7 +148,7 @@ class ReceiptVoucherController extends Controller
     {
         $validated = $request->validate([
             'customer_id' => 'required|exists:customers,id',
-            'project_id' => 'required|exists:projects,id',
+            'project_id' => 'nullable|exists:projects,id',
             'receipt_category_id' => 'nullable|exists:receipt_categories,id',
             'amount' => 'required|numeric|min:0',
             'description' => 'nullable|string',
