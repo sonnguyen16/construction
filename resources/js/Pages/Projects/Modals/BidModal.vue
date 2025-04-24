@@ -218,7 +218,7 @@ const initInputPicker = async () => {
       ],
       fieldText: 'text',
       fieldValue: 'value',
-      filterOpen: false,
+      filterOpen: true,
       autoOpen: true,
       headShow: true,
       width: '100%'

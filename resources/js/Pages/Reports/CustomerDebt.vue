@@ -19,7 +19,7 @@
               <div class="card-body">
                 <div class="table-responsive">
                   <table class="table table-bordered table-striped">
-                    <thead>
+                    <thead class="sticky-top bg-white">
                       <tr>
                         <th class="text-center" style="width: 50px">STT</th>
                         <th>Khách hàng</th>
@@ -46,7 +46,7 @@
                         <td colspan="7" class="text-center">Không có dữ liệu</td>
                       </tr>
                     </tbody>
-                    <tfoot v-if="debtData.length > 0">
+                    <tfoot v-if="debtData.length > 0" class="sticky-bottom bg-white">
                       <tr>
                         <th colspan="4" class="text-right">Tổng cộng:</th>
                         <th class="text-right">{{ formatCurrency(totalProject) }}</th>
@@ -123,3 +123,22 @@ const exportToExcel = () => {
   XLSX.writeFile(workbook, 'bao-cao-cong-no-khach-hang.xlsx')
 }
 </script>
+
+<style>
+.sticky-top {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.sticky-bottom {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+}
+
+.table-responsive {
+  max-height: calc(100vh - 250px);
+  overflow-y: auto;
+}
+</style>

@@ -163,7 +163,7 @@ onMounted(() => {
     ],
     fieldText: 'text',
     fieldValue: 'value',
-    filterOpen: false,
+    filterOpen: true,
     headShow: true,
     autoOpen: true,
     width: '100%'
