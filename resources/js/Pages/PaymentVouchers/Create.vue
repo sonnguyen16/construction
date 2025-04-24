@@ -27,12 +27,12 @@
 
                   <!-- Select cho nhà thầu -->
                   <div class="form-group">
-                    <label for="contractor_id">Nhà thầu <span class="text-danger">*</span></label>
+                    <label for="contractor_id">Nhà thầu / nhà cung cấp<span class="text-danger">*</span></label>
                     <input
                       type="text"
                       class="form-control"
                       id="contractor_id"
-                      placeholder="Chọn nhà thầu"
+                      placeholder="Chọn nhà thầu / nhà cung cấp"
                       data-role="inputpicker"
                       :class="{ 'is-invalid': form.errors.contractor_id }"
                     />

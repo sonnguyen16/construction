@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\BidPackage;
+use App\Models\Contractor;
+use App\Models\Customer;
 use App\Models\PaymentCategory;
 use App\Models\PaymentVoucher;
 use App\Models\Project;
@@ -14,16 +16,98 @@ use Inertia\Inertia;
 class ReportController extends Controller
 {
     /**
+     * Hiển thị trang báo cáo công nợ nhà cung cấp/nhà thầu
+     */
+    public function contractorDebtReport()
+    {
+        // Lấy danh sách nhà thầu/nhà cung cấp có phiếu chi
+        $contractors = Contractor::whereHas('paymentVouchers')->get();
+
+        $debtData = [];
+
+        foreach ($contractors as $contractor) {
+            // Tổng mua hàng (tổng tiền các phiếu chi có trạng thái khác paid)
+            $totalPurchase = PaymentVoucher::where('contractor_id', $contractor->id)
+                ->whereNull('deleted_at')
+                ->sum('amount');
+
+            // Tổng chi trả (tổng tiền các phiếu chi có trạng thái paid)
+            $totalPaid = PaymentVoucher::where('contractor_id', $contractor->id)
+                ->where('status', 'paid')
+                ->whereNull('deleted_at')
+                ->sum('amount');
+
+            // Còn lại
+            $remaining = $totalPurchase - $totalPaid;
+
+            // Chỉ hiển thị nhà thầu có công nợ
+            if ($totalPurchase > 0 || $totalPaid > 0) {
+                $debtData[] = [
+                    'contractor' => $contractor,
+                    'total_purchase' => $totalPurchase,
+                    'total_paid' => $totalPaid,
+                    'remaining' => $remaining
+                ];
+            }
+        }
+
+        return Inertia::render('Reports/ContractorDebt', [
+            'debtData' => $debtData
+        ]);
+    }
+
+    /**
+     * Hiển thị trang báo cáo công nợ khách hàng
+     */
+    public function customerDebtReport()
+    {
+        // Lấy danh sách khách hàng có phiếu thu
+        $customers = Customer::whereHas('receiptVouchers')->get();
+
+        $debtData = [];
+
+        foreach ($customers as $customer) {
+            // Tổng dự án (tổng tiền các phiếu thu có trạng thái khác paid)
+            $totalProject = ReceiptVoucher::where('customer_id', $customer->id)
+                ->whereNull('deleted_at')
+                ->sum('amount');
+
+            // Tổng chi trả (tổng tiền các phiếu thu có trạng thái paid)
+            $totalPaid = ReceiptVoucher::where('customer_id', $customer->id)
+                ->where('status', 'paid')
+                ->whereNull('deleted_at')
+                ->sum('amount');
+
+            // Còn lại
+            $remaining = $totalProject - $totalPaid;
+
+            // Chỉ hiển thị khách hàng có công nợ
+            if ($totalProject > 0 || $totalPaid > 0) {
+                $debtData[] = [
+                    'customer' => $customer,
+                    'total_project' => $totalProject,
+                    'total_paid' => $totalPaid,
+                    'remaining' => $remaining
+                ];
+            }
+        }
+
+        return Inertia::render('Reports/CustomerDebt', [
+            'debtData' => $debtData
+        ]);
+    }
+
+    /**
      * Hiển thị trang báo cáo thu chi
      */
     public function financialReport(Request $request)
     {
         // Lấy danh sách dự án để filter
         $projects = Project::whereNull('deleted_at')->orderBy('name')->get();
-        
+
         // Lấy project_id từ request hoặc lấy dự án đầu tiên nếu không có
         $projectId = $request->input('project_id', $projects->first()->id ?? null);
-        
+
         // Nếu không có dự án nào, trả về trang báo cáo trống
         if (!$projectId) {
             return Inertia::render('Reports/Financial', [
@@ -32,49 +116,49 @@ class ReportController extends Controller
                 'reportData' => null
             ]);
         }
-        
+
         // Lấy thông tin dự án được chọn
         $selectedProject = Project::with(['bidPackages' => function ($query) {
             $query->whereNull('parent_id'); // Chỉ lấy các gói thầu cha
         }])->findOrFail($projectId);
-        
+
         // Tính tổng dự toán, phát sinh và tổng giao thầu
         $totalEstimatedPrice = $selectedProject->bidPackages->sum(function ($bidPackage) {
             return $bidPackage->display_estimated_price;
         });
-        
+
         $totalAdditionalPrice = $selectedProject->bidPackages->sum(function ($bidPackage) {
             return $bidPackage->display_additional_price;
         });
-        
+
         $totalClientPrice = $selectedProject->bidPackages->sum(function ($bidPackage) {
             return $bidPackage->display_client_price;
         });
-        
+
         // Lấy danh sách phiếu thu có trạng thái paid
         $receipts = ReceiptVoucher::with('receiptCategory')
             ->where('project_id', $projectId)
             ->where('status', 'paid')
             ->get()
             ->groupBy('receipt_category_id');
-        
+
         // Lấy danh sách phiếu chi có trạng thái paid
         $payments = PaymentVoucher::with('paymentCategory')
             ->where('project_id', $projectId)
             ->where('status', 'paid')
             ->get()
             ->groupBy('payment_category_id');
-        
+
         // Tổng hợp danh sách loại thu chi và số tiền tương ứng
         $receiptCategories = ReceiptCategory::all();
         $paymentCategories = PaymentCategory::all();
-        
+
         $receiptItems = [];
         foreach ($receiptCategories as $category) {
-            $amount = isset($receipts[$category->id]) 
-                ? $receipts[$category->id]->sum('amount') 
+            $amount = isset($receipts[$category->id])
+                ? $receipts[$category->id]->sum('amount')
                 : 0;
-            
+
             if ($amount > 0) {
                 $receiptItems[] = [
                     'id' => $category->id,
@@ -83,13 +167,13 @@ class ReportController extends Controller
                 ];
             }
         }
-        
+
         $paymentItems = [];
         foreach ($paymentCategories as $category) {
-            $amount = isset($payments[$category->id]) 
-                ? $payments[$category->id]->sum('amount') 
+            $amount = isset($payments[$category->id])
+                ? $payments[$category->id]->sum('amount')
                 : 0;
-            
+
             if ($amount > 0) {
                 $paymentItems[] = [
                     'id' => $category->id,
@@ -98,15 +182,15 @@ class ReportController extends Controller
                 ];
             }
         }
-        
+
         // Tính tổng thu và tổng chi
         $totalReceipt = array_sum(array_column($receiptItems, 'amount'));
         $totalPayment = array_sum(array_column($paymentItems, 'amount'));
-        
+
         // Tính phải thu và phải chi
         $receivables = $totalEstimatedPrice - $totalReceipt;
         $payables = $totalClientPrice - $totalPayment;
-        
+
         // Chuẩn bị dữ liệu báo cáo
         $reportData = [
             'totalEstimatedPrice' => $totalEstimatedPrice,
@@ -119,7 +203,7 @@ class ReportController extends Controller
             'receivables' => $receivables,
             'payables' => $payables
         ];
-        
+
         return Inertia::render('Reports/Financial', [
             'projects' => $projects,
             'selectedProject' => $selectedProject,

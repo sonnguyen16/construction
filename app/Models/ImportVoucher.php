@@ -13,6 +13,7 @@ class ImportVoucher extends Model
     protected $fillable = [
         'code',
         'project_id',
+        'bid_package_id',
         'import_date',
         'contractor_id',
         'notes',
@@ -46,6 +47,14 @@ class ImportVoucher extends Model
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Get the bid package associated with the import voucher.
+     */
+    public function bidPackage()
+    {
+        return $this->belongsTo(BidPackage::class);
     }
 
     /**

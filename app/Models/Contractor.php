@@ -38,4 +38,12 @@ class Contractor extends Model
             }
         });
     }
+    
+    /**
+     * Quan hệ với phiếu chi
+     */
+    public function paymentVouchers()
+    {
+        return $this->hasMany(PaymentVoucher::class)->whereNull('deleted_at');
+    }
 }

@@ -19,7 +19,7 @@ class ImportVoucherController extends Controller
      */
     public function index(Request $request)
     {
-        $query = ImportVoucher::whereNull('deleted_at')->with(['project', 'contractor', 'creator', 'updater']);
+        $query = ImportVoucher::whereNull('deleted_at')->with(['project', 'contractor', 'creator', 'updater', 'bidPackage']);
 
         // Áp dụng tìm kiếm nếu có
         if ($request->has('search') && !empty($request->search)) {
@@ -70,7 +70,9 @@ class ImportVoucherController extends Controller
      */
     public function create()
     {
-        $projects = Project::all();
+        $projects = Project::with(['bidPackages' => function($query) {
+            $query->whereNull('deleted_at');
+        }])->get();
         $contractors = Contractor::all();
         $products = Product::with('unit')->get();
 
@@ -104,6 +106,7 @@ class ImportVoucherController extends Controller
         $request->validate([
             'code' => 'required|string|max:255',
             'project_id' => 'required|exists:projects,id',
+            'bid_package_id' => 'nullable|exists:bid_packages,id',
             'import_date' => 'required|date',
             'contractor_id' => 'nullable|exists:contractors,id',
             'notes' => 'nullable|string',
@@ -120,6 +123,7 @@ class ImportVoucherController extends Controller
             $importVoucher = ImportVoucher::create([
                 'code' => $request->code,
                 'project_id' => $request->project_id,
+                'bid_package_id' => $request->bid_package_id,
                 'import_date' => $request->import_date,
                 'contractor_id' => $request->contractor_id,
                 'notes' => $request->notes,
@@ -155,7 +159,7 @@ class ImportVoucherController extends Controller
     {
         $importVoucher->load([
             'project', 'contractor', 'creator', 'updater',
-            'items.product.unit'
+            'items.product.unit', 'bidPackage'
         ]);
 
         // Tính tổng tiền
@@ -171,9 +175,11 @@ class ImportVoucherController extends Controller
      */
     public function edit(ImportVoucher $importVoucher)
     {
-        $importVoucher->load(['items.product.unit']);
+        $importVoucher->load(['items.product.unit', 'bidPackage']);
 
-        $projects = Project::all();
+        $projects = Project::with(['bidPackages' => function($query) {
+            $query->whereNull('deleted_at');
+        }])->get();
         $contractors = Contractor::all();
         $products = Product::with('unit')->get();
 
@@ -193,6 +199,7 @@ class ImportVoucherController extends Controller
         $request->validate([
             'code' => 'required|string|max:255',
             'project_id' => 'required|exists:projects,id',
+            'bid_package_id' => 'nullable|exists:bid_packages,id',
             'import_date' => 'required|date',
             'contractor_id' => 'nullable|exists:contractors,id',
             'notes' => 'nullable|string',
@@ -210,6 +217,7 @@ class ImportVoucherController extends Controller
             $importVoucher->update([
                 'code' => $request->code,
                 'project_id' => $request->project_id,
+                'bid_package_id' => $request->bid_package_id,
                 'import_date' => $request->import_date,
                 'contractor_id' => $request->contractor_id,
                 'notes' => $request->notes,

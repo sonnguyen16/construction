@@ -226,7 +226,9 @@ const menuItems = [
       page.component.startsWith('ReceiptVouchers/') ||
       page.component.startsWith('PaymentCategories/') ||
       page.component.startsWith('ReceiptCategories/') ||
-      page.component.startsWith('Reports/Financial'),
+      page.component.startsWith('Reports/Financial') ||
+      page.component.startsWith('Reports/ContractorDebt') ||
+      page.component.startsWith('Reports/CustomerDebt'),
     children: [
       {
         href: route('payment-vouchers.index'),
@@ -256,7 +258,19 @@ const menuItems = [
         href: route('reports.financial'),
         icon: 'fas fa-chart-pie',
         label: 'Báo cáo thu chi',
-        isActive: (page) => page.component.startsWith('Reports/Financial')
+        isActive: (page) => page.component === 'Reports/Financial'
+      },
+      {
+        href: route('reports.contractor-debt'),
+        icon: 'fas fa-file-invoice-dollar',
+        label: 'Công nợ nhà cung cấp',
+        isActive: (page) => page.component === 'Reports/ContractorDebt'
+      },
+      {
+        href: route('reports.customer-debt'),
+        icon: 'fas fa-hand-holding-usd',
+        label: 'Công nợ khách hàng',
+        isActive: (page) => page.component === 'Reports/CustomerDebt'
       }
     ]
   },
@@ -354,33 +368,40 @@ const showFlashMessages = () => {
 // Hiển thị flash messages khi component được tạo
 onMounted(() => {
   showFlashMessages()
-  
+
   // Script hỗ trợ menu collapse
   // Sử dụng setTimeout để đảm bảo jQuery đã được load
   setTimeout(() => {
-    // Xử lý sự kiện click cho các menu có submenu
-    $(document).on('click', '.nav-sidebar .nav-item > a.nav-link', function(e) {
-      if ($(this).next('.nav-treeview').length > 0) {
-        e.preventDefault();
-        e.stopPropagation(); // Ngăn chặn sự kiện lan truyền
-        
-        // Toggle class menu-open cho parent
-        var $parentLi = $(this).parent('.nav-item');
-        $parentLi.toggleClass('menu-open');
-        
-        // Toggle hiển thị submenu
-        var $submenu = $(this).next('.nav-treeview');
-        if ($parentLi.hasClass('menu-open')) {
-          $submenu.slideDown(300);
-        } else {
-          $submenu.slideUp(300);
+    try {
+      // Trước tiên gỡ bỏ tất cả các sự kiện click đã được gắn trước đó
+      $(document).off('click', '.nav-sidebar .nav-item > a.nav-link');
+
+      // Sau đó mới gắn sự kiện mới
+      $(document).on('click', '.nav-sidebar .nav-item > a.nav-link', function(e) {
+        if ($(this).next('.nav-treeview').length > 0) {
+          e.preventDefault();
+          e.stopPropagation(); // Ngăn chặn sự kiện lan truyền
+
+          // Toggle class menu-open cho parent
+          var $parentLi = $(this).parent('.nav-item');
+          $parentLi.toggleClass('menu-open');
+
+          // Toggle hiển thị submenu
+          var $submenu = $(this).next('.nav-treeview');
+          if ($parentLi.hasClass('menu-open')) {
+            $submenu.slideDown(300);
+          } else {
+            $submenu.slideUp(300);
+          }
         }
-      }
-    });
-    
-    // Đảm bảo các menu đã mở sẵn hiển thị đúng
-    $('.nav-sidebar .nav-item.menu-open > .nav-treeview').show();
-  }, 100);
+      });
+
+      // Đảm bảo các menu đã mở sẵn hiển thị đúng
+      $('.nav-sidebar .nav-item.menu-open > .nav-treeview').show();
+    } catch (error) {
+      console.error('Lỗi khi khởi tạo menu collapse:', error);
+    }
+  }, 200); // Tăng thời gian chờ lên 200ms
 })
 
 // Theo dõi thay đổi của flash messages

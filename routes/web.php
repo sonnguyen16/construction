@@ -108,6 +108,10 @@ Route::middleware('auth')->group(function () {
     
     // Báo cáo thu chi
     Route::get('/reports/financial', [ReportController::class, 'financialReport'])->name('reports.financial');
+    
+    // Báo cáo công nợ
+    Route::get('/reports/contractor-debt', [ReportController::class, 'contractorDebtReport'])->name('reports.contractor-debt');
+    Route::get('/reports/customer-debt', [ReportController::class, 'customerDebtReport'])->name('reports.customer-debt');
 
 });
 
