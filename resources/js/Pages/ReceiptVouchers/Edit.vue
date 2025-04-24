@@ -86,7 +86,6 @@
                       v-model="form.receipt_category_id"
                       :class="{ 'is-invalid': form.errors.receipt_category_id }"
                     >
-                      <option value="">Chọn loại thu</option>
                       <option v-for="category in receiptCategories" :key="category.id" :value="category.id">
                         {{ category.name }}
                       </option>

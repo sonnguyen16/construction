@@ -103,7 +103,6 @@
                       v-model="form.payment_category_id"
                       :class="{ 'is-invalid': form.errors.payment_category_id }"
                     >
-                      <option value="">Chọn loại chi</option>
                       <option v-for="category in paymentCategories" :key="category.id" :value="category.id">
                         {{ category.name }}
                       </option>
@@ -223,7 +222,7 @@ const submit = () => {
     alert('Vui lòng chọn gói thầu cho dự án đã chọn')
     return
   }
-  
+
   // Chuyển đổi số tiền từ định dạng tiền tệ sang số
   form.amount = parseCurrency(form.amount)
 
