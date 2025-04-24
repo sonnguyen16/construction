@@ -39,33 +39,7 @@
     {{-- sweetalert2 --}}
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.11.0/dist/sweetalert2.min.js"></script>
     
-    <!-- Script hỗ trợ menu collapse -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Xử lý sự kiện click cho các menu có submenu
-            $(document).on('click', '.nav-sidebar .nav-item > a.nav-link', function(e) {
-                if ($(this).next('.nav-treeview').length > 0) {
-                    e.preventDefault();
-                    e.stopPropagation(); // Ngăn chặn sự kiện lan truyền
-                    
-                    // Toggle class menu-open cho parent
-                    var $parentLi = $(this).parent('.nav-item');
-                    $parentLi.toggleClass('menu-open');
-                    
-                    // Toggle hiển thị submenu
-                    var $submenu = $(this).next('.nav-treeview');
-                    if ($parentLi.hasClass('menu-open')) {
-                        $submenu.slideDown(300);
-                    } else {
-                        $submenu.slideUp(300);
-                    }
-                }
-            });
-            
-            // Đảm bảo các menu đã mở sẵn hiển thị đúng
-            $('.nav-sidebar .nav-item.menu-open > .nav-treeview').show();
-        });
-    </script>
+
 
 </body>
 
