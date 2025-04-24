@@ -175,7 +175,7 @@ const form = useForm({
   contractor_id: props.paymentVoucher.contractor_id || '',
   project_id: props.paymentVoucher.project_id || '',
   bid_package_id: props.paymentVoucher.bid_package_id || '',
-  payment_category_id: props.paymentVoucher.payment_category_id || '',
+  payment_category_id: props.paymentVoucher.payment_category_id || 1,
   amount: formatCurrency(props.paymentVoucher.amount) || '',
   status: props.paymentVoucher.status || 'proposed',
   payment_date: props.paymentVoucher.payment_date

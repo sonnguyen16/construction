@@ -157,7 +157,7 @@ const props = defineProps({
 const form = useForm({
   customer_id: props.receiptVoucher.customer_id || '',
   project_id: props.receiptVoucher.project_id || '',
-  receipt_category_id: props.receiptVoucher.receipt_category_id || '',
+  receipt_category_id: props.receiptVoucher.receipt_category_id || 1,
   amount: formatCurrency(props.receiptVoucher.amount || 0),
   status: props.receiptVoucher.status || 'unpaid',
   payment_date: props.receiptVoucher.payment_date

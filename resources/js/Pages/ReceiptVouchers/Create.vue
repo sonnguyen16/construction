@@ -162,7 +162,7 @@ const props = defineProps({
 const form = useForm({
   customer_id: props.preselectedCustomerId || '',
   project_id: props.preselectedProjectId || '',
-  receipt_category_id: '',
+  receipt_category_id: 1,
   amount: '',
   status: 'unpaid',
   payment_date: '',
