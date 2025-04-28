@@ -202,6 +202,14 @@
                           >
                             <i class="fas fa-tasks"></i>
                           </button>
+                          <button
+                            v-if="bidPackage.selected_contractor_id"
+                            @click="goToCreatePaymentVoucher(bidPackage)"
+                            class="btn btn-sm btn-success mb-1"
+                            title="Tạo phiếu chi"
+                            >
+                            <i class="fas fa-money-bill"></i>
+                        </button>
                         </div>
                       </div>
                     </div>
