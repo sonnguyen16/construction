@@ -9,6 +9,7 @@
             <th>Tên gói thầu</th>
             <th style="width: 150px">Giá dự thầu</th>
             <th style="width: 120px">Phát sinh</th>
+            <th style="width: 150px">Giá giao thầu</th>
             <th>Nhà thầu</th>
             <th style="width: 120px">Trạng thái</th>
             <th>Ghi chú</th>
@@ -23,6 +24,9 @@
               <td>{{ bidPackage.name }}</td>
               <td class="text-right">{{ formatCurrency(bidPackage.display_estimated_price) }}</td>
               <td class="text-right">{{ formatCurrency(bidPackage.display_additional_price) }}</td>
+              <td class="text-right">
+                {{ bidPackage.status === 'awarded' || bidPackage.status === 'completed' ? formatCurrency(bidPackage.display_client_price) : '' }}
+              </td>
               <td>
                 {{ getWinningBidContractor(bidPackage) }}
               </td>
@@ -42,6 +46,9 @@
                 <td>{{ workItem.name }}</td>
                 <td class="text-right">{{ formatCurrency(workItem.display_estimated_price) }}</td>
                 <td class="text-right">{{ formatCurrency(workItem.display_additional_price) }}</td>
+                <td class="text-right">
+                  {{ workItem.status === 'awarded' || workItem.status === 'completed' ? formatCurrency(workItem.display_client_price) : '' }}
+                </td>
                 <td>{{ getSelectedContractorName(workItem) }}</td>
                 <td>
                   <span :class="getWorkItemStatusBadgeClass(workItem.status)">
@@ -58,6 +65,7 @@
             <td colspan="3" class="text-right">Tổng cộng:</td>
             <td class="text-right">{{ formatCurrency(totalEstimatedPrice) }}</td>
             <td class="text-right">{{ formatCurrency(totalAdditionalPrice) }}</td>
+            <td class="text-right">{{ formatCurrency(totalClientPrice) }}</td>
             <td></td>
             <td></td>
             <td></td>
@@ -65,7 +73,7 @@
           <tr v-if="isCompact" class="table-info font-weight-bold">
             <td colspan="3" class="text-right">Tổng giá trị (Dự thầu + Phát sinh):</td>
             <td colspan="2" class="text-right">{{ formatCurrency(totalEstimatedPrice + totalAdditionalPrice) }}</td>
-            <td colspan="3"></td>
+            <td colspan="4"></td>
           </tr>
         </tfoot>
       </table>
@@ -91,6 +99,17 @@ const totalAdditionalPrice = computed(() => {
   let total = 0
   props.bidPackages.forEach(bidPackage => {
     total += parseInt(bidPackage.display_additional_price) || 0
+  })
+  return total
+})
+
+// Tính tổng giá giao thầu
+const totalClientPrice = computed(() => {
+  let total = 0
+  props.bidPackages.forEach(bidPackage => {
+    if (bidPackage.status === 'awarded' || bidPackage.status === 'completed') {
+      total += parseInt(bidPackage.display_client_price) || 0
+    }
   })
   return total
 })

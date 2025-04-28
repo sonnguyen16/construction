@@ -26,19 +26,64 @@ class ReportController extends Controller
         $debtData = [];
 
         foreach ($contractors as $contractor) {
-            // Tổng mua hàng (tổng tiền các phiếu chi có trạng thái khác paid)
-            $totalPurchase = PaymentVoucher::where('contractor_id', $contractor->id)
+            // Tổng giao thầu: tổng display_client_price của các gói thầu cha
+            $totalPurchase = 0;
+            $contractorBidPackages = BidPackage::whereNull('parent_id')
+                ->where('selected_contractor_id', $contractor->id)
                 ->whereNull('deleted_at')
-                ->sum('amount');
+                ->get();
+            
+            foreach ($contractorBidPackages as $bidPackage) {
+                $totalPurchase += $bidPackage->display_client_price;
+            }
 
-            // Tổng chi trả (tổng tiền các phiếu chi có trạng thái paid)
+            // Tổng chi trả: tổng amount các phiếu chi có trạng thái paid
             $totalPaid = PaymentVoucher::where('contractor_id', $contractor->id)
                 ->where('status', 'paid')
                 ->whereNull('deleted_at')
                 ->sum('amount');
 
-            // Còn lại
+            // Còn lại: tổng giao thầu trừ đi tổng chi trả
             $remaining = $totalPurchase - $totalPaid;
+
+            // Lấy chi tiết theo từng dự án
+            $projectDetails = [];
+            $contractorProjects = Project::whereHas('bidPackages', function ($query) use ($contractor) {
+                $query->where('selected_contractor_id', $contractor->id);
+            })->get();
+
+            foreach ($contractorProjects as $project) {
+                // Tổng giao thầu của dự án
+                $projectPurchase = 0;
+                $projectBidPackages = BidPackage::whereNull('parent_id')
+                    ->where('project_id', $project->id)
+                    ->where('selected_contractor_id', $contractor->id)
+                    ->whereNull('deleted_at')
+                    ->get();
+                
+                foreach ($projectBidPackages as $bidPackage) {
+                    $projectPurchase += $bidPackage->display_client_price;
+                }
+
+                // Tổng chi trả của dự án
+                $projectPaid = PaymentVoucher::where('contractor_id', $contractor->id)
+                    ->where('project_id', $project->id)
+                    ->where('status', 'paid')
+                    ->whereNull('deleted_at')
+                    ->sum('amount');
+
+                // Còn lại của dự án
+                $projectRemaining = $projectPurchase - $projectPaid;
+
+                if ($projectPurchase > 0 || $projectPaid > 0) {
+                    $projectDetails[] = [
+                        'project' => $project,
+                        'total_purchase' => $projectPurchase,
+                        'total_paid' => $projectPaid,
+                        'remaining' => $projectRemaining
+                    ];
+                }
+            }
 
             // Chỉ hiển thị nhà thầu có công nợ
             if ($totalPurchase > 0 || $totalPaid > 0) {
@@ -46,7 +91,8 @@ class ReportController extends Controller
                     'contractor' => $contractor,
                     'total_purchase' => $totalPurchase,
                     'total_paid' => $totalPaid,
-                    'remaining' => $remaining
+                    'remaining' => $remaining,
+                    'project_details' => $projectDetails
                 ];
             }
         }
@@ -67,18 +113,53 @@ class ReportController extends Controller
         $debtData = [];
 
         foreach ($customers as $customer) {
-            // Tổng dự án (tổng tiền các phiếu thu có trạng thái khác paid)
-            $totalProject = ReceiptVoucher::where('customer_id', $customer->id)
-                ->whereNull('deleted_at')
-                ->sum('amount');
+            // Lấy các dự án của khách hàng
+            $customerProjects = Project::where('customer_id', $customer->id)->get();
+            
+            // Tổng dự án: tổng display_estimated_price của các gói thầu cha
+            $totalProject = 0;
+            $projectDetails = [];
 
-            // Tổng chi trả (tổng tiền các phiếu thu có trạng thái paid)
+            foreach ($customerProjects as $project) {
+                // Tổng giá trị dự án
+                $projectValue = 0;
+                $projectBidPackages = BidPackage::whereNull('parent_id')
+                    ->where('project_id', $project->id)
+                    ->whereNull('deleted_at')
+                    ->get();
+                
+                foreach ($projectBidPackages as $bidPackage) {
+                    $projectValue += $bidPackage->display_estimated_price;
+                }
+
+                // Tổng chi trả của dự án
+                $projectPaid = ReceiptVoucher::where('customer_id', $customer->id)
+                    ->where('project_id', $project->id)
+                    ->where('status', 'paid')
+                    ->whereNull('deleted_at')
+                    ->sum('amount');
+
+                // Còn lại của dự án
+                $projectRemaining = $projectValue - $projectPaid;
+
+                if ($projectValue > 0 || $projectPaid > 0) {
+                    $projectDetails[] = [
+                        'project' => $project,
+                        'total_project' => $projectValue,
+                        'total_paid' => $projectPaid,
+                        'remaining' => $projectRemaining
+                    ];
+                    $totalProject += $projectValue;
+                }
+            }
+
+            // Tổng chi trả: tổng amount các phiếu có trạng thái paid
             $totalPaid = ReceiptVoucher::where('customer_id', $customer->id)
                 ->where('status', 'paid')
                 ->whereNull('deleted_at')
                 ->sum('amount');
 
-            // Còn lại
+            // Còn lại: tổng dự án trừ đi tổng chi trả
             $remaining = $totalProject - $totalPaid;
 
             // Chỉ hiển thị khách hàng có công nợ
@@ -87,7 +168,8 @@ class ReportController extends Controller
                     'customer' => $customer,
                     'total_project' => $totalProject,
                     'total_paid' => $totalPaid,
-                    'remaining' => $remaining
+                    'remaining' => $remaining,
+                    'project_details' => $projectDetails
                 ];
             }
         }

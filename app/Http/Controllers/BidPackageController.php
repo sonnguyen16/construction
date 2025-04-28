@@ -95,6 +95,7 @@ class BidPackageController extends Controller
         $bidPriceSelected = $bidPackage->bidPriceSelected;
         $additionalPrice = (int)$validated['additional_price'];
         $bidPackage->client_price = $bidPriceSelected ? $bidPriceSelected->price + $additionalPrice : $additionalPrice;
+        $bidPackage->estimated_price = $bidPriceSelected ? $bidPriceSelected->price + $additionalPrice : $additionalPrice;
 
         $bidPackage->save();
 

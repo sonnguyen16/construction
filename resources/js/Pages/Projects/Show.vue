@@ -229,7 +229,7 @@
                               <th style="width: 150px">Phát sinh</th>
                               <th style="width: 150px" class="text-right">Giá giao thầu</th>
                               <th>Danh sách nhà thầu</th>
-                              <th style="width: 150px" class="text-center">Thao tác</th>
+                              <th style="width: 180px" class="text-center">Thao tác</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -336,6 +336,14 @@
                                   >
                                     <i class="fas fa-file"></i>
                                   </Link>
+                                  <button
+                                    v-if="workItem.selected_contractor_id"
+                                    @click="goToCreatePaymentVoucher(workItem)"
+                                    class="btn btn-sm btn-success mb-1"
+                                    title="Tạo phiếu chi"
+                                  >
+                                    <i class="fas fa-money-bill"></i>
+                                  </button>
                                 </div>
                               </td>
                             </tr>
@@ -935,6 +943,16 @@ const handleWorkItemSubmit = (formData) => {
     showError('Có lỗi xảy ra khi xử lý hạng mục. Vui lòng thử lại sau.')
     isSubmitting.value = false
   }
+}
+
+// Chuyển đến trang tạo phiếu chi với thông tin gói thầu
+const goToCreatePaymentVoucher = (bidPackage) => {
+  router.visit(route('payment-vouchers.create', {
+    contractor_id: bidPackage.selected_contractor_id,
+    project_id: props.project.id,
+    bid_package_id: bidPackage.id,
+    redirect_to_expenses: true
+  }))
 }
 
 // Tính tổng cho các cột

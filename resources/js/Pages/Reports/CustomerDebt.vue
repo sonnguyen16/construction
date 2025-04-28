@@ -31,51 +31,117 @@
                       </tr>
                     </thead>
                     <tbody>
-                      <tr v-for="(item, index) in debtData" :key="index">
-                        <td class="text-center">{{ index + 1 }}</td>
-                        <td>{{ item.customer.name }}</td>
-                        <td>{{ item.customer.phone }}</td>
-                        <td>{{ item.customer.address }}</td>
-                        <td class="text-right">
-                          <div class="d-flex justify-content-end align-items-center">
-                            <span>{{ formatCurrency(item.total_project) }}</span>
-                            <button
-                              @click="viewAll(item.customer.id)"
-                              class="btn btn-xs btn-outline-primary ml-2"
-                              title="Xem tất cả phiếu"
-                              style="font-size: 0.7rem; padding: 0.15rem 0.4rem;"
-                            >
-                              <i class="fas fa-eye"></i>
-                            </button>
-                          </div>
-                        </td>
-                        <td class="text-right">
-                          <div class="d-flex justify-content-end align-items-center">
-                            <span>{{ formatCurrency(item.total_paid) }}</span>
-                            <button
-                              @click="viewPaidVouchers(item.customer.id)"
-                              class="btn btn-xs btn-outline-success ml-2"
-                              title="Xem phiếu đã thanh toán"
-                              style="font-size: 0.7rem; padding: 0.15rem 0.4rem;"
-                            >
-                              <i class="fas fa-eye"></i>
-                            </button>
-                          </div>
-                        </td>
-                        <td class="text-right" :class="{'text-danger': item.remaining > 0, 'text-success': item.remaining <= 0}">
-                          <div class="d-flex justify-content-end align-items-center">
-                            <span>{{ formatCurrency(item.remaining) }}</span>
-                            <button
-                              @click="viewUnpaidVouchers(item.customer.id)"
-                              class="btn btn-xs btn-outline-primary ml-2"
-                              title="Xem phiếu chưa thanh toán"
-                              style="font-size: 0.7rem; padding: 0.15rem 0.4rem;"
-                            >
-                              <i class="fas fa-eye"></i>
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
+                      <template v-for="(item, index) in debtData" :key="index">
+                        <!-- Dòng khách hàng chính -->
+                        <tr :class="{ 'bg-light': hasExpandedDetails(item.customer.id) }">
+                          <td class="text-center">{{ index + 1 }}</td>
+                          <td>
+                            <div class="d-flex align-items-center">
+                              <button
+                                @click="toggleDetails(item.customer.id)"
+                                class="btn btn-xs mr-2"
+                                :class="hasExpandedDetails(item.customer.id) ? 'btn-info' : 'btn-secondary'"
+                              >
+                                <i :class="hasExpandedDetails(item.customer.id) ? 'fas fa-minus' : 'fas fa-plus'"></i>
+                              </button>
+                              {{ item.customer.name }}
+                            </div>
+                          </td>
+                          <td>{{ item.customer.phone }}</td>
+                          <td>{{ item.customer.address }}</td>
+                          <td class="text-right">
+                            <div class="d-flex justify-content-end align-items-center">
+                              <span>{{ formatCurrency(item.total_project) }}</span>
+                            </div>
+                          </td>
+                          <td class="text-right">
+                            <div class="d-flex justify-content-end align-items-center">
+                              <span>{{ formatCurrency(item.total_paid) }}</span>
+                              <button
+                                @click="viewPaidVouchers(item.customer.id)"
+                                class="btn btn-xs btn-outline-success ml-2"
+                                title="Xem phiếu đã thanh toán"
+                                style="font-size: 0.7rem; padding: 0.15rem 0.4rem;"
+                              >
+                                <i class="fas fa-eye"></i>
+                              </button>
+                            </div>
+                          </td>
+                          <td class="text-right" :class="{'text-danger': item.remaining > 0, 'text-success': item.remaining <= 0}">
+                            <div class="d-flex justify-content-end align-items-center">
+                              <span>{{ formatCurrency(item.remaining) }}</span>
+                              <button
+                                @click="viewUnpaidVouchers(item.customer.id)"
+                                class="btn btn-xs btn-outline-primary ml-2"
+                                title="Xem phiếu chưa thanh toán"
+                                style="font-size: 0.7rem; padding: 0.15rem 0.4rem;"
+                              >
+                                <i class="fas fa-eye"></i>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+
+                        <!-- Chi tiết theo dự án -->
+                        <template v-if="hasExpandedDetails(item.customer.id) && item.project_details && item.project_details.length > 0">
+                          <tr class="project-detail-header bg-light">
+                            <td></td>
+                            <td colspan="3" class="font-weight-bold">Dự án</td>
+                            <td class="text-right font-weight-bold">Tổng dự án</td>
+                            <td class="text-right font-weight-bold">Tổng chi trả</td>
+                            <td class="text-right font-weight-bold">Còn lại</td>
+                          </tr>
+                          <tr v-for="(project, pIndex) in item.project_details" :key="`${item.customer.id}-${project.project.id}`" class="project-detail-row">
+                            <td></td>
+                            <td colspan="3">
+                              <div class="d-flex align-items-center">
+                                <Link :href="route('projects.show', project.project.id)" class="ml-4">
+                                  {{ project.project.name }}
+                                </Link>
+                              </div>
+                            </td>
+                            <td class="text-right">
+                              <div class="d-flex justify-content-end align-items-center">
+                                <span>{{ formatCurrency(project.total_project) }}</span>
+                                <Link
+                                  :href="route('projects.show', project.project.id)"
+                                  class="btn btn-xs btn-outline-primary ml-2"
+                                  title="Xem chi tiết dự án"
+                                  style="font-size: 0.7rem; padding: 0.15rem 0.4rem;"
+                                >
+                                  <i class="fas fa-eye"></i>
+                                </Link>
+                              </div>
+                            </td>
+                            <td class="text-right">
+                              <div class="d-flex justify-content-end align-items-center">
+                                <span>{{ formatCurrency(project.total_paid) }}</span>
+                                <button
+                                  @click="viewProjectPaidVouchers(item.customer.id, project.project.id)"
+                                  class="btn btn-xs btn-outline-success ml-2"
+                                  title="Xem phiếu đã thanh toán của dự án"
+                                  style="font-size: 0.7rem; padding: 0.15rem 0.4rem;"
+                                >
+                                  <i class="fas fa-eye"></i>
+                                </button>
+                              </div>
+                            </td>
+                            <td class="text-right" :class="{'text-danger': project.remaining > 0, 'text-success': project.remaining <= 0}">
+                              <div class="d-flex justify-content-end align-items-center">
+                                <span>{{ formatCurrency(project.remaining) }}</span>
+                                <button
+                                  @click="viewProjectUnpaidVouchers(item.customer.id, project.project.id)"
+                                  class="btn btn-xs btn-outline-primary ml-2"
+                                  title="Xem phiếu chưa thanh toán của dự án"
+                                  style="font-size: 0.7rem; padding: 0.15rem 0.4rem;"
+                                >
+                                  <i class="fas fa-eye"></i>
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        </template>
+                      </template>
                       <tr v-if="debtData.length === 0">
                         <td colspan="7" class="text-center">Không có dữ liệu</td>
                       </tr>
@@ -104,12 +170,30 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { Link, router } from '@inertiajs/vue3'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import * as XLSX from 'xlsx'
 
 const props = defineProps({
   debtData: Array
 })
+
+// Quản lý trạng thái mở rộng chi tiết
+const expandedDetails = ref([])
+
+// Kiểm tra xem chi tiết của khách hàng có đang được mở rộng không
+const hasExpandedDetails = (customerId) => {
+  return expandedDetails.value.includes(customerId)
+}
+
+// Bật/tắt hiển thị chi tiết
+const toggleDetails = (customerId) => {
+  const index = expandedDetails.value.indexOf(customerId)
+  if (index === -1) {
+    expandedDetails.value.push(customerId)
+  } else {
+    expandedDetails.value.splice(index, 1)
+  }
+}
 
 // Tính tổng các cột
 const totalProject = computed(() => {
@@ -153,6 +237,32 @@ const viewUnpaidVouchers = (customerId) => {
   })
 }
 
+// Hàm xem phiếu chưa thanh toán theo dự án
+const viewProjectUnpaidVouchers = (customerId, projectId) => {
+  router.visit(route('receipt-vouchers.index'), {
+    data: {
+      customer_id: customerId,
+      project_id: projectId,
+      status: 'unpaid'
+    },
+    replace: false,
+    preserveState: false
+  })
+}
+
+// Hàm xem phiếu đã thanh toán theo dự án
+const viewProjectPaidVouchers = (customerId, projectId) => {
+  router.visit(route('receipt-vouchers.index'), {
+    data: {
+      customer_id: customerId,
+      project_id: projectId,
+      status: 'paid'
+    },
+    replace: false,
+    preserveState: false
+  })
+}
+
 // Hàm xem phiếu đã thanh toán
 const viewPaidVouchers = (customerId) => {
   router.visit(route('receipt-vouchers.index'), {
@@ -168,11 +278,16 @@ const viewPaidVouchers = (customerId) => {
 // Hàm xuất Excel
 const exportToExcel = () => {
   // Chuẩn bị dữ liệu cho Excel
-  const excelData = [
+  let excelData = [
     ['Báo cáo công nợ khách hàng'],
     [],
-    ['STT', 'Khách hàng', 'Điện thoại', 'Địa chỉ', 'Tổng dự án', 'Tổng chi trả', 'Còn lại'],
-    ...props.debtData.map((item, index) => [
+    ['STT', 'Khách hàng', 'Điện thoại', 'Địa chỉ', 'Tổng dự án', 'Tổng chi trả', 'Còn lại']
+  ]
+
+  // Thêm dữ liệu chi tiết
+  props.debtData.forEach((item, index) => {
+    // Thêm dòng khách hàng
+    excelData.push([
       index + 1,
       item.customer.name,
       item.customer.phone,
@@ -180,9 +295,31 @@ const exportToExcel = () => {
       parseInt(item.total_project || 0),
       parseInt(item.total_paid || 0),
       parseInt(item.remaining || 0)
-    ]),
-    ['', '', '', 'Tổng cộng:', totalProject.value, totalPaid.value, totalRemaining.value]
-  ]
+    ])
+
+    // Thêm chi tiết dự án
+    if (item.project_details && item.project_details.length > 0) {
+      excelData.push(['', 'Dự án', '', '', 'Tổng dự án', 'Tổng chi trả', 'Còn lại'])
+
+      item.project_details.forEach(project => {
+        excelData.push([
+          '',
+          project.project.name,
+          '',
+          '',
+          parseInt(project.total_project || 0),
+          parseInt(project.total_paid || 0),
+          parseInt(project.remaining || 0)
+        ])
+      })
+
+      // Thêm dòng trống sau chi tiết
+      excelData.push([])
+    }
+  })
+
+  // Thêm dòng tổng cộng
+  excelData.push(['', '', '', 'Tổng cộng:', totalProject.value, totalPaid.value, totalRemaining.value])
 
   // Tạo workbook và worksheet
   const worksheet = XLSX.utils.aoa_to_sheet(excelData)

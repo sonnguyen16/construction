@@ -67,6 +67,7 @@ class BidController extends Controller
             $bidPackage = $bid->bidPackage;
             $bidPackage->selected_contractor_id = $validated['contractor_id'];
             $bidPackage->client_price = $validated['price'] + $bidPackage->additional_price;
+            $bidPackage->estimated_price = $validated['price'] + $bidPackage->additional_price;
             $bidPackage->status = 'awarded';
             $bidPackage->save();
         }
@@ -117,6 +118,7 @@ class BidController extends Controller
         // Cập nhật thông tin gói thầu
         $bidPackage->selected_contractor_id = $bid->contractor_id;
         $bidPackage->client_price = $bid->price + $bidPackage->additional_price;
+        $bidPackage->estimated_price = $bid->price + $bidPackage->additional_price;
         $bidPackage->status = 'awarded';
         $bidPackage->save();
 
