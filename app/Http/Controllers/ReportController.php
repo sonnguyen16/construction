@@ -21,7 +21,7 @@ class ReportController extends Controller
     public function contractorDebtReport()
     {
         // Lấy danh sách nhà thầu/nhà cung cấp có phiếu chi
-        $contractors = Contractor::whereHas('paymentVouchers')->get();
+        $contractors = Contractor::whereHas('paymentVouchers')->whereNull('deleted_at')->get();
 
         $debtData = [];
 
@@ -32,7 +32,7 @@ class ReportController extends Controller
                 ->where('selected_contractor_id', $contractor->id)
                 ->whereNull('deleted_at')
                 ->get();
-            
+
             foreach ($contractorBidPackages as $bidPackage) {
                 $totalPurchase += $bidPackage->display_client_price;
             }
@@ -48,9 +48,10 @@ class ReportController extends Controller
 
             // Lấy chi tiết theo từng dự án
             $projectDetails = [];
-            $contractorProjects = Project::whereHas('bidPackages', function ($query) use ($contractor) {
-                $query->where('selected_contractor_id', $contractor->id);
-            })->get();
+            $contractorProjects = Project::whereNull('deleted_at')
+                ->whereHas('bidPackages', function ($query) use ($contractor) {
+                    $query->where('selected_contractor_id', $contractor->id);
+                })->get();
 
             foreach ($contractorProjects as $project) {
                 // Tổng giao thầu của dự án
@@ -60,7 +61,7 @@ class ReportController extends Controller
                     ->where('selected_contractor_id', $contractor->id)
                     ->whereNull('deleted_at')
                     ->get();
-                
+
                 foreach ($projectBidPackages as $bidPackage) {
                     $projectPurchase += $bidPackage->display_client_price;
                 }
@@ -114,8 +115,8 @@ class ReportController extends Controller
 
         foreach ($customers as $customer) {
             // Lấy các dự án của khách hàng
-            $customerProjects = Project::where('customer_id', $customer->id)->get();
-            
+            $customerProjects = Project::where('customer_id', $customer->id)->whereNull('deleted_at')->get();
+
             // Tổng dự án: tổng display_estimated_price của các gói thầu cha
             $totalProject = 0;
             $projectDetails = [];
@@ -127,7 +128,7 @@ class ReportController extends Controller
                     ->where('project_id', $project->id)
                     ->whereNull('deleted_at')
                     ->get();
-                
+
                 foreach ($projectBidPackages as $bidPackage) {
                     $projectValue += $bidPackage->display_estimated_price;
                 }
