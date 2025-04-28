@@ -70,11 +70,6 @@
             <td></td>
             <td></td>
           </tr>
-          <tr v-if="isCompact" class="table-info font-weight-bold">
-            <td colspan="3" class="text-right">Tổng giá trị (Dự thầu + Phát sinh):</td>
-            <td colspan="2" class="text-right">{{ formatCurrency(totalEstimatedPrice + totalAdditionalPrice) }}</td>
-            <td colspan="4"></td>
-          </tr>
         </tfoot>
       </table>
     </div>
