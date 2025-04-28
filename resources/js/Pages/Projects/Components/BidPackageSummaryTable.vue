@@ -256,7 +256,6 @@ const getWorkItemStatusText = (status) => {
 
 .sticky-footer tr:first-child td {
   position: sticky;
-  bottom: 38px; /* Chiều cao của dòng cuối cùng */
   background-color: #e9ecef;
 }
 
