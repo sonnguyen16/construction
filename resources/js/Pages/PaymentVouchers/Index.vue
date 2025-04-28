@@ -261,7 +261,7 @@
                     </td>
                   </tr>
                   <tr v-if="paymentVouchers.data.length === 0">
-                    <td colspan="9" class="text-center">Không có phiếu chi nào</td>
+                    <td colspan="11" class="text-center">Không có phiếu chi nào</td>
                   </tr>
                 </tbody>
               </table>

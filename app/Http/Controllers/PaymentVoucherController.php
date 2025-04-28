@@ -83,8 +83,13 @@ class PaymentVoucherController extends Controller
 
         // Lọc theo trạng thái
         if ($request->has('status') && $request->status) {
-            $query->where('status', $request->status);
-            $statsQuery->where('status', $request->status);
+            if($request->status === 'unpaid') {
+                $query->whereIn('status', ['proposed', 'approved']);
+                $statsQuery->whereIn('status', ['proposed', 'approved']);
+            } else {
+                $query->where('status', $request->status);
+                $statsQuery->where('status', $request->status);
+            }
         }
 
         // Lọc theo khoảng thời gian
@@ -335,7 +340,8 @@ class PaymentVoucherController extends Controller
         return [
             'proposed' => 'Đề xuất chi',
             'approved' => 'Đã duyệt',
-            'paid' => 'Đã chi'
+            'paid' => 'Đã chi',
+            'unpaid' => 'Chưa thanh toán'
         ];
     }
 

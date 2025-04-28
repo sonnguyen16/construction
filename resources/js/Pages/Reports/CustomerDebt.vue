@@ -36,10 +36,44 @@
                         <td>{{ item.customer.name }}</td>
                         <td>{{ item.customer.phone }}</td>
                         <td>{{ item.customer.address }}</td>
-                        <td class="text-right">{{ formatCurrency(item.total_project) }}</td>
-                        <td class="text-right">{{ formatCurrency(item.total_paid) }}</td>
+                        <td class="text-right">
+                          <div class="d-flex justify-content-end align-items-center">
+                            <span>{{ formatCurrency(item.total_project) }}</span>
+                            <button
+                              @click="viewAll(item.customer.id)"
+                              class="btn btn-xs btn-outline-primary ml-2"
+                              title="Xem tất cả phiếu"
+                              style="font-size: 0.7rem; padding: 0.15rem 0.4rem;"
+                            >
+                              <i class="fas fa-eye"></i>
+                            </button>
+                          </div>
+                        </td>
+                        <td class="text-right">
+                          <div class="d-flex justify-content-end align-items-center">
+                            <span>{{ formatCurrency(item.total_paid) }}</span>
+                            <button
+                              @click="viewPaidVouchers(item.customer.id)"
+                              class="btn btn-xs btn-outline-success ml-2"
+                              title="Xem phiếu đã thanh toán"
+                              style="font-size: 0.7rem; padding: 0.15rem 0.4rem;"
+                            >
+                              <i class="fas fa-eye"></i>
+                            </button>
+                          </div>
+                        </td>
                         <td class="text-right" :class="{'text-danger': item.remaining > 0, 'text-success': item.remaining <= 0}">
-                          {{ formatCurrency(item.remaining) }}
+                          <div class="d-flex justify-content-end align-items-center">
+                            <span>{{ formatCurrency(item.remaining) }}</span>
+                            <button
+                              @click="viewUnpaidVouchers(item.customer.id)"
+                              class="btn btn-xs btn-outline-primary ml-2"
+                              title="Xem phiếu chưa thanh toán"
+                              style="font-size: 0.7rem; padding: 0.15rem 0.4rem;"
+                            >
+                              <i class="fas fa-eye"></i>
+                            </button>
+                          </div>
                         </td>
                       </tr>
                       <tr v-if="debtData.length === 0">
@@ -69,7 +103,7 @@
 
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue'
-import { Link } from '@inertiajs/vue3'
+import { Link, router } from '@inertiajs/vue3'
 import { computed } from 'vue'
 import * as XLSX from 'xlsx'
 
@@ -93,6 +127,42 @@ const totalRemaining = computed(() => {
 // Hàm định dạng tiền tệ
 const formatCurrency = (value) => {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value)
+}
+
+// Hàm xem phiếu chưa thanh toán
+const viewAll = (customerId) => {
+  router.visit(route('receipt-vouchers.index'), {
+    data: {
+      customer_id: customerId,
+      status: ''
+    },
+    replace: false,
+    preserveState: false
+  })
+}
+
+// Hàm xem phiếu chưa thanh toán
+const viewUnpaidVouchers = (customerId) => {
+  router.visit(route('receipt-vouchers.index'), {
+    data: {
+      customer_id: customerId,
+      status: 'unpaid'
+    },
+    replace: false,
+    preserveState: false
+  })
+}
+
+// Hàm xem phiếu đã thanh toán
+const viewPaidVouchers = (customerId) => {
+  router.visit(route('receipt-vouchers.index'), {
+    data: {
+      customer_id: customerId,
+      status: 'paid'
+    },
+    replace: false,
+    preserveState: false
+  })
 }
 
 // Hàm xuất Excel
