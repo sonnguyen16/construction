@@ -72,25 +72,37 @@
                     {{ project.description }}
                   </td>
                   <td>
-                    <div class="d-flex gap-2">
-                      <Link :href="route('projects.edit', project.id)" class="btn btn-sm btn-primary">
-                        <i class="fas fa-edit"></i> Sửa
-                      </Link>
-                      <Link :href="route('projects.show', project.id)" class="btn btn-sm btn-info">
-                        <i class="fas fa-eye"></i> Chi tiết
-                      </Link>
-                      <Link :href="route('projects.expenses', project.id)" class="btn btn-sm btn-warning">
-                        <i class="fas fa-money-bill"></i> Chi phí
-                      </Link>
-                      <Link :href="route('projects.profit', project.id)" class="btn btn-sm btn-success">
-                        <i class="fas fa-chart-line"></i> Lợi nhuận
-                      </Link>
-                      <Link :href="route('projects.files', project.id)" class="btn btn-sm btn-secondary">
-                        <i class="fas fa-file"></i> Files
-                      </Link>
-                      <button @click="confirmDelete(project)" class="btn btn-sm btn-danger">
-                        <i class="fas fa-trash"></i> Xóa
+                    <div class="dropdown">
+                      <button
+                        class="btn btn-sm btn-secondary dropdown-toggle"
+                        type="button"
+                        id="dropdownMenuButton"
+                        data-toggle="dropdown"
+                        aria-haspopup="true"
+                        aria-expanded="false"
+                      >
+                        Thao tác
                       </button>
+                      <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                        <Link :href="route('projects.edit', project.id)" class="dropdown-item">
+                          <i class="fas fa-edit"></i> Sửa
+                        </Link>
+                        <Link :href="route('projects.show', project.id)" class="dropdown-item">
+                          <i class="fas fa-eye"></i> Chi tiết
+                        </Link>
+                        <Link :href="route('projects.expenses', project.id)" class="dropdown-item">
+                          <i class="fas fa-money-bill"></i> Chi phí
+                        </Link>
+                        <Link :href="route('projects.profit', project.id)" class="dropdown-item">
+                          <i class="fas fa-chart-line"></i> Lợi nhuận
+                        </Link>
+                        <Link :href="route('projects.files', project.id)" class="dropdown-item">
+                          <i class="fas fa-file"></i> Files
+                        </Link>
+                        <button @click="confirmDelete(project)" class="dropdown-item">
+                          <i class="fas fa-trash"></i> Xóa
+                        </button>
+                      </div>
                     </div>
                   </td>
                 </tr>
@@ -257,3 +269,15 @@ watch(search, (value) => {
   )
 })
 </script>
+
+<style scoped>
+.dropdown-item {
+  cursor: pointer;
+  padding: 5px 10px;
+}
+.dropdown-item i {
+  width: 20px;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+</style>

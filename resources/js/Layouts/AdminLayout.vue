@@ -93,7 +93,12 @@
         <!-- Sidebar Menu -->
         <nav class="mt-2">
           <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
-            <li v-for="(item, index) in menuItems" :key="index" class="nav-item" :class="{ 'menu-open': item.children && isMenuActive(item) }">
+            <li
+              v-for="(item, index) in menuItems"
+              :key="index"
+              class="nav-item"
+              :class="{ 'menu-open': item.children && isMenuActive(item) }"
+            >
               <!-- Menu có submenu -->
               <template v-if="item.children">
                 <a href="#" class="nav-link" :class="{ active: isMenuActive(item) }">
@@ -109,22 +114,17 @@
                       :href="child.href"
                       class="nav-link"
                       :class="{ active: child.isActive($page) }"
-                      style="padding-left: 25px;"
+                      style="padding-left: 25px"
                     >
-                      <i :class="['nav-icon', child.icon]" style="font-size: 0.85em;"></i>
-                      <p style="margin-left: 5px;">{{ child.label }}</p>
+                      <i :class="['nav-icon', child.icon]" style="font-size: 0.85em"></i>
+                      <p style="margin-left: 5px">{{ child.label }}</p>
                     </Link>
                   </li>
                 </ul>
               </template>
 
               <!-- Menu không có submenu -->
-              <Link
-                v-else
-                :href="item.href"
-                class="nav-link"
-                :class="{ active: item.isActive($page) }"
-              >
+              <Link v-else :href="item.href" class="nav-link" :class="{ active: item.isActive($page) }">
                 <i :class="['nav-icon', item.icon]"></i>
                 <p>{{ item.label }}</p>
               </Link>
@@ -317,6 +317,12 @@ const menuItems = [
     ]
   },
   {
+    label: 'Quản lý công việc',
+    icon: 'fas fa-tasks',
+    isActive: (page) => page.component.startsWith('Tasks/'),
+    href: route('tasks.index')
+  },
+  {
     href: '/contractors',
     icon: 'fas fa-hard-hat',
     label: 'Quản lý nhà thầu',
@@ -374,34 +380,34 @@ onMounted(() => {
   setTimeout(() => {
     try {
       // Trước tiên gỡ bỏ tất cả các sự kiện click đã được gắn trước đó
-      $(document).off('click', '.nav-sidebar .nav-item > a.nav-link');
+      $(document).off('click', '.nav-sidebar .nav-item > a.nav-link')
 
       // Sau đó mới gắn sự kiện mới
-      $(document).on('click', '.nav-sidebar .nav-item > a.nav-link', function(e) {
+      $(document).on('click', '.nav-sidebar .nav-item > a.nav-link', function (e) {
         if ($(this).next('.nav-treeview').length > 0) {
-          e.preventDefault();
-          e.stopPropagation(); // Ngăn chặn sự kiện lan truyền
+          e.preventDefault()
+          e.stopPropagation() // Ngăn chặn sự kiện lan truyền
 
           // Toggle class menu-open cho parent
-          var $parentLi = $(this).parent('.nav-item');
-          $parentLi.toggleClass('menu-open');
+          var $parentLi = $(this).parent('.nav-item')
+          $parentLi.toggleClass('menu-open')
 
           // Toggle hiển thị submenu
-          var $submenu = $(this).next('.nav-treeview');
+          var $submenu = $(this).next('.nav-treeview')
           if ($parentLi.hasClass('menu-open')) {
-            $submenu.slideDown(300);
+            $submenu.slideDown(300)
           } else {
-            $submenu.slideUp(300);
+            $submenu.slideUp(300)
           }
         }
-      });
+      })
 
       // Đảm bảo các menu đã mở sẵn hiển thị đúng
-      $('.nav-sidebar .nav-item.menu-open > .nav-treeview').show();
+      $('.nav-sidebar .nav-item.menu-open > .nav-treeview').show()
     } catch (error) {
-      console.error('Lỗi khi khởi tạo menu collapse:', error);
+      console.error('Lỗi khi khởi tạo menu collapse:', error)
     }
-  }, 200); // Tăng thời gian chờ lên 200ms
+  }, 200) // Tăng thời gian chờ lên 200ms
 })
 
 // Theo dõi thay đổi của flash messages

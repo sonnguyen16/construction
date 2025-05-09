@@ -17,7 +17,8 @@
         </div>
         <div class="modal-body">
           <div v-if="isAutoCalculate" class="alert alert-info">
-            <i class="fas fa-info-circle mr-2"></i> Gói thầu này đang được cấu hình để tính toán tự động từ các gói thầu con. Bạn cần tắt tính năng này để có thể nhập giá phát sinh thủ công.
+            <i class="fas fa-info-circle mr-2"></i> Gói thầu này đang được cấu hình để tính toán tự động từ các gói thầu
+            con. Bạn cần tắt tính năng này để có thể nhập giá phát sinh thủ công.
           </div>
           <form @submit.prevent="submitForm">
             <div class="form-group" :class="{ 'opacity-50': isAutoCalculate }">
@@ -64,7 +65,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import { formatNumberInput, parseCurrency, formatCurrency } from '@/utils'
 
 const props = defineProps({
@@ -108,12 +109,39 @@ const submitForm = () => {
   emit('submit', formData)
 }
 
+// Cập nhật form khi bidPackage thay đổi
+const updateFormFromBidPackage = () => {
+  if (props.bidPackage) {
+    // Hiển thị giá phát sinh hiện tại nếu có
+    if (props.bidPackage.additional_price) {
+      form.value.additional_price = formatCurrency(props.bidPackage.additional_price)
+    }
+
+    // Hiển thị ghi chú nếu có
+    if (props.bidPackage.additional_price_notes) {
+      form.value.notes = props.bidPackage.additional_price_notes
+    }
+  }
+}
+
 // Xử lý khi modal hiển thị
 const setupModalEvents = () => {
   window.$('#additionalPriceModal').on('show.bs.modal', function () {
     resetForm()
+    updateFormFromBidPackage()
   })
 }
+
+// Theo dõi sự thay đổi của bidPackage
+watch(
+  () => props.bidPackage,
+  (newVal) => {
+    if (newVal) {
+      updateFormFromBidPackage()
+    }
+  },
+  { deep: true, immediate: true }
+)
 
 // Lifecycle hooks
 onMounted(() => {

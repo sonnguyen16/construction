@@ -21,10 +21,14 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-// API để lấy danh sách nhà thầu
-Route::get('/contractors', function () {
-    return Contractor::orderBy('name')->get();
+Route::get('/projects', function () {
+    return App\Models\Project::select('id', 'name')->orderBy('name')->get();
 });
 
-Route::get('/projects/{project}/bid-packages', [ProjectBidPackageController::class, 'index'])
-    ->name('api.project.bid-packages');
+Route::get('/users', function () {
+    return App\Models\User::select('id', 'name', 'email', 'avatar')->orderBy('name')->get();
+});
+
+Route::get('/products', function () {
+    return App\Models\Product::with(['unit', 'category'])->orderBy('name')->get();
+});

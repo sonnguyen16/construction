@@ -112,12 +112,18 @@
                           {{ formatCurrency(bidPackage.display_additional_price || 0) }}
                         </div>
                       </div>
-                      <div class="col-span-3 px-2 text-right">{{ formatCurrency(bidPackage.display_client_price || 0) }}</div>
+                      <div class="col-span-3 px-2 text-right">
+                        {{ formatCurrency(bidPackage.display_client_price || 0) }}
+                      </div>
 
                       <!-- Danh sách nhà thầu -->
-                      <div class="col-span-12 px-2 bid-contractor-list" :class="{ 'opacity-50': bidPackage.auto_calculate && !bidPackage.is_work_item }">
+                      <div
+                        class="col-span-12 px-2 bid-contractor-list"
+                        :class="{ 'opacity-50': bidPackage.auto_calculate && !bidPackage.is_work_item }"
+                      >
                         <div v-if="bidPackage.auto_calculate && !bidPackage.is_work_item" class="alert alert-info mb-2">
-                          <i class="fas fa-info-circle mr-2"></i> Gói thầu này đang được cấu hình để tính toán tự động từ các gói thầu con. Bạn cần tắt tính năng này để có thể chọn nhà thầu.
+                          <i class="fas fa-info-circle mr-2"></i> Gói thầu này đang được cấu hình để tính toán tự động
+                          từ các gói thầu con. Bạn cần tắt tính năng này để có thể chọn nhà thầu.
                         </div>
                         <div class="bid-contractors-scroll">
                           <div v-if="bidPackage.bids && bidPackage.bids.length > 0" class="bid-contractors">
@@ -207,9 +213,9 @@
                             @click="goToCreatePaymentVoucher(bidPackage)"
                             class="btn btn-sm btn-success mb-1"
                             title="Tạo phiếu chi"
-                            >
+                          >
                             <i class="fas fa-money-bill"></i>
-                        </button>
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -378,7 +384,10 @@
             </div>
 
             <!-- Footer với tổng cộng -->
-            <div v-if="viewMode === 'detailed'" class="grid grid-cols-25 bg-light font-weight-bold py-2 mt-2 sticky-bottom">
+            <div
+              v-if="viewMode === 'detailed'"
+              class="grid grid-cols-25 bg-light font-weight-bold py-2 mt-2 sticky-bottom"
+            >
               <div class="col-span-8 text-right px-1">Tổng cộng:</div>
               <div class="col-span-3 text-right px-1">{{ formatCurrency(totalEstimatedPrice) }}</div>
               <div class="col-span-3 text-right px-2">{{ formatCurrency(totalAdditionalPrice) }}</div>
@@ -685,9 +694,7 @@ const openEditBidModal = (bid) => {
   bidModalMode.value = 'edit'
   selectedBid.value = bid
 
-  editSelectedContractor.value = bid.contractor_id
-    ? props.contractors.find((c) => c.id == bid.contractor_id)
-    : null
+  editSelectedContractor.value = bid.contractor_id ? props.contractors.find((c) => c.id == bid.contractor_id) : null
 
   // Đảm bảo modal được hiển thị sau khi các giá trị đã được chuẩn bị
   nextTick(() => {
@@ -702,14 +709,24 @@ const isSelectedContractor = (bidPackage, bid) => {
 
 // Mở modal giá phát sinh
 const openAdditionalPriceModal = (bidPackage) => {
+  // Đặt dữ liệu trước khi mở modal
   selectedBidPackage.value = bidPackage
 
-  // Truyền trạng thái auto_calculate vào modal
+  // Đảm bảo cập nhật trạng thái auto_calculate trước khi mở modal
   if (additionalPriceModalRef.value) {
     additionalPriceModalRef.value.isAutoCalculate = bidPackage.auto_calculate && !bidPackage.is_work_item
   }
 
-  window.$('#additionalPriceModal').modal('show')
+  // Đảm bảo cập nhật bidPackage trước khi mở modal
+  if (additionalPriceModalRef.value) {
+    // Gán trực tiếp giá trị để đảm bảo cập nhật ngay
+    additionalPriceModalRef.value.bidPackage = JSON.parse(JSON.stringify(bidPackage))
+  }
+
+  // Mở modal sau khi đã có dữ liệu
+  setTimeout(() => {
+    window.$('#additionalPriceModal').modal('show')
+  }, 50)
 }
 
 // Xử lý khi form cập nhật giá phát sinh được submit
@@ -721,7 +738,8 @@ const handleAdditionalPriceSubmit = (formData) => {
   router.patch(
     route('bid-packages.update-additional-price', selectedBidPackage.value.id),
     {
-      additional_price: formData.additional_price
+      additional_price: formData.additional_price,
+      additional_price_notes: formData.notes // Thêm ghi chú vào dữ liệu gửi đi
     },
     {
       onSuccess: () => {
@@ -955,12 +973,14 @@ const handleWorkItemSubmit = (formData) => {
 
 // Chuyển đến trang tạo phiếu chi với thông tin gói thầu
 const goToCreatePaymentVoucher = (bidPackage) => {
-  router.visit(route('payment-vouchers.create', {
-    contractor_id: bidPackage.selected_contractor_id,
-    project_id: props.project.id,
-    bid_package_id: bidPackage.id,
-    redirect_to_expenses: true
-  }))
+  router.visit(
+    route('payment-vouchers.create', {
+      contractor_id: bidPackage.selected_contractor_id,
+      project_id: props.project.id,
+      bid_package_id: bidPackage.id,
+      redirect_to_expenses: true
+    })
+  )
 }
 
 // Tính tổng cho các cột

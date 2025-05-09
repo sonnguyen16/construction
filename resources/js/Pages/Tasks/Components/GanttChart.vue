@@ -1,15 +1,23 @@
 <template>
   <div>
-    <div class="toolbar">
-      <label class="mr-1 text-sm font-normal">Chế độ xem:</label>
-      <select v-model="currentView" @change="changeView">
-        <option value="day">Day</option>
-        <option value="week">Week</option>
-        <option value="month">Month</option>
-        <option value="year">Year</option>
-      </select>
+    <div class="toolbar flex align-items-center mb-3">
+      <div class="flex align-items-center gap-2">
+        <label class="text-md font-normal">Dự án:</label>
+        <select v-model="selectedProject" @change="loadTasks" class="mr-3 select">
+          <option v-for="project in projects" :key="project.id" :value="project.id">{{ project.name }}</option>
+        </select>
+      </div>
+      <div class="flex align-items-center gap-2">
+        <label class="mr-1 text-md font-normal">Chế độ xem:</label>
+        <select v-model="currentView" @change="changeView" class="select">
+          <option value="day">Ngày</option>
+          <option value="week">Tuần</option>
+          <option value="month">Tháng</option>
+          <option value="year">Năm</option>
+        </select>
+      </div>
     </div>
-    <div ref="ganttContainer" style="height: 70vh"></div>
+    <div ref="ganttContainer" style="height: calc(100vh - 250px)"></div>
   </div>
 </template>
 
@@ -17,9 +25,12 @@
 import { onMounted, ref } from 'vue'
 import 'dhtmlx-gantt/codebase/dhtmlxgantt.css'
 import gantt from 'dhtmlx-gantt'
+import axios from 'axios'
 
 const ganttContainer = ref(null)
 const currentView = ref('day')
+const selectedProject = ref(null)
+const projects = ref([])
 
 // Đổi chế độ xem
 function changeView() {
@@ -31,13 +42,13 @@ function changeView() {
       break
     case 'week':
       gantt.config.scale_unit = 'week'
-      gantt.config.date_scale = 'Tuần #%W'
+      gantt.config.date_scale = 'Week #%W'
       gantt.config.subscales = [{ unit: 'day', step: 1, date: '%D' }]
       break
     case 'month':
       gantt.config.scale_unit = 'month'
-      gantt.config.date_scale = '%F, %Y'
-      gantt.config.subscales = [{ unit: 'week', step: 1, date: 'Tuần %W' }]
+      gantt.config.date_scale = '%F, %Y '
+      gantt.config.subscales = [{ unit: 'week', step: 1, date: 'Week %W' }]
       break
     case 'year':
       gantt.config.scale_unit = 'year'
@@ -49,11 +60,37 @@ function changeView() {
   gantt.render() // 🔥 cập nhật lại Gantt sau khi thay đổi scale
 }
 
-onMounted(() => {
-  gantt.config.date_format = '%d-%m-%Y'
+// Tải danh sách công việc theo dự án
+async function loadTasks() {
+  if (!selectedProject.value) return
 
-  // Cột task + nút thêm task con
+  try {
+    const response = await axios.get(`/projects/${selectedProject.value}/tasks`)
+    gantt.clearAll()
+    gantt.parse({
+      data: response.data.data,
+      links: response.data.links
+    })
+  } catch (error) {
+    console.error('Lỗi khi tải dữ liệu công việc:', error)
+  }
+}
+
+// Khởi tạo Gantt
+function initGantt() {
+  gantt.config.show_task_wbs = true
+  gantt.config.date_format = '%d/%m/%Y'
+  gantt.config.date_grid = '%d/%m/%Y'
+  gantt.config.autoscroll = true
+
+  // Cột task + nút thêm task con và nút truy cập chi tiết
   gantt.config.columns = [
+    {
+      name: 'wbs',
+      label: 'WBS',
+      width: 60,
+      template: gantt.getWBSCode
+    },
     { name: 'text', label: 'Tên công việc', tree: true, width: 200, editor: { type: 'text', map_to: 'text' } },
     {
       name: 'start_date',
@@ -64,7 +101,7 @@ onMounted(() => {
     },
     {
       name: 'duration',
-      label: 'Thời gian',
+      label: 'Số ngày',
       align: 'center',
       width: 90,
       editor: { type: 'number', map_to: 'duration' }
@@ -80,54 +117,133 @@ onMounted(() => {
     {
       name: 'add',
       label: '',
-      width: 50,
+      width: 100,
       template: (task) => {
-        if (!task.parent || task.parent === 0) {
-          return `<button class='add-subtask-btn' data-taskid='${task.id}'>➕</button>`
-        }
-        return ''
+        let html = ''
+        // Nút thêm task con
+        html += `<button class='add-subtask-btn gantt-action-btn' title='Thêm công việc con' data-taskid='${task.id}'>➕</button>`
+
+        return html
+      }
+    },
+    {
+      name: 'users&products',
+      label: 'Quản lý',
+      width: 100,
+      align: 'center',
+      template: (task) => {
+        let html = ''
+        // Nút thêm nhân sự
+        html += `<a href='/tasks/${task.id}' class='gantt-action-btn' title='Quản lý vật tư và nhân sự'><i class='fas fa-cog'></i></a>`
+        return html
       }
     }
   ]
 
-  gantt.config.calendar_property = 'start_date'
-
-  // Khởi tạo thang thời gian mặc định// Thiết lập mặc định là 'day'
+  // Khởi tạo thang thời gian mặc định
   gantt.config.scale_unit = 'day'
   gantt.config.date_scale = '%d %M'
   gantt.config.subscales = []
 
-  gantt.attachEvent('onAfterTaskAdd', function (id, task) {
-    //add to database
-    console.log(id, task)
+  // Xử lý sự kiện thêm công việc
+  gantt.attachEvent('onAfterTaskAdd', async function (id, task) {
+    try {
+      // Đảm bảo ngày có định dạng d-m-Y
+      const response = await axios.post('/tasks', {
+        name: task.text,
+        start_date: new Date(task.start_date).toLocaleDateString(),
+        duration: task.duration,
+        progress: task.progress || 0,
+        project_id: selectedProject.value,
+        parent_id: task.parent > 0 ? task.parent : null
+      })
+
+      // Cập nhật ID từ server
+      gantt.changeTaskId(id, response.data.id)
+    } catch (error) {
+      console.error('Lỗi khi thêm công việc:', error)
+    }
   })
 
-  gantt.attachEvent('onAfterTaskUpdate', function (id, task) {
-    console.log(id, task)
+  // Xử lý sự kiện cập nhật công việc
+  gantt.attachEvent('onAfterTaskUpdate', async function (id, task) {
+    try {
+      console.log(task)
+      // Đảm bảo ngày có định dạng d-m-Y
+      await axios.put(`/tasks/${id}`, {
+        name: task.text,
+        start_date: new Date(task.start_date).toLocaleDateString(),
+        duration: task.duration,
+        progress: task.progress,
+        parent_id: task.parent > 0 ? task.parent : null
+      })
+    } catch (error) {
+      console.error('Lỗi khi cập nhật công việc:', error)
+      // Tải lại dữ liệu nếu có lỗi
+      loadTasks()
+    }
   })
 
-  gantt.attachEvent('onAfterTaskDelete', function (id, task) {
-    //delete to database
-    console.log(id, task)
+  // Xử lý sự kiện xóa công việc
+  gantt.attachEvent('onAfterTaskDelete', async function (id) {
+    try {
+      await axios.delete(`/tasks/${id}`)
+    } catch (error) {
+      console.error('Lỗi khi xóa công việc:', error)
+      // Tải lại dữ liệu nếu có lỗi
+      loadTasks()
+    }
   })
 
-  gantt.attachEvent('onAfterLinkAdd', function (id, link) {
-    console.log('Đã tạo liên kết:', link)
+  // Xử lý sự kiện thêm liên kết
+  gantt.attachEvent('onAfterLinkAdd', async function (id, link) {
+    try {
+      const response = await axios.post('/task-links', {
+        source_id: link.source,
+        target_id: link.target,
+        type: link.type
+      })
+
+      // Cập nhật ID từ server
+      gantt.changeLinkId(id, response.data.id)
+    } catch (error) {
+      console.error('Lỗi khi tạo liên kết:', error)
+      gantt.deleteLink(id)
+    }
   })
 
-  gantt.attachEvent('onAfterLinkDelete', function (id, link) {
-    console.log('Đã xóa liên kết:', link)
-    // type: 0 (Finish to Start), 1 (Start to Start), 2 (Finish to Finish), 3 (Start to Finish)
+  // Xử lý sự kiện xóa liên kết
+  gantt.attachEvent('onAfterLinkDelete', async function (id, link) {
+    try {
+      await axios.delete(`/task-links/${id}`)
+    } catch (error) {
+      console.error('Lỗi khi xóa liên kết:', error)
+      loadTasks()
+    }
   })
 
-  // Dữ liệu mẫu
   gantt.init(ganttContainer.value)
-  gantt.parse({
-    data: [
-      { id: 1, text: 'Project A', start_date: '09-05-2025', duration: 5, open: true, progress: 0.2 },
-      { id: 2, text: 'Task con A1', start_date: '10-05-2025', duration: 3, parent: 1, progress: 0.5 }
-    ]
-  })
+}
+
+// Tải danh sách dự án
+async function loadProjects() {
+  try {
+    const response = await axios.get('/api/projects')
+    projects.value = response.data
+
+    // Mặc định chọn dự án đầu tiên
+    if (projects.value.length > 0) {
+      selectedProject.value = projects.value[0].id
+      loadTasks()
+    }
+  } catch (error) {
+    console.error('Lỗi khi tải danh sách dự án:', error)
+  }
+}
+
+onMounted(() => {
+  initGantt()
+  loadProjects()
 })
 </script>
 
@@ -137,5 +253,46 @@ onMounted(() => {
   align-items: center;
   gap: 10px;
   margin-bottom: 10px;
+}
+
+.select {
+  padding: 5px 10px;
+  width: 150px;
+  border: 1px solid #ccc;
+}
+
+label {
+  margin-bottom: 0;
+}
+
+/* CSS cho các nút thao tác trong Gantt */
+:deep(.gantt-action-btn) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin: 0 2px;
+  border-radius: 4px;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  color: #495057;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+:deep(.gantt-action-btn:hover) {
+  background-color: #e9ecef;
+  border-color: #ced4da;
+}
+
+:deep(.add-subtask-btn) {
+  color: #28a745;
+}
+
+:deep(.fa-cog) {
+  color: #007bff;
+  font-size: 12px;
 }
 </style>

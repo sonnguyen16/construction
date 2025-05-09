@@ -106,4 +106,12 @@ class Project extends Model
     {
         return $this->belongsTo(ProjectCategory::class);
     }
+
+    /**
+     * Lấy tất cả các công việc của dự án
+     */
+    public function tasks()
+    {
+        return $this->hasMany(Task::class);
+    }
 }
