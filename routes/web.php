@@ -20,6 +20,7 @@ use App\Http\Controllers\ReceiptCategoryController;
 use App\Http\Controllers\PaymentCategoryController;
 use App\Http\Controllers\ProjectCategoryController;
 use App\Http\Controllers\ReportController;
+use Inertia\Inertia;
 
 /*
 |--------------------------------------------------------------------------
@@ -105,14 +106,17 @@ Route::middleware('auth')->group(function () {
 
     // Quản lý phiếu xuất kho
     Route::resource('export-vouchers', ExportVoucherController::class);
-    
+
     // Báo cáo thu chi
     Route::get('/reports/financial', [ReportController::class, 'financialReport'])->name('reports.financial');
-    
+
     // Báo cáo công nợ
     Route::get('/reports/contractor-debt', [ReportController::class, 'contractorDebtReport'])->name('reports.contractor-debt');
     Route::get('/reports/customer-debt', [ReportController::class, 'customerDebtReport'])->name('reports.customer-debt');
 
+    Route::get('tasks', function () {
+        return Inertia::render('Tasks/Index');
+    })->name('tasks.index');
 });
 
 // File Manager Routes
@@ -126,9 +130,6 @@ Route::get('/projects/{project}/files', [App\Http\Controllers\ProjectFileControl
 // Bid Package File Routes
 Route::get('/bid-packages/{bidPackage}/files', [App\Http\Controllers\BidPackageFileController::class, 'index'])->name('bid-packages.files');
 
-// API Routes
-Route::get('/api/contractors', [ContractorController::class, 'getContractors']);
-Route::get('/api/customers', [CustomerController::class, 'getCustomers']);
 
 
 

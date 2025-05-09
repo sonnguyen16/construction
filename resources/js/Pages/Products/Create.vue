@@ -120,9 +120,6 @@
                       min="0"
                       :class="{ 'is-invalid': form.errors.warning_threshold }"
                     />
-                    <small class="form-text text-muted"
-                      >Khi số lượng tồn kho giảm xuống dưới mức này, hệ thống sẽ hiển thị cảnh báo.</small
-                    >
                     <div class="invalid-feedback" v-if="form.errors.warning_threshold">
                       {{ form.errors.warning_threshold }}
                     </div>
