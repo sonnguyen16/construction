@@ -483,18 +483,36 @@ onMounted(() => {
       labels: monthLabels,
       datasets: [
         {
-          label: 'Phiếu thu',
-          data: months.map((month) => props.receiptsByMonth[month] || 0),
-          backgroundColor: 'rgba(40, 167, 69, 0.7)',
+          label: 'Phiếu thu đã thanh toán',
+          data: months.map((month) => props.receiptsByMonth[month]?.paid || 0),
+          backgroundColor: 'rgba(40, 167, 69, 0.9)',
           borderColor: 'rgba(40, 167, 69, 1)',
-          borderWidth: 1
+          borderWidth: 1,
+          stack: 'thu'
         },
         {
-          label: 'Phiếu chi',
-          data: months.map((month) => props.paymentsByMonth[month] || 0),
-          backgroundColor: 'rgba(220, 53, 69, 0.7)',
+          label: 'Phiếu thu chưa thanh toán',
+          data: months.map((month) => props.receiptsByMonth[month]?.unpaid || 0),
+          backgroundColor: 'rgba(23, 162, 184, 0.9)',
+          borderColor: 'rgba(23, 162, 184, 1)',
+          borderWidth: 1,
+          stack: 'thu'
+        },
+        {
+          label: 'Phiếu chi đã thanh toán',
+          data: months.map((month) => props.paymentsByMonth[month]?.paid || 0),
+          backgroundColor: 'rgba(220, 53, 69, 0.9)',
           borderColor: 'rgba(220, 53, 69, 1)',
-          borderWidth: 1
+          borderWidth: 1,
+          stack: 'chi'
+        },
+        {
+          label: 'Phiếu chi chưa thanh toán',
+          data: months.map((month) => props.paymentsByMonth[month]?.unpaid || 0),
+          backgroundColor: 'rgba(255, 193, 7, 0.9)',
+          borderColor: 'rgba(255, 193, 7, 1)',
+          borderWidth: 1,
+          stack: 'chi'
         }
       ]
     },

@@ -81,30 +81,60 @@ class HomeController extends Controller
             ->limit(5)
             ->get();
 
-        // Lấy tổng tiền chi theo tháng trong năm hiện tại
+        // Lấy tổng tiền chi theo tháng trong năm hiện tại, phân tách theo trạng thái
         $currentYear = Carbon::now()->year;
-        $paymentsByMonth = PaymentVoucher::whereNull('deleted_at')->selectRaw('MONTH(created_at) as month, SUM(amount) as total_amount')
+        $paymentsByMonth = [];
+        
+        // Lấy dữ liệu phiếu chi theo tháng và trạng thái
+        $paymentData = PaymentVoucher::whereNull('deleted_at')
+            ->selectRaw('MONTH(created_at) as month, status, SUM(amount) as total_amount')
             ->whereYear('created_at', $currentYear)
-            ->groupBy('month')
+            ->groupBy('month', 'status')
             ->orderBy('month')
-            ->get()
-            ->keyBy('month')
-            ->map(function ($item) {
-                return $item->total_amount;
-            })
-            ->toArray();
+            ->get();
+            
+        // Tổ chức dữ liệu theo tháng và trạng thái
+        foreach ($paymentData as $payment) {
+            if (!isset($paymentsByMonth[$payment->month])) {
+                $paymentsByMonth[$payment->month] = [
+                    'paid' => 0,
+                    'unpaid' => 0
+                ];
+            }
+            
+            if ($payment->status === 'paid') {
+                $paymentsByMonth[$payment->month]['paid'] = $payment->total_amount;
+            } else {
+                $paymentsByMonth[$payment->month]['unpaid'] = $payment->total_amount;
+            }
+        }
 
-        // Lấy tổng tiền thu theo tháng trong năm hiện tại
-        $receiptsByMonth = ReceiptVoucher::whereNull('deleted_at')->selectRaw('MONTH(created_at) as month, SUM(amount) as total_amount')
+        // Lấy tổng tiền thu theo tháng trong năm hiện tại, phân tách theo trạng thái
+        $receiptsByMonth = [];
+        
+        // Lấy dữ liệu phiếu thu theo tháng và trạng thái
+        $receiptData = ReceiptVoucher::whereNull('deleted_at')
+            ->selectRaw('MONTH(created_at) as month, status, SUM(amount) as total_amount')
             ->whereYear('created_at', $currentYear)
-            ->groupBy('month')
+            ->groupBy('month', 'status')
             ->orderBy('month')
-            ->get()
-            ->keyBy('month')
-            ->map(function ($item) {
-                return $item->total_amount;
-            })
-            ->toArray();
+            ->get();
+            
+        // Tổ chức dữ liệu theo tháng và trạng thái
+        foreach ($receiptData as $receipt) {
+            if (!isset($receiptsByMonth[$receipt->month])) {
+                $receiptsByMonth[$receipt->month] = [
+                    'paid' => 0,
+                    'unpaid' => 0
+                ];
+            }
+            
+            if ($receipt->status === 'paid') {
+                $receiptsByMonth[$receipt->month]['paid'] = $receipt->total_amount;
+            } else {
+                $receiptsByMonth[$receipt->month]['unpaid'] = $receipt->total_amount;
+            }
+        }
 
         return Inertia::render('Home', [
             'stats' => [
