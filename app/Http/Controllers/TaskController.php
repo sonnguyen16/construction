@@ -15,7 +15,7 @@ class TaskController extends Controller
     public function index()
     {
         // Lấy tất cả các dự án
-        $projects = Project::orderBy('name')->whereNull('deleted_at')->get();
+        $projects = Project::whereNull('deleted_at')->orderBy('name')->get();
 
         // Mặc định chọn dự án đầu tiên nếu có
         $defaultProject = $projects->first();
