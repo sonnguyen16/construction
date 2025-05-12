@@ -26,7 +26,32 @@ class BidPackageController extends Controller
             'auto_calculate' => 'nullable|boolean',
         ]);
 
-        $project->bidPackages()->create($validated);
+        // Tạo gói thầu mới
+        $bidPackage = $project->bidPackages()->create($validated);
+
+        // Tạo task tương ứng với gói thầu
+        $taskData = [
+            'name' => $bidPackage->name,
+            'start_date' => now(),
+            'duration' => 7, // Mặc định 30 ngày
+            'progress' => 0,
+            'project_id' => $project->id,
+            'bid_package_id' => $bidPackage->id,
+            'description' => $bidPackage->description,
+            'priority' => 1, // Trung bình
+            'status' => 0, // Chưa bắt đầu
+        ];
+
+        // Nếu là hạng mục con (có parent_id), tìm task của gói thầu cha để gán parent_id
+        if ($bidPackage->parent_id) {
+            $parentTask = \App\Models\Task::where('bid_package_id', $bidPackage->parent_id)->first();
+            if ($parentTask) {
+                $taskData['parent_id'] = $parentTask->id;
+            }
+        }
+
+        // Tạo task
+        \App\Models\Task::create($taskData);
 
         return redirect()->route('projects.show', $project)
             ->with('success', $validated['is_work_item'] ? 'Hạng mục đã được tạo thành công.' : 'Gói thầu đã được tạo thành công.');

@@ -16,6 +16,7 @@ class Task extends Model
         'duration',
         'progress',
         'project_id',
+        'bid_package_id',
         'parent_id',
         'description',
         'priority', // 0: Thấp, 1: Trung bình, 2: Cao, 3: Khẩn cấp
@@ -71,6 +72,14 @@ class Task extends Model
     public function project()
     {
         return $this->belongsTo(Project::class);
+    }
+    
+    /**
+     * Lấy gói thầu liên quan
+     */
+    public function bidPackage()
+    {
+        return $this->belongsTo(BidPackage::class);
     }
 
     /**

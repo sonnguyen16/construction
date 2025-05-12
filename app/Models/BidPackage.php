@@ -108,6 +108,14 @@ class BidPackage extends Model
     {
         return $this->hasMany(BidPackage::class, 'parent_id')->whereNull('deleted_at');
     }
+    
+    /**
+     * Lấy các công việc liên quan đến gói thầu
+     */
+    public function tasks()
+    {
+        return $this->hasMany(Task::class);
+    }
 
 
     /**
