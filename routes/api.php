@@ -22,7 +22,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::get('/projects', function () {
-    return App\Models\Project::select('id', 'name')->orderBy('name')->get();
+    return App\Models\Project::select('id', 'name')->whereNull('deleted_at')->orderBy('name')->get();
 });
 
 Route::get('/users', function () {

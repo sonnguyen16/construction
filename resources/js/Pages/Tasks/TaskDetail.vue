@@ -13,7 +13,7 @@
                 <h3 class="card-title mb-0">{{ task.name }}</h3>
               </div>
               <div class="card-tools">
-                <Link :href="route('tasks.index')" class="btn btn-sm btn-info">
+                <Link :href="route('tasks.index', { project_id: task.project_id })" class="btn btn-sm btn-info">
                   <i class="fas fa-arrow-left"></i> Quay lại
                 </Link>
               </div>

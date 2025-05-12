@@ -231,9 +231,11 @@ async function loadProjects() {
     const response = await axios.get('/api/projects')
     projects.value = response.data
 
-    // Mặc định chọn dự án đầu tiên
+    const project_params = new URLSearchParams(window.location.search)
+    const project_id = project_params.get('project_id')
+
     if (projects.value.length > 0) {
-      selectedProject.value = projects.value[0].id
+      selectedProject.value = project_id ? project_id : projects.value[0].id
       loadTasks()
     }
   } catch (error) {

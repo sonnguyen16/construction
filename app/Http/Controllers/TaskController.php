@@ -12,13 +12,24 @@ class TaskController extends Controller
     /**
      * Hiển thị trang quản lý công việc
      */
-    public function index()
+    public function index(Request $request)
     {
         // Lấy tất cả các dự án
-        $projects = Project::whereNull('deleted_at')->orderBy('name')->get();
+        $projects = Project::query()->whereNull('deleted_at')->orderBy('name')->get();
 
-        // Mặc định chọn dự án đầu tiên nếu có
-        $defaultProject = $projects->first();
+        // Kiểm tra nếu có project_id trong query param
+        $projectId = $request->query('project_id');
+        $defaultProject = null;
+        
+        if ($projectId) {
+            // Tìm dự án theo ID
+            $defaultProject = $projects->firstWhere('id', $projectId);
+        }
+        
+        // Nếu không có project_id hoặc không tìm thấy dự án, chọn dự án đầu tiên
+        if (!$defaultProject && $projects->isNotEmpty()) {
+            $defaultProject = $projects->first();
+        }
 
         return Inertia::render('Tasks/Index', [
             'projects' => $projects,
