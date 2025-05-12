@@ -15,7 +15,7 @@ class TaskController extends Controller
     public function index()
     {
         // Lấy tất cả các dự án
-        $projects = Project::orderBy('name')->get();
+        $projects = Project::orderBy('name')->whereNull('deleted_at')->get();
 
         // Mặc định chọn dự án đầu tiên nếu có
         $defaultProject = $projects->first();
@@ -143,7 +143,7 @@ class TaskController extends Controller
     {
         // Load dự án và các quan hệ liên quan
         $task->load(['project', 'parent', 'creator', 'updater']);
-        
+
         return Inertia::render('Tasks/TaskDetail', [
             'task' => $task,
             'project' => $task->project
