@@ -49,20 +49,6 @@ class BidController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        // Kiểm tra xem gói thầu đã có nhà thầu với contractor_id mới chưa
-        if (isset($validated['contractor_id']) && $validated['contractor_id'] != $bid->contractor_id) {
-            $bidPackage = $bid->bidPackage;
-            $existingBid = $bidPackage->bids()
-                ->where('contractor_id', $validated['contractor_id'])
-                ->where('id', '!=', $bid->id)
-                ->whereNull('deleted_at')
-                ->first();
-
-            if ($existingBid) {
-                return back()->withErrors(['contractor_id' => 'Nhà thầu này đã có giá dự thầu cho gói thầu này.']);
-            }
-        }
-
         if($bid->is_selected){
             $bidPackage = $bid->bidPackage;
             $bidPackage->selected_contractor_id = $validated['contractor_id'];
