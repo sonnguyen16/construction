@@ -21,17 +21,6 @@ class BidController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        // Kiểm tra xem nhà thầu đã đặt giá cho gói thầu này chưa
-        $existingBid = $bidPackage->bids()->where('contractor_id', $validated['contractor_id'])
-                        ->whereNull('deleted_at')
-                        ->first();
-
-        if ($existingBid) {
-            return redirect()->back()->withErrors([
-                'contractor_id' => 'Nhà thầu này đã đặt giá cho gói thầu này.',
-            ]);
-        }
-
         $bidPackage->bids()->create($validated);
 
         return redirect()->route('projects.show', $bidPackage->project_id)
