@@ -45,6 +45,7 @@ class TaskController extends Controller
         // Lấy tất cả các công việc của dự án
         $tasks = Task::where('project_id', $project->id)
             ->whereNull('deleted_at')
+            ->orderBy('order', 'asc')
             ->get()
             ->map(function ($task) {
                 return [
@@ -54,6 +55,7 @@ class TaskController extends Controller
                     'duration' => $task->duration,
                     'progress' => $task->progress,
                     'parent' => $task->parent_id,
+                    'order' => $task->order,
                     'open' => true
                 ];
             });
@@ -211,6 +213,98 @@ class TaskController extends Controller
         // Nếu task cha cũng là task con của một task khác, cập nhật tiếp task cha cấp cao hơn
         if ($parentTask->parent_id) {
             $this->updateParentTaskDuration($parentTask->parent_id);
+        }
+    }
+
+    /**
+     * Xử lý việc di chuyển task (kéo thả)
+     */
+    public function moveTask(Request $request)
+    {
+        $validated = $request->validate([
+            'id' => 'required|exists:tasks,id',
+            'parent_id' => 'nullable|exists:tasks,id',
+            'order' => 'required|integer|min:0',
+        ]);
+
+        $task = Task::findOrFail($validated['id']);
+
+        // Lưu parent_id cũ trước khi cập nhật
+        $oldParentId = $task->parent_id;
+
+        // Kiểm tra nếu parent_id trùng với id của task hiện tại
+        if (isset($validated['parent_id']) && $validated['parent_id'] == $task->id) {
+            return response()->json(['message' => 'Công việc không thể là công việc cha của chính nó'], 422);
+        }
+
+        // Kiểm tra nếu parent_id mới là con hoặc cháu của task hiện tại
+        if (isset($validated['parent_id'])) {
+            $potentialParent = Task::findOrFail($validated['parent_id']);
+            $currentParentId = $potentialParent->parent_id;
+
+            while ($currentParentId) {
+                if ($currentParentId == $task->id) {
+                    return response()->json(['message' => 'Không thể chuyển công việc thành con của công việc con'], 422);
+                }
+
+                $parentTask = Task::find($currentParentId);
+                if (!$parentTask) break;
+
+                $currentParentId = $parentTask->parent_id;
+            }
+        }
+
+        // Cập nhật task
+        $task->parent_id = $validated['parent_id'];
+        $task->order = $validated['order'];
+        $task->save();
+
+        // Cập nhật lại thứ tự của các task cùng cấp
+        if (isset($validated['parent_id'])) {
+            $this->reorderSiblingTasks($validated['parent_id'], $task->id, $validated['order']);
+        } else {
+            $this->reorderSiblingTasks(null, $task->id, $validated['order']);
+        }
+
+        // Nếu task có parent_id mới, cập nhật duration của task cha mới
+        if ($task->parent_id) {
+            $this->updateParentTaskDuration($task->parent_id);
+        }
+
+        // Nếu parent_id đã thay đổi và parent_id cũ không rỗng, cập nhật duration của task cha cũ
+        if ($oldParentId && $oldParentId != $task->parent_id) {
+            $this->updateParentTaskDuration($oldParentId);
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Sắp xếp lại thứ tự các task cùng cấp
+     */
+    private function reorderSiblingTasks($parentId, $taskId, $newOrder)
+    {
+        // Lấy tất cả các task cùng cấp (trừ task hiện tại)
+        $siblingTasks = Task::where('parent_id', $parentId)
+            ->where('id', '!=', $taskId)
+            ->whereNull('deleted_at')
+            ->orderBy('order')
+            ->get();
+
+        $order = 0;
+        foreach ($siblingTasks as $siblingTask) {
+            // Nếu đến vị trí mới của task hiện tại, tăng order lên 1
+            if ($order == $newOrder) {
+                $order++;
+            }
+
+            // Cập nhật order cho task cùng cấp
+            if ($siblingTask->order != $order) {
+                $siblingTask->order = $order;
+                $siblingTask->save();
+            }
+
+            $order++;
         }
     }
 }

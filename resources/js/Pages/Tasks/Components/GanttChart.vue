@@ -76,6 +76,22 @@ async function loadTasks() {
   }
 }
 
+// Xử lý kéo thả task
+async function handleTaskDrag(id, parent, order) {
+  try {
+    await axios.post('/tasks/move', {
+      id: id,
+      parent_id: parent > 0 ? parent : null,
+      order: order
+    })
+    // Không cần tải lại dữ liệu vì gantt đã cập nhật UI
+  } catch (error) {
+    console.error('Lỗi khi di chuyển công việc:', error)
+    // Tải lại dữ liệu nếu có lỗi để đảm bảo UI đồng bộ với server
+    loadTasks()
+  }
+}
+
 // Khởi tạo Gantt
 function initGantt() {
   gantt.config.show_task_wbs = true
@@ -86,6 +102,11 @@ function initGantt() {
   // Cấu hình hiển thị công việc cha dưới dạng đường line
   gantt.config.open_tree_initially = true
   gantt.config.show_progress = true
+
+  // Bật chức năng kéo thả
+  gantt.config.order_branch = true // Cho phép sắp xếp lại thứ tự
+  gantt.config.order_branch_free = true // Cho phép kéo task đến bất kỳ vị trí nào
+  gantt.config.drag_move = true // Cho phép di chuyển task
 
   // Định nghĩa loại task dựa trên cấp bậc
   gantt.templates.task_class = function (start, end, task) {
@@ -156,6 +177,12 @@ function initGantt() {
   gantt.config.scale_unit = 'day'
   gantt.config.date_scale = '%d %M'
   gantt.config.subscales = []
+
+  // Xử lý sự kiện kéo thả task
+  gantt.attachEvent('onAfterTaskMove', function (id, parent, tindex) {
+    // Gọi API để cập nhật vị trí task trên server
+    handleTaskDrag(id, parent, tindex)
+  })
 
   // Xử lý sự kiện thêm công việc
   gantt.attachEvent('onAfterTaskAdd', async function (id, task) {

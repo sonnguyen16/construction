@@ -144,6 +144,9 @@ Route::middleware('auth')->group(function () {
     Route::post('tasks/{task}/products', [TaskProductController::class, 'store'])->name('tasks.products.store');
     Route::put('tasks/{task}/products/{product}', [TaskProductController::class, 'update'])->name('tasks.products.update');
     Route::delete('tasks/{task}/products/{product}', [TaskProductController::class, 'destroy'])->name('tasks.products.destroy');
+
+    // Di chuyển task
+    Route::post('tasks/move', [TaskController::class, 'moveTask'])->name('tasks.move');
 });
 
 // File Manager Routes
