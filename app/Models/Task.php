@@ -18,6 +18,7 @@ class Task extends Model
         'project_id',
         'bid_package_id',
         'parent_id',
+        'order',
         'description',
         'priority', // 0: Thấp, 1: Trung bình, 2: Cao, 3: Khẩn cấp
         'status', // 0: Chưa bắt đầu, 1: Đang thực hiện, 2: Hoàn thành, 3: Tạm dừng, 4: Hủy bỏ
@@ -73,7 +74,7 @@ class Task extends Model
     {
         return $this->belongsTo(Project::class);
     }
-    
+
     /**
      * Lấy gói thầu liên quan
      */

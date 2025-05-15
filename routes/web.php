@@ -125,20 +125,20 @@ Route::middleware('auth')->group(function () {
     Route::post('tasks', [TaskController::class, 'store'])->name('tasks.store');
     Route::put('tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');
     Route::delete('tasks/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
-    
+
     // Quản lý liên kết công việc
     Route::post('task-links', [TaskLinkController::class, 'store'])->name('task-links.store');
     Route::put('task-links/{taskLink}', [TaskLinkController::class, 'update'])->name('task-links.update');
     Route::delete('task-links/{taskLink}', [TaskLinkController::class, 'destroy'])->name('task-links.destroy');
-    
+
     // Quản lý file của công việc
     Route::get('tasks/{task}/files', [TaskFileController::class, 'index'])->name('tasks.files');
-    
+
     // Quản lý nhân sự của công việc
     Route::get('tasks/{task}/users', [TaskUserController::class, 'index'])->name('tasks.users.index');
     Route::post('tasks/{task}/users', [TaskUserController::class, 'store'])->name('tasks.users.store');
     Route::delete('tasks/{task}/users/{user}', [TaskUserController::class, 'destroy'])->name('tasks.users.destroy');
-    
+
     // Quản lý vật tư của công việc
     Route::get('tasks/{task}/products', [TaskProductController::class, 'index'])->name('tasks.products.index');
     Route::post('tasks/{task}/products', [TaskProductController::class, 'store'])->name('tasks.products.store');

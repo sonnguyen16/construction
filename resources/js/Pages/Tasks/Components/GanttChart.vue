@@ -83,6 +83,18 @@ function initGantt() {
   gantt.config.date_grid = '%d/%m/%Y'
   gantt.config.autoscroll = true
 
+  // Cấu hình hiển thị công việc cha dưới dạng đường line
+  gantt.config.open_tree_initially = true
+  gantt.config.show_progress = true
+
+  // Định nghĩa loại task dựa trên cấp bậc
+  gantt.templates.task_class = function (start, end, task) {
+    if (!task.parent || task.parent == 0) {
+      return 'level-1-task'
+    }
+    return ''
+  }
+
   // Cột task + nút thêm task con và nút truy cập chi tiết
   gantt.config.columns = [
     {
@@ -104,7 +116,7 @@ function initGantt() {
       label: 'Số ngày',
       align: 'center',
       width: 90,
-      editor: { type: 'number', map_to: 'duration' }
+      editor: { type: 'number', map_to: 'duration', max: 1000 }
     },
     {
       name: 'progress',
@@ -160,6 +172,7 @@ function initGantt() {
 
       // Cập nhật ID từ server
       gantt.changeTaskId(id, response.data.id)
+      loadTasks()
     } catch (error) {
       console.error('Lỗi khi thêm công việc:', error)
     }
@@ -177,6 +190,7 @@ function initGantt() {
         progress: task.progress,
         parent_id: task.parent > 0 ? task.parent : null
       })
+      loadTasks()
     } catch (error) {
       console.error('Lỗi khi cập nhật công việc:', error)
       // Tải lại dữ liệu nếu có lỗi
@@ -188,6 +202,7 @@ function initGantt() {
   gantt.attachEvent('onAfterTaskDelete', async function (id) {
     try {
       await axios.delete(`/tasks/${id}`)
+      loadTasks()
     } catch (error) {
       console.error('Lỗi khi xóa công việc:', error)
       // Tải lại dữ liệu nếu có lỗi
@@ -296,5 +311,45 @@ label {
 :deep(.fa-cog) {
   color: #007bff;
   font-size: 12px;
+}
+
+/* Đảm bảo chỉ các task cấp 1 được hiển thị dạng line */
+:deep(.level-1-task) {
+  background-color: transparent !important;
+  border-top: 3px solid #2196f3 !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+  height: 4px !important;
+  margin-top: 12px !important;
+}
+
+:deep(.level-1-task):before {
+  content: '' !important;
+  position: absolute !important;
+  left: 0 !important;
+  top: -9px !important;
+  height: 16px !important;
+  width: 3px !important;
+  background-color: #2196f3 !important;
+}
+
+:deep(.level-1-task):after {
+  content: '' !important;
+  position: absolute !important;
+  right: 0 !important;
+  top: -9px !important;
+  height: 16px !important;
+  width: 3px !important;
+  background-color: #2196f3 !important;
+}
+
+:deep(.level-1-task) .gantt_task_progress {
+  display: none !important;
+}
+
+:deep(.level-1-task) .gantt_task_content {
+  display: none !important;
 }
 </style>

@@ -20,12 +20,12 @@ class TaskController extends Controller
         // Kiểm tra nếu có project_id trong query param
         $projectId = $request->query('project_id');
         $defaultProject = null;
-        
+
         if ($projectId) {
             // Tìm dự án theo ID
             $defaultProject = $projects->firstWhere('id', $projectId);
         }
-        
+
         // Nếu không có project_id hoặc không tìm thấy dự án, chọn dự án đầu tiên
         if (!$defaultProject && $projects->isNotEmpty()) {
             $defaultProject = $projects->first();
@@ -95,6 +95,11 @@ class TaskController extends Controller
 
         $task = Task::create($validated);
 
+        // Nếu task có parent_id, cập nhật duration của task cha
+        if ($task->parent_id) {
+            $this->updateParentTaskDuration($task->parent_id);
+        }
+
         return response()->json([
             'id' => $task->id,
             'text' => $task->name,
@@ -119,13 +124,25 @@ class TaskController extends Controller
             'parent_id' => 'nullable|exists:tasks,id',
         ]);
 
-
         // Kiểm tra nếu parent_id trùng với id của task hiện tại
         if (isset($validated['parent_id']) && $validated['parent_id'] == $task->id) {
             return response()->json(['message' => 'Công việc không thể là công việc cha của chính nó'], 422);
         }
 
+        // Lưu parent_id cũ trước khi cập nhật
+        $oldParentId = $task->parent_id;
+
         $task->update($validated);
+
+        // Nếu task có parent_id mới, cập nhật duration của task cha mới
+        if ($task->parent_id) {
+            $this->updateParentTaskDuration($task->parent_id);
+        }
+
+        // Nếu parent_id đã thay đổi và parent_id cũ không rỗng, cập nhật duration của task cha cũ
+        if ($oldParentId && $oldParentId != $task->parent_id) {
+            $this->updateParentTaskDuration($oldParentId);
+        }
 
         return response()->json([
             'id' => $task->id,
@@ -143,7 +160,16 @@ class TaskController extends Controller
      */
     public function destroy(Task $task)
     {
+        // Lưu parent_id trước khi xóa
+        $parentId = $task->parent_id;
+
         $task->delete();
+
+        // Nếu task có parent_id, cập nhật duration của task cha
+        if ($parentId) {
+            $this->updateParentTaskDuration($parentId);
+        }
+
         return response()->json(['success' => true]);
     }
 
@@ -159,5 +185,34 @@ class TaskController extends Controller
             'task' => $task,
             'project' => $task->project
         ]);
+    }
+
+    /**
+     * Cập nhật tổng số ngày của task cha dựa trên các task con
+     */
+    private function updateParentTaskDuration($parentId)
+    {
+        $parentTask = Task::findOrFail($parentId);
+
+        // Lấy tất cả các task con chưa bị xóa
+        $childrenTasks = Task::where('parent_id', $parentId)
+            ->whereNull('deleted_at')
+            ->get();
+
+        if ($childrenTasks->isEmpty()) {
+            return; // Không có task con, giữ nguyên duration của task cha
+        }
+
+        // Tính tổng duration của các task con
+        $totalDuration = $childrenTasks->sum('duration');
+
+        // Cập nhật duration của task cha
+        $parentTask->duration = $totalDuration;
+        $parentTask->save();
+
+        // Nếu task cha cũng là task con của một task khác, cập nhật tiếp task cha cấp cao hơn
+        if ($parentTask->parent_id) {
+            $this->updateParentTaskDuration($parentTask->parent_id);
+        }
     }
 }
