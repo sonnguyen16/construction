@@ -95,6 +95,15 @@ class TaskController extends Controller
             'parent_id' => 'nullable|exists:tasks,id',
         ]);
 
+        // Xác định order cho task mới
+        $maxOrder = Task::where('project_id', $validated['project_id'])
+            ->where('parent_id', $validated['parent_id'])
+            ->whereNull('deleted_at')
+            ->max('order');
+
+        // Nếu không có task cùng cấp, đặt order = 0, ngược lại lấy max + 1
+        $validated['order'] = $maxOrder !== null ? $maxOrder + 1 : 0;
+
         $task = Task::create($validated);
 
         // Nếu task có parent_id, cập nhật duration của task cha
@@ -189,6 +198,7 @@ class TaskController extends Controller
 
     /**
      * Cập nhật tổng số ngày của task cha dựa trên các task con
+     * Tính toán dựa trên mốc thời gian bắt đầu sớm nhất và kết thúc muộn nhất
      */
     private function updateParentTaskDuration($parentId)
     {
@@ -203,11 +213,29 @@ class TaskController extends Controller
             return; // Không có task con, giữ nguyên duration của task cha
         }
 
-        // Tính tổng duration của các task con
-        $totalDuration = $childrenTasks->sum('duration');
+        // Tìm ngày bắt đầu sớm nhất và ngày kết thúc muộn nhất
+        $earliestStartDate = null;
+        $latestEndDate = null;
 
-        // Cập nhật duration của task cha
-        $parentTask->duration = $totalDuration;
+        foreach ($childrenTasks as $task) {
+            $startDate = $task->start_date;
+            $endDate = (clone $startDate)->addDays($task->duration - 1); // Trừ 1 vì ngày bắt đầu đã tính là 1 ngày
+
+            if ($earliestStartDate === null || $startDate < $earliestStartDate) {
+                $earliestStartDate = $startDate;
+            }
+
+            if ($latestEndDate === null || $endDate > $latestEndDate) {
+                $latestEndDate = $endDate;
+            }
+        }
+
+        // Tính số ngày giữa ngày bắt đầu sớm nhất và ngày kết thúc muộn nhất
+        $duration = $earliestStartDate->diffInDays($latestEndDate) + 1; // Cộng 1 vì tính cả ngày cuối
+
+        // Cập nhật ngày bắt đầu và duration của task cha
+        $parentTask->start_date = $earliestStartDate;
+        $parentTask->duration = $duration;
         $parentTask->save();
 
         // Nếu task cha cũng là task con của một task khác, cập nhật tiếp task cha cấp cao hơn
@@ -228,83 +256,64 @@ class TaskController extends Controller
         ]);
 
         $task = Task::findOrFail($validated['id']);
-
-        // Lưu parent_id cũ trước khi cập nhật
         $oldParentId = $task->parent_id;
+        $oldOrder = $task->order;
+        $newParentId = $validated['parent_id'];
+        $newOrder = $validated['order'];
 
-        // Kiểm tra nếu parent_id trùng với id của task hiện tại
-        if (isset($validated['parent_id']) && $validated['parent_id'] == $task->id) {
+        // Kiểm tra các trường hợp không hợp lệ
+        if ($newParentId == $task->id) {
             return response()->json(['message' => 'Công việc không thể là công việc cha của chính nó'], 422);
         }
 
         // Kiểm tra nếu parent_id mới là con hoặc cháu của task hiện tại
-        if (isset($validated['parent_id'])) {
-            $potentialParent = Task::findOrFail($validated['parent_id']);
-            $currentParentId = $potentialParent->parent_id;
-
+        if ($newParentId) {
+            $currentParentId = $newParentId;
             while ($currentParentId) {
                 if ($currentParentId == $task->id) {
                     return response()->json(['message' => 'Không thể chuyển công việc thành con của công việc con'], 422);
                 }
-
+                
                 $parentTask = Task::find($currentParentId);
                 if (!$parentTask) break;
-
                 $currentParentId = $parentTask->parent_id;
             }
         }
 
+        // Xử lý xung đột order nếu có
+        if ($oldParentId == $newParentId && $oldOrder == $newOrder) {
+            // Không có gì thay đổi
+            return response()->json(['success' => true]);
+        }
+
+        // Tìm task có thể xung đột order
+        $conflictTask = Task::where('parent_id', $newParentId)
+            ->where('project_id', $task->project_id)
+            ->where('id', '!=', $task->id)
+            ->where('order', $newOrder)
+            ->whereNull('deleted_at')
+            ->first();
+
         // Cập nhật task
-        $task->parent_id = $validated['parent_id'];
-        $task->order = $validated['order'];
+        $task->parent_id = $newParentId;
+        $task->order = $newOrder;
         $task->save();
 
-        // Cập nhật lại thứ tự của các task cùng cấp
-        if (isset($validated['parent_id'])) {
-            $this->reorderSiblingTasks($validated['parent_id'], $task->id, $validated['order']);
-        } else {
-            $this->reorderSiblingTasks(null, $task->id, $validated['order']);
+        // Nếu có task xung đột, hoán đổi order
+        if ($conflictTask) {
+            $conflictTask->order = $oldOrder;
+            $conflictTask->save();
         }
 
-        // Nếu task có parent_id mới, cập nhật duration của task cha mới
-        if ($task->parent_id) {
-            $this->updateParentTaskDuration($task->parent_id);
+        // Cập nhật duration của các task cha
+        if ($newParentId) {
+            $this->updateParentTaskDuration($newParentId);
         }
-
-        // Nếu parent_id đã thay đổi và parent_id cũ không rỗng, cập nhật duration của task cha cũ
-        if ($oldParentId && $oldParentId != $task->parent_id) {
+        
+        if ($oldParentId && $oldParentId != $newParentId) {
             $this->updateParentTaskDuration($oldParentId);
         }
 
         return response()->json(['success' => true]);
-    }
-
-    /**
-     * Sắp xếp lại thứ tự các task cùng cấp
-     */
-    private function reorderSiblingTasks($parentId, $taskId, $newOrder)
-    {
-        // Lấy tất cả các task cùng cấp (trừ task hiện tại)
-        $siblingTasks = Task::where('parent_id', $parentId)
-            ->where('id', '!=', $taskId)
-            ->whereNull('deleted_at')
-            ->orderBy('order')
-            ->get();
-
-        $order = 0;
-        foreach ($siblingTasks as $siblingTask) {
-            // Nếu đến vị trí mới của task hiện tại, tăng order lên 1
-            if ($order == $newOrder) {
-                $order++;
-            }
-
-            // Cập nhật order cho task cùng cấp
-            if ($siblingTask->order != $order) {
-                $siblingTask->order = $order;
-                $siblingTask->save();
-            }
-
-            $order++;
-        }
     }
 }

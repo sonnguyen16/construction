@@ -84,7 +84,7 @@ async function handleTaskDrag(id, parent, order) {
       parent_id: parent > 0 ? parent : null,
       order: order
     })
-    // Không cần tải lại dữ liệu vì gantt đã cập nhật UI
+    loadTasks()
   } catch (error) {
     console.error('Lỗi khi di chuyển công việc:', error)
     // Tải lại dữ liệu nếu có lỗi để đảm bảo UI đồng bộ với server
@@ -178,10 +178,11 @@ function initGantt() {
   gantt.config.date_scale = '%d %M'
   gantt.config.subscales = []
 
-  // Xử lý sự kiện kéo thả task
-  gantt.attachEvent('onAfterTaskMove', function (id, parent, tindex) {
-    // Gọi API để cập nhật vị trí task trên server
-    handleTaskDrag(id, parent, tindex)
+  // Xử lý sự kiện sau khi hoàn tất việc sắp xếp lại hàng
+  gantt.attachEvent('onRowDragEnd', function (id, target) {
+    console.log('onRowDragEnd', id, target)
+    const task = gantt.getTask(id)
+    handleTaskDrag(id, task.parent, gantt.getTaskIndex(id))
   })
 
   // Xử lý sự kiện thêm công việc
