@@ -160,14 +160,12 @@ class TaskController extends Controller
      */
     public function destroy(Task $task)
     {
-        // Lưu parent_id trước khi xóa
-        $parentId = $task->parent_id;
-
-        $task->delete();
+        $task->deleted_at = now();
+        $task->save();
 
         // Nếu task có parent_id, cập nhật duration của task cha
-        if ($parentId) {
-            $this->updateParentTaskDuration($parentId);
+        if ($task->parent_id) {
+            $this->updateParentTaskDuration($task->parent_id);
         }
 
         return response()->json(['success' => true]);
