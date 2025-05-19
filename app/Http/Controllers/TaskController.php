@@ -167,7 +167,7 @@ class TaskController extends Controller
     }
 
     /**
-     * Xóa công việc
+     * Xóa công việc (soft delete)
      */
     public function destroy(Task $task)
     {
@@ -177,6 +177,99 @@ class TaskController extends Controller
         // Nếu task có parent_id, cập nhật duration của task cha
         if ($task->parent_id) {
             $this->updateParentTaskDuration($task->parent_id);
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Hiển thị trang thùng rác công việc
+     */
+    public function trash(Request $request)
+    {
+        // Lấy tất cả các dự án
+        $projects = Project::query()->whereNull('deleted_at')->orderBy('name')->get();
+
+        // Kiểm tra nếu có project_id trong query param
+        $projectId = $request->query('project_id');
+        $defaultProject = null;
+
+        if ($projectId) {
+            // Tìm dự án theo ID
+            $defaultProject = $projects->firstWhere('id', $projectId);
+        }
+
+        // Nếu không có project_id hoặc không tìm thấy dự án, chọn dự án đầu tiên
+        if (!$defaultProject && $projects->isNotEmpty()) {
+            $defaultProject = $projects->first();
+        }
+
+        return Inertia::render('Tasks/Trash', [
+            'projects' => $projects,
+            'defaultProject' => $defaultProject
+        ]);
+    }
+
+    /**
+     * Lấy danh sách công việc đã xóa theo dự án
+     */
+    public function getDeletedTasksByProject(Project $project)
+    {
+        // Lấy tất cả các công việc đã xóa của dự án
+        $tasks = Task::withTrashed()
+            ->where('project_id', $project->id)
+            ->whereNotNull('deleted_at')
+            ->orderBy('deleted_at', 'desc')
+            ->get()
+            ->map(function ($task) {
+                return [
+                    'id' => $task->id,
+                    'text' => $task->name,
+                    'start_date' => $task->start_date->format('d-m-Y'),
+                    'duration' => $task->duration,
+                    'progress' => $task->progress,
+                    'parent' => $task->parent_id,
+                    'deleted_at' => $task->deleted_at->format('d-m-Y H:i:s'),
+                    'order' => $task->order
+                ];
+            });
+
+        return response()->json([
+            'data' => $tasks
+        ]);
+    }
+
+    /**
+     * Khôi phục công việc đã xóa
+     */
+    public function restore($id)
+    {
+        $task = Task::withTrashed()->findOrFail($id);
+        $task->deleted_at = null;
+        $task->save();
+
+        // Nếu task có parent_id, cập nhật duration của task cha
+        if ($task->parent_id) {
+            $this->updateParentTaskDuration($task->parent_id);
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Xóa vĩnh viễn công việc
+     */
+    public function forceDelete($id)
+    {
+        $task = Task::withTrashed()->findOrFail($id);
+        $parentId = $task->parent_id;
+
+        // Xóa vĩnh viễn task
+        $task->forceDelete();
+
+        // Nếu task có parent_id, cập nhật duration của task cha
+        if ($parentId) {
+            $this->updateParentTaskDuration($parentId);
         }
 
         return response()->json(['success' => true]);
@@ -273,7 +366,7 @@ class TaskController extends Controller
                 if ($currentParentId == $task->id) {
                     return response()->json(['message' => 'Không thể chuyển công việc thành con của công việc con'], 422);
                 }
-                
+
                 $parentTask = Task::find($currentParentId);
                 if (!$parentTask) break;
                 $currentParentId = $parentTask->parent_id;
@@ -309,7 +402,7 @@ class TaskController extends Controller
         if ($newParentId) {
             $this->updateParentTaskDuration($newParentId);
         }
-        
+
         if ($oldParentId && $oldParentId != $newParentId) {
             $this->updateParentTaskDuration($oldParentId);
         }

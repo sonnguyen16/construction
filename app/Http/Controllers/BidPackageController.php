@@ -82,6 +82,56 @@ class BidPackageController extends Controller
             $bidPackage->save();
         }
 
+        // Cập nhật task liên quan
+        $task = \App\Models\Task::where('bid_package_id', $bidPackage->id)->first();
+
+        if ($task) {
+            // Chỉ cập nhật tên của task
+            $taskData = [
+                'name' => $bidPackage->name,
+            ];
+
+            // Nếu hạng mục đã hoàn thành, cập nhật progress = 100%
+            if ($bidPackage->status === 'completed') {
+                $taskData['progress'] = 1; // 100%
+            }
+
+            $task->update($taskData);
+
+            // Nếu task có parent_id, cập nhật duration của task cha
+            if ($task->parent_id) {
+                app(\App\Http\Controllers\TaskController::class)->updateParentTaskDuration($task->parent_id);
+            }
+        } else {
+            // Nếu không tìm thấy task, tạo mới
+            $taskData = [
+                'name' => $bidPackage->name,
+                'start_date' => now(),
+                'duration' => 7, // Mặc định 7 ngày
+                'progress' => ($bidPackage->status === 'completed') ? 1 : 0,
+                'project_id' => $bidPackage->project_id,
+                'bid_package_id' => $bidPackage->id,
+                'description' => $bidPackage->description,
+                'priority' => 1, // Trung bình
+                'status' => 0, // Mặc định: Chưa bắt đầu
+            ];
+
+            // Nếu là hạng mục con (có parent_id), tìm task của gói thầu cha để gán parent_id
+            if ($bidPackage->parent_id) {
+                $parentTask = \App\Models\Task::where('bid_package_id', $bidPackage->parent_id)->first();
+                if ($parentTask) {
+                    $taskData['parent_id'] = $parentTask->id;
+                }
+            }
+
+            $task = \App\Models\Task::create($taskData);
+
+            // Nếu task có parent_id, cập nhật duration của task cha
+            if ($task->parent_id) {
+                app(\App\Http\Controllers\TaskController::class)->updateParentTaskDuration($task->parent_id);
+            }
+        }
+
         return redirect()->route('projects.show', $bidPackage->project_id)
             ->with('success', $bidPackage->is_work_item ? 'Hạng mục đã được cập nhật thành công.' : 'Gói thầu đã được cập nhật thành công.');
     }

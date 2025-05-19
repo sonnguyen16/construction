@@ -125,6 +125,12 @@ Route::middleware('auth')->group(function () {
     Route::post('tasks', [TaskController::class, 'store'])->name('tasks.store');
     Route::put('tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');
     Route::delete('tasks/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
+    
+    // Thùng rác công việc
+    Route::get('tasks-trash', [TaskController::class, 'trash'])->name('tasks.trash');
+    Route::get('projects/{project}/deleted-tasks', [TaskController::class, 'getDeletedTasksByProject'])->name('projects.deleted-tasks');
+    Route::post('tasks/{id}/restore', [TaskController::class, 'restore'])->name('tasks.restore');
+    Route::delete('tasks/{id}/force-delete', [TaskController::class, 'forceDelete'])->name('tasks.force-delete');
 
     // Quản lý liên kết công việc
     Route::post('task-links', [TaskLinkController::class, 'store'])->name('task-links.store');

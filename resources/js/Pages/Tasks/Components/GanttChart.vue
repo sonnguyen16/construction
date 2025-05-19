@@ -1,20 +1,27 @@
 <template>
   <div>
-    <div class="toolbar flex align-items-center mb-3">
-      <div class="flex align-items-center gap-2">
-        <label class="text-md font-normal">Dự án:</label>
-        <select v-model="selectedProject" @change="loadTasks" class="mr-3 select">
-          <option v-for="project in projects" :key="project.id" :value="project.id">{{ project.name }}</option>
-        </select>
+    <div class="toolbar flex align-items-center justify-between mb-3">
+      <div class="flex align-items-center gap-4">
+        <div class="flex align-items-center gap-2">
+          <label class="text-md font-normal">Dự án:</label>
+          <select v-model="selectedProject" @change="loadTasks" class="select">
+            <option v-for="project in projects" :key="project.id" :value="project.id">{{ project.name }}</option>
+          </select>
+        </div>
+        <div class="flex align-items-center gap-2">
+          <label class="text-md font-normal">Chế độ xem:</label>
+          <select v-model="currentView" @change="changeView" class="select">
+            <option value="day">Ngày</option>
+            <option value="week">Tuần</option>
+            <option value="month">Tháng</option>
+            <option value="year">Năm</option>
+          </select>
+        </div>
       </div>
-      <div class="flex align-items-center gap-2">
-        <label class="mr-1 text-md font-normal">Chế độ xem:</label>
-        <select v-model="currentView" @change="changeView" class="select">
-          <option value="day">Ngày</option>
-          <option value="week">Tuần</option>
-          <option value="month">Tháng</option>
-          <option value="year">Năm</option>
-        </select>
+      <div>
+        <Link :href="route('tasks.trash')" class="btn btn-sm btn-secondary">
+          <i class="fas fa-trash mr-1"></i> Thùng rác
+        </Link>
       </div>
     </div>
     <div ref="ganttContainer" style="height: calc(100vh - 250px)"></div>
@@ -22,14 +29,15 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import 'dhtmlx-gantt/codebase/dhtmlxgantt.css'
 import gantt from 'dhtmlx-gantt'
 import axios from 'axios'
+import { Link } from '@inertiajs/vue3'
 
 const ganttContainer = ref(null)
-const currentView = ref('day')
-const selectedProject = ref(null)
+const currentView = ref(localStorage.getItem('gantt_view_mode') || 'day')
+const selectedProject = ref(localStorage.getItem('gantt_project_id') || null)
 const projects = ref([])
 
 // Đổi chế độ xem
@@ -200,7 +208,6 @@ function initGantt() {
 
       // Cập nhật ID từ server
       gantt.changeTaskId(id, response.data.id)
-      loadTasks()
     } catch (error) {
       console.error('Lỗi khi thêm công việc:', error)
     }
@@ -218,11 +225,8 @@ function initGantt() {
         progress: task.progress,
         parent_id: task.parent > 0 ? task.parent : null
       })
-      loadTasks()
     } catch (error) {
       console.error('Lỗi khi cập nhật công việc:', error)
-      // Tải lại dữ liệu nếu có lỗi
-      loadTasks()
     }
   })
 
@@ -230,11 +234,8 @@ function initGantt() {
   gantt.attachEvent('onAfterTaskDelete', async function (id) {
     try {
       await axios.delete(`/tasks/${id}`)
-      loadTasks()
     } catch (error) {
       console.error('Lỗi khi xóa công việc:', error)
-      // Tải lại dữ liệu nếu có lỗi
-      loadTasks()
     }
   })
 
@@ -261,7 +262,6 @@ function initGantt() {
       await axios.delete(`/task-links/${id}`)
     } catch (error) {
       console.error('Lỗi khi xóa liên kết:', error)
-      loadTasks()
     }
   })
 
@@ -274,11 +274,26 @@ async function loadProjects() {
     const response = await axios.get('/api/projects')
     projects.value = response.data
 
-    const project_params = new URLSearchParams(window.location.search)
-    const project_id = project_params.get('project_id')
+    const project_id_from_storage = localStorage.getItem('gantt_project_id')
 
-    if (projects.value.length > 0) {
-      selectedProject.value = project_id ? project_id : projects.value[0].id
+    let selected_id = null
+
+    if (project_id_from_storage) {
+      // Nếu không có trong URL nhưng có trong localStorage, kiểm tra xem dự án có tồn tại không
+      const project_exists = projects.value.some((project) => project.id == project_id_from_storage)
+      if (project_exists) {
+        selected_id = project_id_from_storage
+      }
+    }
+
+    // Nếu không có hoặc dự án không tồn tại, sử dụng dự án đầu tiên
+    if (!selected_id && projects.value.length > 0) {
+      selected_id = projects.value[0].id
+      localStorage.setItem('gantt_project_id', selected_id)
+    }
+
+    if (selected_id) {
+      selectedProject.value = selected_id
       loadTasks()
     }
   } catch (error) {
@@ -289,6 +304,14 @@ async function loadProjects() {
 onMounted(() => {
   initGantt()
   loadProjects()
+})
+
+watch(selectedProject, () => {
+  localStorage.setItem('gantt_project_id', selectedProject.value)
+})
+
+watch(currentView, () => {
+  localStorage.setItem('gantt_view_mode', currentView.value)
 })
 </script>
 
@@ -301,13 +324,9 @@ onMounted(() => {
 }
 
 .select {
-  padding: 5px 10px;
-  width: 150px;
+  padding: 4px 10px;
+  width: 200px;
   border: 1px solid #ccc;
-}
-
-label {
-  margin-bottom: 0;
 }
 
 /* CSS cho các nút thao tác trong Gantt */
