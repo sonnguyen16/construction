@@ -92,11 +92,8 @@ async function handleTaskDrag(id, parent, order) {
       parent_id: parent > 0 ? parent : null,
       order: order
     })
-    loadTasks()
   } catch (error) {
     console.error('Lỗi khi di chuyển công việc:', error)
-    // Tải lại dữ liệu nếu có lỗi để đảm bảo UI đồng bộ với server
-    loadTasks()
   }
 }
 
