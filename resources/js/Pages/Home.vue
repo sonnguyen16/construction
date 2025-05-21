@@ -328,6 +328,112 @@
         </div>
       </div>
     </div>
+
+    <!-- Biểu đồ đường chi tiết phiếu thu -->
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Biểu đồ đường phiếu thu</h3>
+            <div class="card-tools d-flex align-items-center">
+              <!-- Combo box chọn tháng/năm -->
+              <div class="mr-2" v-if="chartView === 'day'">
+                <select class="form-control form-control-sm" v-model="selectedMonth" @change="updateCharts">
+                  <option v-for="(month, index) in monthNames" :key="index" :value="index + 1">{{ month }}</option>
+                </select>
+              </div>
+              <div class="mr-2" v-if="chartView === 'day' || chartView === 'month'">
+                <select class="form-control form-control-sm" v-model="selectedYear" @change="updateCharts">
+                  <option v-for="year in availableYears" :key="year" :value="year">{{ year }}</option>
+                </select>
+              </div>
+              <!-- Nút chọn chế độ xem -->
+              <div class="btn-group">
+                <button
+                  @click="changeChartView('day')"
+                  :class="['btn', 'btn-sm', chartView === 'day' ? 'btn-primary' : 'btn-default']"
+                >
+                  Ngày
+                </button>
+                <button
+                  @click="changeChartView('month')"
+                  :class="['btn', 'btn-sm', chartView === 'month' ? 'btn-primary' : 'btn-default']"
+                >
+                  Tháng
+                </button>
+                <button
+                  @click="changeChartView('year')"
+                  :class="['btn', 'btn-sm', chartView === 'year' ? 'btn-primary' : 'btn-default']"
+                >
+                  Năm
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="chart">
+              <canvas
+                id="receiptLineChart"
+                style="min-height: 300px; height: 300px; max-height: 300px; max-width: 100%"
+              ></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Biểu đồ đường chi tiết phiếu chi -->
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Biểu đồ đường phiếu chi</h3>
+            <div class="card-tools d-flex align-items-center">
+              <!-- Combo box chọn tháng/năm -->
+              <div class="mr-2" v-if="chartView === 'day'">
+                <select class="form-control form-control-sm" v-model="selectedMonth" @change="updateCharts">
+                  <option v-for="(month, index) in monthNames" :key="index" :value="index + 1">{{ month }}</option>
+                </select>
+              </div>
+              <div class="mr-2" v-if="chartView === 'day' || chartView === 'month'">
+                <select class="form-control form-control-sm" v-model="selectedYear" @change="updateCharts">
+                  <option v-for="year in availableYears" :key="year" :value="year">{{ year }}</option>
+                </select>
+              </div>
+              <!-- Nút chọn chế độ xem -->
+              <div class="btn-group">
+                <button
+                  @click="changeChartView('day')"
+                  :class="['btn', 'btn-sm', chartView === 'day' ? 'btn-primary' : 'btn-default']"
+                >
+                  Ngày
+                </button>
+                <button
+                  @click="changeChartView('month')"
+                  :class="['btn', 'btn-sm', chartView === 'month' ? 'btn-primary' : 'btn-default']"
+                >
+                  Tháng
+                </button>
+                <button
+                  @click="changeChartView('year')"
+                  :class="['btn', 'btn-sm', chartView === 'year' ? 'btn-primary' : 'btn-default']"
+                >
+                  Năm
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="chart">
+              <canvas
+                id="paymentLineChart"
+                style="min-height: 300px; height: 300px; max-height: 300px; max-width: 100%"
+              ></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </AdminLayout>
 </template>
 
@@ -335,7 +441,8 @@
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { Link } from '@inertiajs/vue3'
 import { formatCurrency, formatDate } from '@/utils'
-import { onMounted } from 'vue'
+import { onMounted, ref, computed } from 'vue'
+import { router } from '@inertiajs/vue3'
 import Chart from 'chart.js/auto'
 
 const props = defineProps({
@@ -346,8 +453,372 @@ const props = defineProps({
   receiptsByCustomer: Array,
   paymentsByMonth: Object,
   receiptsByMonth: Object,
-  currentYear: Number
+  currentYear: Number,
+  currentMonth: Number,
+  dailyData: Object,
+  monthlyData: Object,
+  yearlyData: Object
 })
+
+// Biến để theo dõi chế độ xem biểu đồ đường (ngày/tháng/năm)
+const chartView = ref('month') // Mặc định xem theo tháng
+
+// Biến để lưu trữ instance của các biểu đồ đường
+let receiptLineChartInstance = null
+let paymentLineChartInstance = null
+
+// Các biến cho combo box chọn tháng/năm
+const selectedMonth = ref(props.currentMonth)
+const selectedYear = ref(props.currentYear)
+
+// Danh sách các tháng trong năm
+const monthNames = [
+  'Tháng 1',
+  'Tháng 2',
+  'Tháng 3',
+  'Tháng 4',
+  'Tháng 5',
+  'Tháng 6',
+  'Tháng 7',
+  'Tháng 8',
+  'Tháng 9',
+  'Tháng 10',
+  'Tháng 11',
+  'Tháng 12'
+]
+
+// Tạo danh sách các năm có sẵn (từ 2020 đến năm hiện tại)
+const availableYears = computed(() => {
+  const currentYear = new Date().getFullYear()
+  const years = []
+  for (let i = 2020; i <= currentYear; i++) {
+    years.push(i)
+  }
+  return years
+})
+
+// Hàm thay đổi chế độ xem biểu đồ đường
+function changeChartView(view) {
+  chartView.value = view
+  updateCharts()
+}
+
+// Hàm cập nhật cả hai biểu đồ khi thay đổi tháng hoặc năm
+function updateCharts() {
+  // Gọi API để lấy dữ liệu mới dựa trên tháng và năm đã chọn
+  if (chartView.value === 'day') {
+    // Nếu đang xem theo ngày, lấy dữ liệu cho tháng đã chọn
+    router.reload({
+      only: ['dailyData'],
+      data: {
+        month: selectedMonth.value,
+        year: selectedYear.value,
+        view: 'day'
+      },
+      onSuccess: () => {
+        updateReceiptLineChart()
+        updatePaymentLineChart()
+      }
+    })
+  } else if (chartView.value === 'month') {
+    // Nếu đang xem theo tháng, lấy dữ liệu cho năm đã chọn
+    router.reload({
+      only: ['monthlyData'],
+      data: {
+        year: selectedYear.value,
+        view: 'month'
+      },
+      onSuccess: () => {
+        updateReceiptLineChart()
+        updatePaymentLineChart()
+      }
+    })
+  } else {
+    // Nếu đang xem theo năm, không cần lấy dữ liệu mới vì đã có sẵn
+    updateReceiptLineChart()
+    updatePaymentLineChart()
+  }
+}
+
+// Hàm xử lý khi nhấp vào điểm trên biểu đồ phiếu thu
+function handleReceiptChartClick(event, chartElements, chart) {
+  if (chartElements.length === 0) return
+
+  const clickedElement = chartElements[0]
+  const datasetIndex = clickedElement.datasetIndex
+  const index = clickedElement.index
+
+  // Xác định trạng thái (paid/unpaid)
+  const datasetLabel = chart.data.datasets[datasetIndex].label
+  const isPaid = datasetLabel.includes('đã thanh toán')
+  const status = isPaid ? 'paid' : 'unpaid'
+
+  // Xác định thời gian tương ứng
+  let date_from, date_to
+
+  if (chartView.value === 'day') {
+    // Nếu xem theo ngày, cả date_from và date_to đều là cùng một ngày
+    const selectedDay = props.dailyData.labels[index]
+    date_from = `${selectedYear.value}-${String(selectedMonth.value).padStart(2, '0')}-${String(selectedDay).padStart(
+      2,
+      '0'
+    )}`
+    date_to = date_from
+  } else if (chartView.value === 'month') {
+    // Nếu xem theo tháng, date_from là ngày đầu tháng, date_to là ngày cuối tháng
+    const monthValue = index + 1 // Chuyển từ index 0-11 sang tháng 1-12
+    const daysInMonth = new Date(selectedYear.value, monthValue, 0).getDate()
+    date_from = `${selectedYear.value}-${String(monthValue).padStart(2, '0')}-01`
+    date_to = `${selectedYear.value}-${String(monthValue).padStart(2, '0')}-${String(daysInMonth).padStart(2, '0')}`
+  } else {
+    // chartView.value === 'year'
+    // Nếu xem theo năm, date_from là ngày đầu năm, date_to là ngày cuối năm
+    const selectedYear = props.yearlyData.labels[index]
+    date_from = `${selectedYear}-01-01`
+    date_to = `${selectedYear}-12-31`
+  }
+
+  // Chuyển hướng đến trang phiếu thu với bộ lọc
+  const queryParams = {
+    status,
+    date_from,
+    date_to
+  }
+
+  router.visit(route('receipt-vouchers.index', queryParams))
+}
+
+// Hàm xử lý khi nhấp vào điểm trên biểu đồ phiếu chi
+function handlePaymentChartClick(event, chartElements, chart) {
+  if (chartElements.length === 0) return
+
+  const clickedElement = chartElements[0]
+  const datasetIndex = clickedElement.datasetIndex
+  const index = clickedElement.index
+
+  // Xác định trạng thái (paid/unpaid)
+  const datasetLabel = chart.data.datasets[datasetIndex].label
+  const isPaid = datasetLabel.includes('đã thanh toán')
+  const status = isPaid ? 'paid' : 'unpaid'
+
+  // Xác định thời gian tương ứng
+  let date_from, date_to
+
+  if (chartView.value === 'day') {
+    // Nếu xem theo ngày, cả date_from và date_to đều là cùng một ngày
+    const selectedDay = props.dailyData.labels[index]
+    date_from = `${selectedYear.value}-${String(selectedMonth.value).padStart(2, '0')}-${String(selectedDay).padStart(
+      2,
+      '0'
+    )}`
+    date_to = date_from
+  } else if (chartView.value === 'month') {
+    // Nếu xem theo tháng, date_from là ngày đầu tháng, date_to là ngày cuối tháng
+    const monthValue = index + 1 // Chuyển từ index 0-11 sang tháng 1-12
+    const daysInMonth = new Date(selectedYear.value, monthValue, 0).getDate()
+    date_from = `${selectedYear.value}-${String(monthValue).padStart(2, '0')}-01`
+    date_to = `${selectedYear.value}-${String(monthValue).padStart(2, '0')}-${String(daysInMonth).padStart(2, '0')}`
+  } else {
+    // chartView.value === 'year'
+    // Nếu xem theo năm, date_from là ngày đầu năm, date_to là ngày cuối năm
+    const selectedYear = props.yearlyData.labels[index]
+    date_from = `${selectedYear}-01-01`
+    date_to = `${selectedYear}-12-31`
+  }
+
+  // Chuyển hướng đến trang phiếu chi với bộ lọc
+  const queryParams = {
+    status,
+    date_from,
+    date_to
+  }
+
+  router.visit(route('payment-vouchers.index', queryParams))
+}
+
+// Hàm cập nhật biểu đồ đường phiếu thu
+function updateReceiptLineChart() {
+  // Hủy biểu đồ cũ nếu có
+  if (receiptLineChartInstance) {
+    receiptLineChartInstance.destroy()
+  }
+
+  // Lấy dữ liệu tương ứng với chế độ xem
+  let chartData
+  let chartTitle
+
+  if (chartView.value === 'day') {
+    chartData = props.dailyData
+    chartTitle = `Phiếu thu theo ngày (Tháng ${selectedMonth.value}/${selectedYear.value})`
+  } else if (chartView.value === 'month') {
+    chartData = props.monthlyData
+    chartTitle = `Phiếu thu theo tháng (${selectedYear.value})`
+  } else {
+    // chartView.value === 'year'
+    chartData = props.yearlyData
+    chartTitle = 'Phiếu thu theo năm'
+  }
+
+  // Tạo biểu đồ đường mới cho phiếu thu
+  const ctx = document.getElementById('receiptLineChart')
+
+  receiptLineChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: chartData.labels,
+      datasets: [
+        {
+          label: 'Phiếu thu đã thanh toán',
+          data: chartData.receipts.paid,
+          borderColor: 'rgba(40, 167, 69, 1)',
+          backgroundColor: 'rgba(40, 167, 69, 0.1)',
+          borderWidth: 2,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          fill: false,
+          tension: 0.1
+        },
+        {
+          label: 'Phiếu thu chưa thanh toán',
+          data: chartData.receipts.unpaid,
+          borderColor: 'rgba(23, 162, 184, 1)',
+          backgroundColor: 'rgba(23, 162, 184, 0.1)',
+          borderWidth: 2,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          fill: false,
+          tension: 0.1
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      onClick: handleReceiptChartClick,
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: function (value) {
+              return formatCurrency(value)
+            }
+          }
+        }
+      },
+      plugins: {
+        title: {
+          display: true,
+          text: chartTitle,
+          font: {
+            size: 16
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: function (context) {
+              return `${context.dataset.label}: ${formatCurrency(context.raw)}`
+            }
+          }
+        },
+        legend: {
+          position: 'bottom'
+        }
+      }
+    }
+  })
+}
+
+// Hàm cập nhật biểu đồ đường phiếu chi
+function updatePaymentLineChart() {
+  // Hủy biểu đồ cũ nếu có
+  if (paymentLineChartInstance) {
+    paymentLineChartInstance.destroy()
+  }
+
+  // Lấy dữ liệu tương ứng với chế độ xem
+  let chartData
+  let chartTitle
+
+  if (chartView.value === 'day') {
+    chartData = props.dailyData
+    chartTitle = `Phiếu chi theo ngày (Tháng ${selectedMonth.value}/${selectedYear.value})`
+  } else if (chartView.value === 'month') {
+    chartData = props.monthlyData
+    chartTitle = `Phiếu chi theo tháng (${selectedYear.value})`
+  } else {
+    // chartView.value === 'year'
+    chartData = props.yearlyData
+    chartTitle = 'Phiếu chi theo năm'
+  }
+
+  // Tạo biểu đồ đường mới cho phiếu chi
+  const ctx = document.getElementById('paymentLineChart')
+
+  paymentLineChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: chartData.labels,
+      datasets: [
+        {
+          label: 'Phiếu chi đã thanh toán',
+          data: chartData.payments.paid,
+          borderColor: 'rgba(220, 53, 69, 1)',
+          backgroundColor: 'rgba(220, 53, 69, 0.1)',
+          borderWidth: 2,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          fill: false,
+          tension: 0.1
+        },
+        {
+          label: 'Phiếu chi chưa thanh toán',
+          data: chartData.payments.unpaid,
+          borderColor: 'rgba(255, 193, 7, 1)',
+          backgroundColor: 'rgba(255, 193, 7, 0.1)',
+          borderWidth: 2,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          fill: false,
+          tension: 0.1
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      onClick: handlePaymentChartClick,
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: function (value) {
+              return formatCurrency(value)
+            }
+          }
+        }
+      },
+      plugins: {
+        title: {
+          display: true,
+          text: chartTitle,
+          font: {
+            size: 16
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: function (context) {
+              return `${context.dataset.label}: ${formatCurrency(context.raw)}`
+            }
+          }
+        },
+        legend: {
+          position: 'bottom'
+        }
+      }
+    }
+  })
+}
 
 onMounted(() => {
   // Biểu đồ tổng chi theo nhà thầu
@@ -540,5 +1011,9 @@ onMounted(() => {
       }
     }
   })
+
+  // Khởi tạo biểu đồ đường chi tiết phiếu thu và phiếu chi
+  updateReceiptLineChart()
+  updatePaymentLineChart()
 })
 </script>
