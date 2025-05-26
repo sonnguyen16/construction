@@ -81,6 +81,24 @@
                                     v-model="form.password_confirmation"
                                 />
                             </div>
+                            
+                            <div class="form-group">
+                                <label for="role">Vai trò</label>
+                                <select
+                                    class="form-control"
+                                    id="role"
+                                    v-model="form.role"
+                                    :class="{ 'is-invalid': form.errors.role }"
+                                >
+                                    <option value="">Chọn vai trò</option>
+                                    <option v-for="role in roles" :key="role.id" :value="role.id">
+                                        {{ role.name }}
+                                    </option>
+                                </select>
+                                <div class="invalid-feedback" v-if="form.errors.role">
+                                    {{ form.errors.role }}
+                                </div>
+                            </div>
                             <div class="form-group">
                                 <label for="avatar">Ảnh đại diện</label>
                                 <div class="input-group">
@@ -149,6 +167,9 @@ import { ref, watch } from "vue";
 
 const props = defineProps({
     user: Object,
+    roles: Array,
+    userRoles: Array,
+    avatar: String
 });
 
 const avatarPreview = ref(null);
@@ -159,6 +180,7 @@ const form = useForm({
     password: "",
     password_confirmation: "",
     avatar: null,
+    role: props.userRoles && props.userRoles.length > 0 ? props.userRoles[0] : '',
     _method: "PUT",
 });
 

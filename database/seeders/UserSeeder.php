@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Spatie\Permission\Models\Role;
 
 class UserSeeder extends Seeder
 {
@@ -14,8 +15,8 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        // Tạo tài khoản admin
-        User::create([
+        // Tạo tài khoản admin và gán vai trò Super Admin
+        $admin = User::create([
             'name' => 'Admin',
             'email' => 'admin@example.com',
             'email_verified_at' => now(),
@@ -23,6 +24,7 @@ class UserSeeder extends Seeder
             'remember_token' => Str::random(10),
             'avatar' => 'https://i.pravatar.cc/150?img=1'
         ]);
+        $admin->assignRole('Super Admin');
 
         // Tạo 20 người dùng fake
         $avatarIds = range(2, 70); // IDs cho pravatar.cc
@@ -49,7 +51,7 @@ class UserSeeder extends Seeder
 
             $usedEmails[] = $email;
 
-            User::create([
+            $user = User::create([
                 'name' => $fullName,
                 'email' => $email,
                 'email_verified_at' => now(),
@@ -57,6 +59,11 @@ class UserSeeder extends Seeder
                 'remember_token' => Str::random(10),
                 'avatar' => 'https://i.pravatar.cc/150?img=' . $avatarIds[$i]
             ]);
+            
+            // Gán vai trò ngẫu nhiên cho người dùng
+            $roles = ['Quản lý', 'Kế toán', 'Quản lý dự án', 'Nhân viên'];
+            $randomRole = $roles[array_rand($roles)];
+            $user->assignRole($randomRole);
         }
     }
 

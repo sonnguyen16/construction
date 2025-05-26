@@ -17,8 +17,13 @@ use App\Http\Controllers\Api\ProjectBidPackageController;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/user', function (Request $request) {
+        return $request->user();
+    });
+    
+    // Lấy danh sách người dùng cho chức năng gán vai trò
+    Route::get('/users', [\App\Http\Controllers\Api\UserController::class, 'index']);
 });
 
 Route::get('/projects', function () {

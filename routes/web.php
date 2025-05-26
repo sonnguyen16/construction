@@ -25,6 +25,7 @@ use App\Http\Controllers\TaskLinkController;
 use App\Http\Controllers\TaskFileController;
 use App\Http\Controllers\TaskUserController;
 use App\Http\Controllers\TaskProductController;
+use App\Http\Controllers\RoleController;
 
 /*
 |--------------------------------------------------------------------------
@@ -117,6 +118,11 @@ Route::middleware('auth')->group(function () {
     // Báo cáo công nợ
     Route::get('/reports/contractor-debt', [ReportController::class, 'contractorDebtReport'])->name('reports.contractor-debt');
     Route::get('/reports/customer-debt', [ReportController::class, 'customerDebtReport'])->name('reports.customer-debt');
+    
+    // Quản lý vai trò và phân quyền
+    Route::resource('roles', RoleController::class);
+    Route::post('roles/{role}/assign-users', [RoleController::class, 'assignUsers'])->name('roles.assign-users');
+    Route::post('roles/{role}/remove-user/{user}', [RoleController::class, 'removeUser'])->name('roles.remove-user');
 
         // Quản lý công việc
     Route::get('tasks', [TaskController::class, 'index'])->name('tasks.index');

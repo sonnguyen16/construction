@@ -335,10 +335,23 @@ const menuItems = [
     isActive: (page) => page.component.startsWith('Customers/')
   },
   {
-    href: '/users',
-    icon: 'fas fa-users',
-    label: 'Quản lý người dùng',
-    isActive: (page) => page.url.startsWith('/users')
+    label: 'Quản lý hệ thống',
+    icon: 'fas fa-cogs',
+    isActive: (page) => page.url.startsWith('/users') || page.url.startsWith('/roles'),
+    children: [
+      {
+        href: '/users',
+        icon: 'fas fa-users',
+        label: 'Quản lý người dùng',
+        isActive: (page) => page.url.startsWith('/users')
+      },
+      {
+        href: route('roles.index'),
+        icon: 'fas fa-user-tag',
+        label: 'Vai trò & Phân quyền',
+        isActive: (page) => page.url.startsWith('/roles')
+      }
+    ]
   }
 ]
 

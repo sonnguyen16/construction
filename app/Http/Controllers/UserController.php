@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
+use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
@@ -40,7 +41,11 @@ class UserController extends Controller
      */
     public function create()
     {
-        return Inertia::render('Users/Create');
+        $roles = Role::all();
+        
+        return Inertia::render('Users/Create', [
+            'roles' => $roles
+        ]);
     }
 
     /**
@@ -51,8 +56,9 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
+            'password' => 'required|string|min:8',
             'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'role' => 'nullable|string',
         ]);
 
         $user = new User();
@@ -66,8 +72,17 @@ class UserController extends Controller
         }
 
         $user->save();
+        
+        // Gán vai trò cho người dùng
+        if ($request->filled('role')) {
+            $role = Role::find($request->role);
+            if ($role) {
+                $user->assignRole($role->name);
+            }
+        }
 
-        return redirect()->route('users.index');
+        return redirect()->route('users.index')
+            ->with('success', 'Người dùng đã được tạo thành công!');
     }
 
     /**
@@ -75,8 +90,14 @@ class UserController extends Controller
      */
     public function edit(User $user)
     {
+        $roles = Role::all();
+        $userRoles = $user->roles->pluck('id')->toArray();
+        
         return Inertia::render('Users/Edit', [
-            'user' => $user
+            'user' => $user,
+            'avatar' => $user->avatar,
+            'roles' => $roles,
+            'userRoles' => $userRoles
         ]);
     }
 
@@ -96,6 +117,7 @@ class UserController extends Controller
             ],
             'password' => 'nullable|string|min:8|confirmed',
             'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'role' => 'nullable|string',
         ]);
 
         $user->name = $validated['name'];
@@ -116,6 +138,18 @@ class UserController extends Controller
         }
 
         $user->save();
+        
+        // Cập nhật vai trò cho người dùng
+        if ($request->filled('role')) {
+            $role = Role::find($request->role);
+            if ($role) {
+                $user->syncRoles([$role->name]);
+            } else {
+                $user->syncRoles([]);
+            }
+        } else {
+            $user->syncRoles([]);
+        }
 
         return redirect()->route('users.index')
             ->with('success', 'Thông tin người dùng đã được cập nhật.');

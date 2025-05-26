@@ -64,6 +64,24 @@
                                 >
                             </div>
                             <div class="form-group">
+                                <label for="role">Vai trò</label>
+                                <select
+                                    class="form-control"
+                                    id="role"
+                                    v-model="form.role"
+                                    :class="{ 'is-invalid': form.errors.role }"
+                                >
+                                    <option value="">Chọn vai trò</option>
+                                    <option v-for="role in roles" :key="role.id" :value="role.id">
+                                        {{ role.name }}
+                                    </option>
+                                </select>
+                                <div class="invalid-feedback" v-if="form.errors.role">
+                                    {{ form.errors.role }}
+                                </div>
+                            </div>
+
+                            <div class="form-group">
                                 <label for="avatar">Ảnh đại diện</label>
                                 <div class="input-group">
                                     <div class="custom-file">
@@ -107,6 +125,10 @@ import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Link, useForm } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
 
+const props = defineProps({
+    roles: Array
+});
+
 const avatarPreview = ref(null);
 
 const form = useForm({
@@ -114,7 +136,8 @@ const form = useForm({
     email: '',
     password: '',
     password_confirmation: '',
-    avatar: null
+    avatar: null,
+    role: ''
 });
 
 watch(() => form.avatar, (newAvatar) => {
