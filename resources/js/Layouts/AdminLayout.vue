@@ -228,7 +228,8 @@ const menuItems = [
       page.component.startsWith('ReceiptCategories/') ||
       page.component.startsWith('Reports/Financial') ||
       page.component.startsWith('Reports/ContractorDebt') ||
-      page.component.startsWith('Reports/CustomerDebt'),
+      page.component.startsWith('Reports/CustomerDebt') ||
+      page.component.startsWith('Loans/'),
     children: [
       {
         href: route('payment-vouchers.index'),
@@ -271,6 +272,12 @@ const menuItems = [
         icon: 'fas fa-hand-holding-usd',
         label: 'Công nợ khách hàng',
         isActive: (page) => page.component === 'Reports/CustomerDebt'
+      },
+      {
+        href: route('loans.index'),
+        icon: 'fas fa-money-bill-wave',
+        label: 'Khoản vay',
+        isActive: (page) => page.component.startsWith('Loans/')
       }
     ]
   },

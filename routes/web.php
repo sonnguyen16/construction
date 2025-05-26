@@ -21,6 +21,7 @@ use App\Http\Controllers\PaymentCategoryController;
 use App\Http\Controllers\ProjectCategoryController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\TaskController;
+use App\Http\Controllers\LoanController;
 use App\Http\Controllers\TaskLinkController;
 use App\Http\Controllers\TaskFileController;
 use App\Http\Controllers\TaskUserController;
@@ -105,6 +106,10 @@ Route::middleware('auth')->group(function () {
 
     // Quản lý sản phẩm
     Route::resource('products', ProductController::class);
+
+    // Quản lý khoản vay
+    Route::resource('loans', LoanController::class);
+    Route::put('loans/{loan}/update-status', [LoanController::class, 'updateStatus'])->name('loans.update-status');
 
     // Quản lý phiếu nhập kho
     Route::resource('import-vouchers', ImportVoucherController::class);
