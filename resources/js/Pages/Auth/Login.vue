@@ -2,12 +2,12 @@
   <div class="login-page">
     <div class="login-box">
       <div class="login-logo">
-        <a href="/"><b>Hoàng Tâm</b></a>
+        <a href="/"><b>Quản lý hệ thống</b></a>
       </div>
       <!-- /.login-logo -->
       <div class="card">
         <div class="card-body login-card-body">
-          <p class="login-box-msg">Đăng nhập để bắt đầu</p>
+          <p class="login-box-msg">Đăng nhập để làm việc</p>
 
           <form @submit.prevent="submit">
             <div class="input-group mb-3">
