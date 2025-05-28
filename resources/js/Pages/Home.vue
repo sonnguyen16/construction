@@ -3,379 +3,381 @@
     <template #header>Bảng điều khiển</template>
     <template #breadcrumb>Bảng điều khiển</template>
 
-    <!-- Thống kê tổng quan -->
-    <div class="row">
-      <!-- Thông tin dự án -->
-      <div class="col-lg-4 col-6">
-        <div class="small-box bg-info">
-          <div class="inner">
-            <h3>{{ stats.totalProjects }}</h3>
-            <p>Tổng số dự án</p>
+    <div v-show="can('dashboard.view')">
+      <!-- Thống kê tổng quan -->
+      <div class="row">
+        <!-- Thông tin dự án -->
+        <div class="col-lg-4 col-6">
+          <div class="small-box bg-info">
+            <div class="inner">
+              <h3>{{ stats.totalProjects }}</h3>
+              <p>Tổng số dự án</p>
+            </div>
+            <div class="icon">
+              <i class="fas fa-project-diagram"></i>
+            </div>
+            <Link :href="route('projects.index')" class="small-box-footer">
+              Xem chi tiết <i class="fas fa-arrow-circle-right"></i>
+            </Link>
           </div>
-          <div class="icon">
-            <i class="fas fa-project-diagram"></i>
+        </div>
+        <div class="col-lg-4 col-6">
+          <div class="small-box bg-success">
+            <div class="inner">
+              <h3>{{ stats.completedProjects }}</h3>
+              <p>Dự án đã hoàn thành</p>
+            </div>
+            <div class="icon">
+              <i class="fas fa-check-circle"></i>
+            </div>
+            <Link :href="route('projects.index') + '?status=completed'" class="small-box-footer">
+              Xem chi tiết <i class="fas fa-arrow-circle-right"></i>
+            </Link>
           </div>
-          <Link :href="route('projects.index')" class="small-box-footer">
-            Xem chi tiết <i class="fas fa-arrow-circle-right"></i>
-          </Link>
+        </div>
+        <div class="col-lg-4 col-6">
+          <div class="small-box bg-warning">
+            <div class="inner">
+              <h3>{{ stats.inProgressProjects }}</h3>
+              <p>Dự án đang thực hiện</p>
+            </div>
+            <div class="icon">
+              <i class="fas fa-spinner"></i>
+            </div>
+            <Link :href="route('projects.index') + '?status=active'" class="small-box-footer">
+              Xem chi tiết <i class="fas fa-arrow-circle-right"></i>
+            </Link>
+          </div>
         </div>
       </div>
-      <div class="col-lg-4 col-6">
-        <div class="small-box bg-success">
-          <div class="inner">
-            <h3>{{ stats.completedProjects }}</h3>
-            <p>Dự án đã hoàn thành</p>
-          </div>
-          <div class="icon">
-            <i class="fas fa-check-circle"></i>
-          </div>
-          <Link :href="route('projects.index') + '?status=completed'" class="small-box-footer">
-            Xem chi tiết <i class="fas fa-arrow-circle-right"></i>
-          </Link>
-        </div>
-      </div>
-      <div class="col-lg-4 col-6">
-        <div class="small-box bg-warning">
-          <div class="inner">
-            <h3>{{ stats.inProgressProjects }}</h3>
-            <p>Dự án đang thực hiện</p>
-          </div>
-          <div class="icon">
-            <i class="fas fa-spinner"></i>
-          </div>
-          <Link :href="route('projects.index') + '?status=active'" class="small-box-footer">
-            Xem chi tiết <i class="fas fa-arrow-circle-right"></i>
-          </Link>
-        </div>
-      </div>
-    </div>
 
-    <!-- Thống kê tài chính -->
-    <div class="row">
-      <!-- Doanh thu -->
-      <div class="col-lg-4 col-6">
-        <div class="small-box bg-primary">
-          <div class="inner">
-            <h3>{{ formatCurrency(stats.totalRevenue) }}</h3>
-            <p>Doanh thu</p>
-          </div>
-          <div class="icon">
-            <i class="fas fa-chart-line"></i>
-          </div>
-          <div class="small-box-footer">
-            <i class="fas fa-info-circle"></i>
-          </div>
-        </div>
-      </div>
-      <!-- Tổng thu -->
-      <div class="col-lg-4 col-6">
-        <div class="small-box bg-success">
-          <div class="inner">
-            <h3>{{ formatCurrency(stats.totalReceiptAmount) }}</h3>
-            <p>Tổng thu</p>
-          </div>
-          <div class="icon">
-            <i class="fas fa-money-bill"></i>
-          </div>
-          <Link :href="route('receipt-vouchers.index') + '?status=paid'" class="small-box-footer">
-            Xem chi tiết <i class="fas fa-arrow-circle-right"></i>
-          </Link>
-        </div>
-      </div>
-      <!-- Phải thu -->
-      <div class="col-lg-4 col-6">
-        <div class="small-box bg-info">
-          <div class="inner">
-            <h3>{{ formatCurrency(stats.receivables) }}</h3>
-            <p>Phải thu</p>
-          </div>
-          <div class="icon">
-            <i class="fas fa-hand-holding-usd"></i>
-          </div>
-          <div class="small-box-footer">
-            <i class="fas fa-info-circle"></i>
+      <!-- Thống kê tài chính -->
+      <div class="row">
+        <!-- Doanh thu -->
+        <div class="col-lg-4 col-6">
+          <div class="small-box bg-primary">
+            <div class="inner">
+              <h3>{{ formatCurrency(stats.totalRevenue) }}</h3>
+              <p>Doanh thu</p>
+            </div>
+            <div class="icon">
+              <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="small-box-footer">
+              <i class="fas fa-info-circle"></i>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
-
-    <div class="row">
-      <!-- Chi phí -->
-      <div class="col-lg-4 col-6">
-        <div class="small-box bg-secondary">
-          <div class="inner">
-            <h3>{{ formatCurrency(stats.totalExpense) }}</h3>
-            <p>Chi phí</p>
-          </div>
-          <div class="icon">
-            <i class="fas fa-chart-pie"></i>
-          </div>
-          <div class="small-box-footer">
-            <i class="fas fa-info-circle"></i>
+        <!-- Tổng thu -->
+        <div class="col-lg-4 col-6">
+          <div class="small-box bg-success">
+            <div class="inner">
+              <h3>{{ formatCurrency(stats.totalReceiptAmount) }}</h3>
+              <p>Tổng thu</p>
+            </div>
+            <div class="icon">
+              <i class="fas fa-money-bill"></i>
+            </div>
+            <Link :href="route('receipt-vouchers.index') + '?status=paid'" class="small-box-footer">
+              Xem chi tiết <i class="fas fa-arrow-circle-right"></i>
+            </Link>
           </div>
         </div>
-      </div>
-      <!-- Tổng chi -->
-      <div class="col-lg-4 col-6">
-        <div class="small-box bg-danger">
-          <div class="inner">
-            <h3>{{ formatCurrency(stats.totalPaymentAmount) }}</h3>
-            <p>Tổng chi</p>
-          </div>
-          <div class="icon">
-            <i class="fas fa-money-bill-wave"></i>
-          </div>
-          <Link :href="route('payment-vouchers.index') + '?status=paid'" class="small-box-footer">
-            Xem chi tiết <i class="fas fa-arrow-circle-right"></i>
-          </Link>
-        </div>
-      </div>
-      <!-- Phải chi -->
-      <div class="col-lg-4 col-6">
-        <div class="small-box bg-dark">
-          <div class="inner">
-            <h3>{{ formatCurrency(stats.payables) }}</h3>
-            <p>Phải chi</p>
-          </div>
-          <div class="icon">
-            <i class="fas fa-credit-card"></i>
-          </div>
-          <div class="small-box-footer">
-            <i class="fas fa-info-circle"></i>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Lợi nhuận và Cân đối -->
-    <div class="row">
-      <div class="col-lg-4 col-12">
-        <div class="small-box bg-success">
-          <div class="inner">
-            <h3>{{ formatCurrency(stats.profit) }}</h3>
-            <p>Lợi nhuận (Doanh thu - Chi phí)</p>
-          </div>
-          <div class="icon">
-            <i class="fas fa-chart-bar"></i>
-          </div>
-          <div class="small-box-footer">
-            <i class="fas fa-info-circle"></i>
-          </div>
-        </div>
-      </div>
-      <!-- Đề xuất thu -->
-      <div class="col-lg-4 col-6">
-        <div class="small-box bg-warning">
-          <div class="inner">
-            <h3>{{ formatCurrency(stats.pendingReceiptAmount) }}</h3>
-            <p>Đề xuất thu ({{ stats.pendingReceiptCount }})</p>
-          </div>
-          <div class="icon">
-            <i class="fas fa-file-invoice-dollar"></i>
-          </div>
-          <Link :href="route('receipt-vouchers.index') + '?status=unpaid'" class="small-box-footer">
-            Xem chi tiết <i class="fas fa-arrow-circle-right"></i>
-          </Link>
-        </div>
-      </div>
-      <!-- Đề xuất chi -->
-      <div class="col-lg-4 col-6">
-        <div class="small-box bg-warning">
-          <div class="inner">
-            <h3>{{ formatCurrency(stats.pendingPaymentAmount) }}</h3>
-            <p>Đề xuất chi ({{ stats.pendingPaymentCount }})</p>
-          </div>
-          <div class="icon">
-            <i class="fas fa-file-invoice"></i>
-          </div>
-          <Link :href="route('payment-vouchers.index') + '?status=proposed'" class="small-box-footer">
-            Xem chi tiết <i class="fas fa-arrow-circle-right"></i>
-          </Link>
-        </div>
-      </div>
-    </div>
-
-    <!-- Biểu đồ thu chi -->
-    <div class="row">
-      <!-- Thêm biểu đồ tổng thu theo khách hàng -->
-      <div class="col-md-6">
-        <div class="card">
-          <div class="card-header">
-            <h3 class="card-title">Tổng thu theo khách hàng</h3>
-          </div>
-          <div class="card-body">
-            <div class="chart">
-              <canvas
-                id="receiptsByCustomerChart"
-                style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%"
-              ></canvas>
+        <!-- Phải thu -->
+        <div class="col-lg-4 col-6">
+          <div class="small-box bg-info">
+            <div class="inner">
+              <h3>{{ formatCurrency(stats.receivables) }}</h3>
+              <p>Phải thu</p>
+            </div>
+            <div class="icon">
+              <i class="fas fa-hand-holding-usd"></i>
+            </div>
+            <div class="small-box-footer">
+              <i class="fas fa-info-circle"></i>
             </div>
           </div>
         </div>
       </div>
-      <!-- Thêm chi tiết thu theo khách hàng -->
-      <div class="col-md-6">
-        <div class="card">
-          <div class="card-header">
-            <h3 class="card-title">Chi tiết thu theo khách hàng</h3>
-          </div>
-          <div class="card-body p-0">
-            <table class="table table-striped">
-              <thead>
-                <tr>
-                  <th>Khách hàng</th>
-                  <th>Tổng thu</th>
-                  <th>Tỷ lệ</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="receipt in receiptsByCustomer" :key="receipt.customer_id">
-                  <td>{{ receipt.customer.name }}</td>
-                  <td>{{ formatCurrency(receipt.total_amount) }}</td>
-                  <td>
-                    <div class="progress progress-xs">
-                      <div
-                        class="progress-bar bg-success"
-                        :style="`width: ${((receipt.total_amount / stats.totalReceiptAmount) * 100).toFixed(2)}%`"
-                      ></div>
-                    </div>
-                    <span class="badge bg-success">
-                      {{ ((receipt.total_amount / stats.totalReceiptAmount) * 100).toFixed(2) }}%
-                    </span>
-                  </td>
-                </tr>
-                <tr v-if="receiptsByCustomer.length === 0">
-                  <td colspan="3" class="text-center">Không có dữ liệu</td>
-                </tr>
-              </tbody>
-            </table>
+
+      <div class="row">
+        <!-- Chi phí -->
+        <div class="col-lg-4 col-6">
+          <div class="small-box bg-secondary">
+            <div class="inner">
+              <h3>{{ formatCurrency(stats.totalExpense) }}</h3>
+              <p>Chi phí</p>
+            </div>
+            <div class="icon">
+              <i class="fas fa-chart-pie"></i>
+            </div>
+            <div class="small-box-footer">
+              <i class="fas fa-info-circle"></i>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
-
-    <div class="row">
-      <div class="col-md-6">
-        <div class="card">
-          <div class="card-header">
-            <h3 class="card-title">Tổng chi theo nhà thầu</h3>
+        <!-- Tổng chi -->
+        <div class="col-lg-4 col-6">
+          <div class="small-box bg-danger">
+            <div class="inner">
+              <h3>{{ formatCurrency(stats.totalPaymentAmount) }}</h3>
+              <p>Tổng chi</p>
+            </div>
+            <div class="icon">
+              <i class="fas fa-money-bill-wave"></i>
+            </div>
+            <Link :href="route('payment-vouchers.index') + '?status=paid'" class="small-box-footer">
+              Xem chi tiết <i class="fas fa-arrow-circle-right"></i>
+            </Link>
           </div>
-          <div class="card-body">
-            <div class="chart">
-              <canvas
-                id="paymentsByContractorChart"
-                style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%"
-              ></canvas>
+        </div>
+        <!-- Phải chi -->
+        <div class="col-lg-4 col-6">
+          <div class="small-box bg-dark">
+            <div class="inner">
+              <h3>{{ formatCurrency(stats.payables) }}</h3>
+              <p>Phải chi</p>
+            </div>
+            <div class="icon">
+              <i class="fas fa-credit-card"></i>
+            </div>
+            <div class="small-box-footer">
+              <i class="fas fa-info-circle"></i>
             </div>
           </div>
         </div>
       </div>
-      <div class="col-md-6">
-        <div class="card">
-          <div class="card-header">
-            <h3 class="card-title">Chi tiết chi theo nhà thầu</h3>
-          </div>
-          <div class="card-body p-0">
-            <table class="table table-striped">
-              <thead>
-                <tr>
-                  <th>Nhà thầu</th>
-                  <th>Tổng chi</th>
-                  <th>Tỷ lệ</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="payment in paymentsByContractor" :key="payment.contractor_id">
-                  <td>{{ payment.contractor.name }}</td>
-                  <td>{{ formatCurrency(payment.total_amount) }}</td>
-                  <td>
-                    <div class="progress progress-xs">
-                      <div
-                        class="progress-bar bg-primary"
-                        :style="`width: ${((payment.total_amount / stats.totalPaymentAmount) * 100).toFixed(2)}%`"
-                      ></div>
-                    </div>
-                    <span class="badge bg-primary">
-                      {{ ((payment.total_amount / stats.totalPaymentAmount) * 100).toFixed(2) }}%
-                    </span>
-                  </td>
-                </tr>
-                <tr v-if="paymentsByContractor.length === 0">
-                  <td colspan="3" class="text-center">Không có dữ liệu</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
 
-    <!-- Biểu đồ thu chi theo tháng -->
-    <div class="row">
-      <div class="col-md-12">
-        <div class="card">
-          <div class="card-header">
-            <h3 class="card-title">Biểu đồ thu chi theo tháng ({{ currentYear }})</h3>
-          </div>
-          <div class="card-body">
-            <div class="chart">
-              <canvas
-                id="incomeExpenseChart"
-                style="min-height: 300px; height: 300px; max-height: 300px; max-width: 100%"
-              ></canvas>
+      <!-- Lợi nhuận và Cân đối -->
+      <div class="row">
+        <div class="col-lg-4 col-12">
+          <div class="small-box bg-success">
+            <div class="inner">
+              <h3>{{ formatCurrency(stats.profit) }}</h3>
+              <p>Lợi nhuận (Doanh thu - Chi phí)</p>
+            </div>
+            <div class="icon">
+              <i class="fas fa-chart-bar"></i>
+            </div>
+            <div class="small-box-footer">
+              <i class="fas fa-info-circle"></i>
             </div>
           </div>
         </div>
+        <!-- Đề xuất thu -->
+        <div class="col-lg-4 col-6">
+          <div class="small-box bg-warning">
+            <div class="inner">
+              <h3>{{ formatCurrency(stats.pendingReceiptAmount) }}</h3>
+              <p>Đề xuất thu ({{ stats.pendingReceiptCount }})</p>
+            </div>
+            <div class="icon">
+              <i class="fas fa-file-invoice-dollar"></i>
+            </div>
+            <Link :href="route('receipt-vouchers.index') + '?status=unpaid'" class="small-box-footer">
+              Xem chi tiết <i class="fas fa-arrow-circle-right"></i>
+            </Link>
+          </div>
+        </div>
+        <!-- Đề xuất chi -->
+        <div class="col-lg-4 col-6">
+          <div class="small-box bg-warning">
+            <div class="inner">
+              <h3>{{ formatCurrency(stats.pendingPaymentAmount) }}</h3>
+              <p>Đề xuất chi ({{ stats.pendingPaymentCount }})</p>
+            </div>
+            <div class="icon">
+              <i class="fas fa-file-invoice"></i>
+            </div>
+            <Link :href="route('payment-vouchers.index') + '?status=proposed'" class="small-box-footer">
+              Xem chi tiết <i class="fas fa-arrow-circle-right"></i>
+            </Link>
+          </div>
+        </div>
       </div>
-    </div>
 
-    <!-- Biểu đồ dòng tiền tổng hợp -->
-    <div class="row">
-      <div class="col-md-12">
-        <div class="card">
-          <div class="card-header">
-            <h3 class="card-title">Biểu đồ dòng tiền tổng hợp</h3>
-            <div class="card-tools d-flex align-items-center">
-              <!-- Combo box chọn tháng/năm -->
-              <div class="mr-2" v-if="chartView === 'day'">
-                <select class="form-control form-control-sm" v-model="selectedMonth" @change="updateCharts">
-                  <option v-for="(month, index) in monthNames" :key="index" :value="index + 1">{{ month }}</option>
-                </select>
-              </div>
-              <div class="mr-2" v-if="chartView === 'day' || chartView === 'month'">
-                <select class="form-control form-control-sm" v-model="selectedYear" @change="updateCharts">
-                  <option v-for="year in availableYears" :key="year" :value="year">{{ year }}</option>
-                </select>
-              </div>
-              <!-- Nút chọn chế độ xem -->
-              <div class="btn-group">
-                <button
-                  @click="changeChartView('day')"
-                  :class="['btn', 'btn-sm', chartView === 'day' ? 'btn-primary' : 'btn-default']"
-                >
-                  Ngày
-                </button>
-                <button
-                  @click="changeChartView('month')"
-                  :class="['btn', 'btn-sm', chartView === 'month' ? 'btn-primary' : 'btn-default']"
-                >
-                  Tháng
-                </button>
-                <button
-                  @click="changeChartView('year')"
-                  :class="['btn', 'btn-sm', chartView === 'year' ? 'btn-primary' : 'btn-default']"
-                >
-                  Năm
-                </button>
+      <!-- Biểu đồ thu chi -->
+      <div class="row">
+        <!-- Thêm biểu đồ tổng thu theo khách hàng -->
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Tổng thu theo khách hàng</h3>
+            </div>
+            <div class="card-body">
+              <div class="chart">
+                <canvas
+                  id="receiptsByCustomerChart"
+                  style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%"
+                ></canvas>
               </div>
             </div>
           </div>
-          <div class="card-body">
-            <div class="chart">
-              <canvas
-                id="cashflowChart"
-                style="min-height: 300px; height: 300px; max-height: 300px; max-width: 100%"
-              ></canvas>
+        </div>
+        <!-- Thêm chi tiết thu theo khách hàng -->
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Chi tiết thu theo khách hàng</h3>
+            </div>
+            <div class="card-body p-0">
+              <table class="table table-striped">
+                <thead>
+                  <tr>
+                    <th>Khách hàng</th>
+                    <th>Tổng thu</th>
+                    <th>Tỷ lệ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="receipt in receiptsByCustomer" :key="receipt.customer_id">
+                    <td>{{ receipt.customer.name }}</td>
+                    <td>{{ formatCurrency(receipt.total_amount) }}</td>
+                    <td>
+                      <div class="progress progress-xs">
+                        <div
+                          class="progress-bar bg-success"
+                          :style="`width: ${((receipt.total_amount / stats.totalReceiptAmount) * 100).toFixed(2)}%`"
+                        ></div>
+                      </div>
+                      <span class="badge bg-success">
+                        {{ ((receipt.total_amount / stats.totalReceiptAmount) * 100).toFixed(2) }}%
+                      </span>
+                    </td>
+                  </tr>
+                  <tr v-if="receiptsByCustomer.length === 0">
+                    <td colspan="3" class="text-center">Không có dữ liệu</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Tổng chi theo nhà thầu</h3>
+            </div>
+            <div class="card-body">
+              <div class="chart">
+                <canvas
+                  id="paymentsByContractorChart"
+                  style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%"
+                ></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Chi tiết chi theo nhà thầu</h3>
+            </div>
+            <div class="card-body p-0">
+              <table class="table table-striped">
+                <thead>
+                  <tr>
+                    <th>Nhà thầu</th>
+                    <th>Tổng chi</th>
+                    <th>Tỷ lệ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="payment in paymentsByContractor" :key="payment.contractor_id">
+                    <td>{{ payment.contractor.name }}</td>
+                    <td>{{ formatCurrency(payment.total_amount) }}</td>
+                    <td>
+                      <div class="progress progress-xs">
+                        <div
+                          class="progress-bar bg-primary"
+                          :style="`width: ${((payment.total_amount / stats.totalPaymentAmount) * 100).toFixed(2)}%`"
+                        ></div>
+                      </div>
+                      <span class="badge bg-primary">
+                        {{ ((payment.total_amount / stats.totalPaymentAmount) * 100).toFixed(2) }}%
+                      </span>
+                    </td>
+                  </tr>
+                  <tr v-if="paymentsByContractor.length === 0">
+                    <td colspan="3" class="text-center">Không có dữ liệu</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Biểu đồ thu chi theo tháng -->
+      <div class="row">
+        <div class="col-md-12">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Biểu đồ thu chi theo tháng ({{ currentYear }})</h3>
+            </div>
+            <div class="card-body">
+              <div class="chart">
+                <canvas
+                  id="incomeExpenseChart"
+                  style="min-height: 300px; height: 300px; max-height: 300px; max-width: 100%"
+                ></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Biểu đồ dòng tiền tổng hợp -->
+      <div class="row">
+        <div class="col-md-12">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Biểu đồ dòng tiền tổng hợp</h3>
+              <div class="card-tools d-flex align-items-center">
+                <!-- Combo box chọn tháng/năm -->
+                <div class="mr-2" v-if="chartView === 'day'">
+                  <select class="form-control form-control-sm" v-model="selectedMonth" @change="updateCharts">
+                    <option v-for="(month, index) in monthNames" :key="index" :value="index + 1">{{ month }}</option>
+                  </select>
+                </div>
+                <div class="mr-2" v-if="chartView === 'day' || chartView === 'month'">
+                  <select class="form-control form-control-sm" v-model="selectedYear" @change="updateCharts">
+                    <option v-for="year in availableYears" :key="year" :value="year">{{ year }}</option>
+                  </select>
+                </div>
+                <!-- Nút chọn chế độ xem -->
+                <div class="btn-group">
+                  <button
+                    @click="changeChartView('day')"
+                    :class="['btn', 'btn-sm', chartView === 'day' ? 'btn-primary' : 'btn-default']"
+                  >
+                    Ngày
+                  </button>
+                  <button
+                    @click="changeChartView('month')"
+                    :class="['btn', 'btn-sm', chartView === 'month' ? 'btn-primary' : 'btn-default']"
+                  >
+                    Tháng
+                  </button>
+                  <button
+                    @click="changeChartView('year')"
+                    :class="['btn', 'btn-sm', chartView === 'year' ? 'btn-primary' : 'btn-default']"
+                  >
+                    Năm
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="chart">
+                <canvas
+                  id="cashflowChart"
+                  style="min-height: 300px; height: 300px; max-height: 300px; max-width: 100%"
+                ></canvas>
+              </div>
             </div>
           </div>
         </div>
@@ -391,6 +393,7 @@ import { formatCurrency, formatDate } from '@/utils'
 import { onMounted, ref, computed } from 'vue'
 import { router } from '@inertiajs/vue3'
 import Chart from 'chart.js/auto'
+import { usePermission } from '@/Composables/usePermission'
 
 const props = defineProps({
   stats: Object,
@@ -406,6 +409,8 @@ const props = defineProps({
   monthlyData: Object,
   yearlyData: Object
 })
+
+const { can } = usePermission()
 
 // Biến để theo dõi chế độ xem biểu đồ đường (ngày/tháng/năm)
 const chartView = ref('month') // Mặc định xem theo tháng
