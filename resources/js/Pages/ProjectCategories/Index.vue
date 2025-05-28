@@ -9,7 +9,7 @@
           <div class="card-header">
             <div class="d-flex justify-content-between">
               <h3 class="card-title">Danh sách danh mục dự án</h3>
-              <Link :href="route('project-categories.create')" class="btn btn-primary btn-sm">
+              <Link v-if="can('project_categories.create')" :href="route('project-categories.create')" class="btn btn-primary btn-sm">
                 <i class="fas fa-plus mr-1"></i> Thêm mới
               </Link>
             </div>
@@ -53,12 +53,14 @@
                     <td>{{ formatDate(category.created_at) }}</td>
                     <td>
                       <Link
+                        v-if="can('project_categories.edit')"
                         :href="route('project-categories.edit', category.id)"
                         class="btn btn-sm btn-info mr-1"
                       >
                         <i class="fas fa-edit"></i>
                       </Link>
                       <button
+                        v-if="can('project_categories.delete')"
                         class="btn btn-sm btn-danger"
                         @click="confirmDelete(category)"
                       >
@@ -88,11 +90,14 @@ import { ref, watch } from 'vue'
 import { formatDate, showConfirm, showSuccess } from '@/utils'
 import Pagination from '@/Components/Pagination.vue'
 import debounce from 'lodash/debounce'
+import { usePermission } from '@/Composables/usePermission'
 
 const props = defineProps({
   projectCategories: Object,
   filters: Object
 })
+
+const { can } = usePermission()
 
 const search = ref(props.filters.search || '')
 

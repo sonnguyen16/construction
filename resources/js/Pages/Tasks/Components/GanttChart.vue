@@ -19,8 +19,8 @@
         </div>
       </div>
       <div>
-        <Link :href="route('tasks.trash')" class="btn btn-sm btn-secondary">
-          <i class="fas fa-trash mr-1"></i> Thùng rác
+        <Link v-if="can('tasks.trash')" :href="route('tasks.trash')" class="btn btn-sm btn-secondary">
+          <i class="fas fa-trash mr-1"></i> Công việc đã xóa
         </Link>
       </div>
     </div>
@@ -34,11 +34,15 @@ import 'dhtmlx-gantt/codebase/dhtmlxgantt.css'
 import gantt from 'dhtmlx-gantt'
 import axios from 'axios'
 import { Link } from '@inertiajs/vue3'
+import { usePermission } from '@/Composables/usePermission'
+import { showWarning } from '@/utils'
 
 const ganttContainer = ref(null)
 const currentView = ref(localStorage.getItem('gantt_view_mode') || 'day')
 const selectedProject = ref(localStorage.getItem('gantt_project_id') || null)
 const projects = ref([])
+
+const { can } = usePermission()
 
 // Đổi chế độ xem
 function changeView() {
@@ -153,14 +157,15 @@ function initGantt() {
       editor: { type: 'number', map_to: 'progress' }
     },
     {
-      name: 'add',
+      name: can('tasks.create') ? 'add' : '',
       label: '',
       width: 100,
       template: (task) => {
         let html = ''
-        // Nút thêm task con
-        html += `<button class='add-subtask-btn gantt-action-btn' title='Thêm công việc con' data-taskid='${task.id}'>➕</button>`
-
+        // Nút thêm task con - chỉ hiển thị khi có quyền tạo công việc
+        if (can('tasks.create')) {
+          html += `<button class='add-subtask-btn gantt-action-btn' title='Thêm công việc con' data-taskid='${task.id}'>➕</button>`
+        }
         return html
       }
     },
@@ -171,8 +176,10 @@ function initGantt() {
       align: 'center',
       template: (task) => {
         let html = ''
-        // Nút thêm nhân sự
-        html += `<a href='/tasks/${task.id}' class='gantt-action-btn' title='Quản lý vật tư và nhân sự'><i class='fas fa-cog'></i></a>`
+        // Nút quản lý vật tư và nhân sự - chỉ hiển thị khi có quyền xem chi tiết
+        if (can('tasks.resources')) {
+          html += `<a href='/tasks/${task.id}' class='gantt-action-btn' title='Quản lý vật tư và nhân sự'><i class='fas fa-cog'></i></a>`
+        }
         return html
       }
     }
@@ -185,18 +192,27 @@ function initGantt() {
 
   // Xử lý sự kiện sau khi hoàn tất việc sắp xếp lại hàng
   gantt.attachEvent('onRowDragEnd', function (id, target) {
-    console.log('onRowDragEnd', id, target)
     const task = gantt.getTask(id)
     handleTaskDrag(id, task.parent, gantt.getTaskIndex(id))
   })
 
   // Xử lý sự kiện thêm công việc
+  gantt.attachEvent('onBeforeTaskAdd', function (id, task) {
+    // Kiểm tra quyền trước khi cho phép thêm công việc
+    if (!can('tasks.create')) {
+      showWarning('Bạn không có quyền thêm công việc.')
+      loadTasks()
+      return false
+    }
+    return true
+  })
+
   gantt.attachEvent('onAfterTaskAdd', async function (id, task) {
     try {
       // Đảm bảo ngày có định dạng d-m-Y
       const response = await axios.post('/tasks', {
         name: task.text,
-        start_date: new Date(task.start_date).toLocaleDateString(),
+        start_date: new Date(task.start_date).toDateString(),
         duration: task.duration,
         progress: task.progress || 0,
         project_id: selectedProject.value,
@@ -211,13 +227,21 @@ function initGantt() {
   })
 
   // Xử lý sự kiện cập nhật công việc
+  gantt.attachEvent('onBeforeTaskUpdate', function (id, task) {
+    if (!can('tasks.edit')) {
+      showWarning('Bạn không có quyền sửa công việc.')
+      loadTasks()
+      return false
+    }
+    return true
+  })
+
   gantt.attachEvent('onAfterTaskUpdate', async function (id, task) {
     try {
-      console.log(task)
       // Đảm bảo ngày có định dạng d-m-Y
       await axios.put(`/tasks/${id}`, {
         name: task.text,
-        start_date: new Date(task.start_date).toLocaleDateString(),
+        start_date: new Date(task.start_date).toDateString(),
         duration: task.duration,
         progress: task.progress,
         parent_id: task.parent > 0 ? task.parent : null
@@ -228,9 +252,19 @@ function initGantt() {
   })
 
   // Xử lý sự kiện xóa công việc
+  gantt.attachEvent('onBeforeTaskDelete', function (id, task) {
+    if (!can('tasks.delete')) {
+      showWarning('Bạn không có quyền xóa công việc.')
+      loadTasks()
+      return false
+    }
+    return true
+  })
+
   gantt.attachEvent('onAfterTaskDelete', async function (id) {
     try {
       await axios.delete(`/tasks/${id}`)
+      loadTasks()
     } catch (error) {
       console.error('Lỗi khi xóa công việc:', error)
     }

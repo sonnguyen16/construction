@@ -26,7 +26,11 @@
                   <i class="fas fa-table"></i> Rút gọn
                 </button>
               </div>
-              <button @click="openCreateBidPackageModal" class="btn btn-primary btn-sm">
+              <button
+                v-if="can('bid-packages.create')"
+                @click="openCreateBidPackageModal"
+                class="btn btn-primary btn-sm"
+              >
                 <i class="fas fa-plus"></i> Thêm gói thầu
               </button>
             </div>
@@ -93,19 +97,11 @@
                       <div class="col-span-3 px-2">
                         <div class="d-flex justify-between align-items-center">
                           <button
-                            v-if="bidPackage.selected_contractor_id"
+                            v-if="can('bid-packages.edit') && bidPackage.selected_contractor_id"
                             @click="openAdditionalPriceModal(bidPackage)"
                             class="btn btn-sm btn-primary me-2"
                             title="Cập nhật giá phát sinh"
                             :disabled="bidPackage.auto_calculate && !bidPackage.is_work_item"
-                          >
-                            <i class="fas fa-edit"></i>
-                          </button>
-                          <button
-                            v-else
-                            class="btn btn-sm btn-secondary me-2"
-                            disabled
-                            title="Cần chọn nhà thầu trước khi cập nhật giá phát sinh"
                           >
                             <i class="fas fa-edit"></i>
                           </button>
@@ -139,6 +135,7 @@
                                     :disabled="bidPackage.auto_calculate && !bidPackage.is_work_item"
                                   />
                                   <button
+                                    v-if="can('bids.delete')"
                                     @click="confirmDeleteBid(bid)"
                                     class="btn btn-sm btn-danger"
                                     title="Xóa"
@@ -147,6 +144,7 @@
                                     <i class="fas fa-trash-alt"></i>
                                   </button>
                                   <button
+                                    v-if="can('bids.edit')"
                                     @click="openEditBidModal(bid)"
                                     class="btn btn-sm btn-warning"
                                     title="Sửa giá dự thầu"
@@ -163,6 +161,7 @@
                             </div>
                             <div class="add-contractor-button">
                               <button
+                                v-if="can('bids.create')"
                                 @click="openAddBidModal(bidPackage)"
                                 class="btn btn-sm btn-success"
                                 :disabled="bidPackage.auto_calculate && !bidPackage.is_work_item"
@@ -171,7 +170,11 @@
                               </button>
                             </div>
                           </div>
-                          <button v-else @click="openAddBidModal(bidPackage)" class="btn btn-sm btn-success">
+                          <button
+                            v-if="can('bids.create') && bidPackage.bids && bidPackage.bids.length === 0"
+                            @click="openAddBidModal(bidPackage)"
+                            class="btn btn-sm btn-success"
+                          >
                             <i class="fas fa-plus me-1"></i> Thêm
                           </button>
                         </div>
@@ -181,6 +184,7 @@
                       <div class="col-span-4 px-2 text-center">
                         <div class="action-buttons">
                           <button
+                            v-if="can('bid-packages.edit')"
                             class="btn btn-sm btn-info mb-1"
                             @click="openEditBidPackageModal(bidPackage)"
                             title="Sửa"
@@ -188,6 +192,7 @@
                             <i class="fas fa-edit"></i>
                           </button>
                           <button
+                            v-if="can('bid-packages.delete')"
                             class="btn btn-sm btn-danger mb-1"
                             @click="confirmDeleteBidPackage(bidPackage)"
                             title="Xóa"
@@ -195,6 +200,7 @@
                             <i class="fas fa-trash"></i>
                           </button>
                           <Link
+                            v-if="can('bid-packages.files')"
                             :href="route('bid-packages.files', bidPackage.id)"
                             class="btn btn-sm btn-secondary mb-1"
                             title="Files"
@@ -202,6 +208,7 @@
                             <i class="fas fa-file"></i>
                           </Link>
                           <button
+                            v-if="can('bid-packages.create')"
                             @click="openCreateWorkItemModal(bidPackage)"
                             class="btn btn-sm btn-success mb-1"
                             title="Thêm hạng mục"
@@ -209,7 +216,7 @@
                             <i class="fas fa-tasks"></i>
                           </button>
                           <button
-                            v-if="bidPackage.selected_contractor_id"
+                            v-if="can('receipt-vouchers.create') && bidPackage.selected_contractor_id"
                             @click="goToCreatePaymentVoucher(bidPackage)"
                             class="btn btn-sm btn-success mb-1"
                             title="Tạo phiếu chi"
@@ -259,18 +266,10 @@
                               <td>
                                 <div class="d-flex justify-between">
                                   <button
-                                    v-if="workItem.selected_contractor_id"
+                                    v-if="can('bid-packages.edit') && workItem.selected_contractor_id"
                                     @click="openAdditionalPriceModal(workItem)"
                                     class="btn btn-sm btn-primary me-2"
                                     title="Cập nhật giá phát sinh"
-                                  >
-                                    <i class="fas fa-edit"></i>
-                                  </button>
-                                  <button
-                                    v-else
-                                    class="btn btn-sm btn-secondary me-2"
-                                    disabled
-                                    title="Cần chọn nhà thầu trước khi cập nhật giá phát sinh"
                                   >
                                     <i class="fas fa-edit"></i>
                                   </button>
@@ -351,7 +350,7 @@
                                     <i class="fas fa-file"></i>
                                   </Link>
                                   <button
-                                    v-if="workItem.selected_contractor_id"
+                                    v-if="can('receipt-vouchers.create') && workItem.selected_contractor_id"
                                     @click="goToCreatePaymentVoucher(workItem)"
                                     class="btn btn-sm btn-success mb-1"
                                     title="Tạo phiếu chi"
@@ -370,7 +369,11 @@
                     <div v-else-if="expandedPackages.includes(bidPackage.id)" class="work-items-container p-3 bg-light">
                       <p class="text-center mb-2">Chưa có hạng mục nào trong gói thầu này.</p>
                       <div class="text-center">
-                        <button @click="openCreateWorkItemModal(bidPackage)" class="btn btn-sm btn-success">
+                        <button
+                          v-if="can('bid-packages.create')"
+                          @click="openCreateWorkItemModal(bidPackage)"
+                          class="btn btn-sm btn-success"
+                        >
                           <i class="fas fa-plus"></i> Thêm hạng mục mới
                         </button>
                       </div>
@@ -452,10 +455,10 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { Link, router } from '@inertiajs/vue3'
-import { ref, computed, onBeforeUnmount, nextTick, watch } from 'vue'
-import axios from 'axios'
+import { ref, computed, watch, nextTick, onBeforeUnmount } from 'vue'
+import { formatCurrency, showConfirm, showSuccess, showError } from '@/utils'
 import draggable from 'vuedraggable'
-import { showConfirm, showSuccess, showError, formatCurrency } from '@/utils'
+import { usePermission } from '@/Composables/usePermission'
 // Import các component modal
 import BidModal from './Modals/BidModal.vue'
 import BidPackageModal from './Modals/BidPackageModal.vue'
@@ -468,6 +471,8 @@ const props = defineProps({
   bidPackageStatuses: Object,
   contractors: Object
 })
+
+const { can } = usePermission()
 
 // Tạo biến để theo dõi các gói thầu có thể kéo thả
 const bidPackages = ref(props.project.bid_packages || [])

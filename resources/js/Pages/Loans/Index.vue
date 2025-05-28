@@ -49,7 +49,7 @@
           <div class="card-header">
             <h3 class="card-title">Danh sách khoản vay</h3>
             <div class="card-tools">
-              <Link :href="route('loans.create')" class="btn btn-sm btn-primary">
+              <Link v-if="can('loans.create')" :href="route('loans.create')" class="btn btn-sm btn-primary">
                 <i class="fas fa-plus"></i> Thêm khoản vay mới
               </Link>
             </div>
@@ -150,13 +150,13 @@
                     </td>
                     <td>
                       <div class="btn-group">
-                        <!-- <Link :href="route('loans.show', loan.id)" class="btn btn-info btn-sm">
+                        <!-- <Link v-if="can('loans.view')" :href="route('loans.show', loan.id)" class="btn btn-info btn-sm">
                           <i class="fas fa-eye"></i>
                         </Link> -->
-                        <Link :href="route('loans.edit', loan.id)" class="btn btn-warning btn-sm">
+                        <Link v-if="can('loans.edit')" :href="route('loans.edit', loan.id)" class="btn btn-warning btn-sm">
                           <i class="fas fa-edit"></i>
                         </Link>
-                        <button @click="confirmDelete(loan)" class="btn btn-danger btn-sm">
+                        <button v-if="can('loans.delete')" @click="confirmDelete(loan)" class="btn btn-danger btn-sm">
                           <i class="fas fa-trash"></i>
                         </button>
                       </div>
@@ -184,6 +184,7 @@ import { ref, computed, onMounted } from 'vue'
 import { formatCurrency, formatDate, showConfirm, showSuccess } from '@/utils'
 import Pagination from '@/Components/Pagination.vue'
 import debounce from 'lodash/debounce'
+import { usePermission } from '@/Composables/usePermission'
 
 const props = defineProps({
   loans: Object,
@@ -192,6 +193,8 @@ const props = defineProps({
   statuses: Array,
   filters: Object
 })
+
+const { can } = usePermission()
 
 // Tính toán tổng số khoản vay
 const totalLoanCount = computed(() => props.loans.total || 0)

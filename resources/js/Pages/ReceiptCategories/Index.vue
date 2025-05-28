@@ -9,7 +9,7 @@
           <div class="card-header">
             <h3 class="card-title">Danh sách loại thu</h3>
             <div class="card-tools">
-              <Link :href="route('receipt-categories.create')" class="btn btn-sm btn-primary">
+              <Link v-if="can('receipt_categories.create')" :href="route('receipt-categories.create')" class="btn btn-sm btn-primary">
                 <i class="fas fa-plus"></i> Thêm loại thu mới
               </Link>
             </div>
@@ -50,10 +50,10 @@
                     <td>{{ truncateText(category.note, 50) || '-' }}</td>
                     <td>
                       <div class="btn-group">
-                        <Link :href="route('receipt-categories.edit', category.id)" class="btn btn-xs btn-primary">
+                        <Link v-if="can('receipt_categories.edit')" :href="route('receipt-categories.edit', category.id)" class="btn btn-xs btn-primary">
                           <i class="fas fa-edit"></i> Sửa
                         </Link>
-                        <button @click="confirmDelete(category)" class="btn btn-xs btn-danger">
+                        <button v-if="can('receipt_categories.delete')" @click="confirmDelete(category)" class="btn btn-xs btn-danger">
                           <i class="fas fa-trash"></i> Xóa
                         </button>
                       </div>
@@ -82,11 +82,14 @@ import { ref, watch } from 'vue'
 import Pagination from '@/Components/Pagination.vue'
 import { showConfirm, showSuccess, showError } from '@/utils'
 import debounce from 'lodash/debounce'
+import { usePermission } from '@/Composables/usePermission'
 
 const props = defineProps({
   receiptCategories: Object,
   filters: Object
 })
+
+const { can } = usePermission()
 
 const search = ref(props.filters?.search || '')
 

@@ -204,7 +204,6 @@ const isMenuActive = (item) => {
 
 // Thay đổi hàm hasMenuAccess
 const hasMenuAccess = (menu) => {
-  console.log(menu)
   if (menu.children && menu.children.length > 0) {
     return menu.children.some((child) => hasMenuItemAccess(child))
   }

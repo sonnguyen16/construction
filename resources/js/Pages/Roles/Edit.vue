@@ -161,7 +161,7 @@ const formatModuleName = (module) => {
     customers: 'Khách hàng',
     'payment-vouchers': 'Phiếu chi',
     'receipt-vouchers': 'Phiếu thu',
-    categories: 'Danh mục',
+    categories: 'Danh mục sản phẩm',
     units: 'Đơn vị tính',
     'receipt-categories': 'Loại thu',
     'payment-categories': 'Loại chi',
@@ -193,12 +193,11 @@ const formatPermissionName = (permissionName) => {
     print: 'In',
     expenses: 'Xem chi phí',
     profit: 'Xem lợi nhuận',
-    commission: 'Cập nhật hoa hồng',
+    commission: 'Xem gói thầu',
     'select-contractor': 'Chọn nhà thầu',
-    trash: 'Xem thùng rác',
-    restore: 'Khôi phục',
-    'force-delete': 'Xóa vĩnh viễn',
-    assign: 'Phân quyền'
+    trash: 'Công việc đã xóa',
+    assign: 'Phân quyền',
+    files: 'Files'
   }
 
   return actionNames[action] || action.charAt(0).toUpperCase() + action.slice(1).replace(/-/g, ' ')

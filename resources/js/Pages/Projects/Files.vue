@@ -49,6 +49,7 @@ const props = defineProps({
 onMounted(() => {
   const iframe = document.getElementById('file-manager')
   iframe.onload = () => {
+    console.log(props.projectFolder)
     iframe.contentWindow.goTo(`/1/${props.projectFolder}`)
   }
 })

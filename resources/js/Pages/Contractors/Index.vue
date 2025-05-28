@@ -8,7 +8,7 @@
         <div class="card">
           <div class="card-header">
             <div class="d-flex justify-content-between align-items-center">
-              <Link :href="route('contractors.create')" class="btn btn-primary">
+              <Link v-if="can('contractors.create')" :href="route('contractors.create')" class="btn btn-primary">
                 <i class="fas fa-plus mr-1"></i> Thêm nhà thầu
               </Link>
               <div class="input-group" style="width: 200px">
@@ -46,10 +46,10 @@
                   <td>{{ contractor.address || '-' }}</td>
                   <td>
                     <div class="btn-group">
-                      <Link :href="route('contractors.edit', contractor.id)" class="btn btn-sm btn-primary">
+                      <Link v-if="can('contractors.edit')" :href="route('contractors.edit', contractor.id)" class="btn btn-sm btn-primary">
                         <i class="fas fa-edit"></i> Sửa
                       </Link>
-                      <button @click="confirmDelete(contractor)" class="btn btn-sm btn-danger">
+                      <button v-if="can('contractors.delete')" @click="confirmDelete(contractor)" class="btn btn-sm btn-danger">
                         <i class="fas fa-trash"></i> Xóa
                       </button>
                     </div>
@@ -105,12 +105,15 @@ import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { Link, router } from '@inertiajs/vue3'
 import { ref, watch } from 'vue'
 import Pagination from '@/Components/Pagination.vue'
-import { showConfirm } from '@/utils'
+import { formatDate, showConfirm } from '@/utils'
+import { usePermission } from '@/Composables/usePermission'
 
 const props = defineProps({
   contractors: Object,
   filters: Object
 })
+
+const { can } = usePermission()
 
 const search = ref(props.filters?.search || '')
 const selectedContractor = ref(null)

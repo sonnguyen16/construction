@@ -10,7 +10,7 @@
         <div class="card">
           <div class="card-header">
             <div class="d-flex justify-content-between align-items-center">
-              <Link :href="route('projects.create')" class="btn btn-primary">
+              <Link v-if="can('projects.create')" :href="route('projects.create')" class="btn btn-primary">
                 <i class="fas fa-plus mr-1"></i> Thêm dự án
               </Link>
               <div class="d-flex">
@@ -84,22 +84,38 @@
                         Thao tác
                       </button>
                       <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                        <Link :href="route('projects.edit', project.id)" class="dropdown-item">
+                        <Link
+                          v-if="can('projects.edit')"
+                          :href="route('projects.edit', project.id)"
+                          class="dropdown-item"
+                        >
                           <i class="fas fa-edit"></i> Sửa
                         </Link>
-                        <Link :href="route('projects.show', project.id)" class="dropdown-item">
+                        <Link
+                          v-if="can('projects.commission')"
+                          :href="route('projects.show', project.id)"
+                          class="dropdown-item"
+                        >
                           <i class="fas fa-eye"></i> Chi tiết
                         </Link>
-                        <Link :href="route('projects.expenses', project.id)" class="dropdown-item">
+                        <Link
+                          v-if="can('projects.expenses')"
+                          :href="route('projects.expenses', project.id)"
+                          class="dropdown-item"
+                        >
                           <i class="fas fa-money-bill"></i> Chi phí
                         </Link>
-                        <Link :href="route('projects.profit', project.id)" class="dropdown-item">
+                        <Link
+                          v-if="can('projects.profit')"
+                          :href="route('projects.profit', project.id)"
+                          class="dropdown-item"
+                        >
                           <i class="fas fa-chart-line"></i> Lợi nhuận
                         </Link>
                         <Link :href="route('projects.files', project.id)" class="dropdown-item">
                           <i class="fas fa-file"></i> Files
                         </Link>
-                        <button @click="confirmDelete(project)" class="dropdown-item">
+                        <button v-if="can('projects.delete')" @click="confirmDelete(project)" class="dropdown-item">
                           <i class="fas fa-trash"></i> Xóa
                         </button>
                       </div>
@@ -157,12 +173,15 @@ import { Link, router } from '@inertiajs/vue3'
 import { ref, watch } from 'vue'
 import Pagination from '@/Components/Pagination.vue'
 import { formatDate, formatCurrency, showConfirm } from '@/utils'
+import { usePermission } from '@/Composables/usePermission'
 
 const props = defineProps({
   projects: Object,
   filters: Object,
   statuses: Object
 })
+
+const { can } = usePermission()
 
 const search = ref(props.filters?.search || '')
 const status = ref(props.filters?.status || 'all')

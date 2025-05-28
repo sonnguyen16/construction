@@ -9,7 +9,7 @@
           <div class="card-header">
             <h3 class="card-title">Danh sách sản phẩm</h3>
             <div class="card-tools">
-              <Link :href="route('products.create')" class="btn btn-sm btn-primary">
+              <Link v-if="can('products.create')" :href="route('products.create')" class="btn btn-sm btn-primary">
                 <i class="fas fa-plus"></i> Thêm sản phẩm mới
               </Link>
             </div>
@@ -78,13 +78,13 @@
                     <td>{{ product.unit ? product.unit.name : '-' }}</td>
                     <td>
                       <div class="btn-group">
-                        <Link :href="route('products.show', product.id)" class="btn btn-xs btn-info">
+                        <Link v-if="can('products.view')" :href="route('products.show', product.id)" class="btn btn-xs btn-info">
                           <i class="fas fa-eye"></i> Xem
                         </Link>
-                        <Link :href="route('products.edit', product.id)" class="btn btn-xs btn-primary">
+                        <Link v-if="can('products.edit')" :href="route('products.edit', product.id)" class="btn btn-xs btn-primary">
                           <i class="fas fa-edit"></i> Sửa
                         </Link>
-                        <button @click="confirmDelete(product)" class="btn btn-xs btn-danger">
+                        <button v-if="can('products.delete')" @click="confirmDelete(product)" class="btn btn-xs btn-danger">
                           <i class="fas fa-trash"></i> Xóa
                         </button>
                       </div>
@@ -113,6 +113,9 @@ import { ref, watch } from 'vue'
 import Pagination from '@/Components/Pagination.vue'
 import { showConfirm, showSuccess, showError, formatCurrency } from '@/utils'
 import debounce from 'lodash/debounce'
+import { usePermission } from '@/Composables/usePermission'
+
+const { can } = usePermission()
 
 const props = defineProps({
   products: Object,
