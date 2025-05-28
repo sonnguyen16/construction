@@ -18,7 +18,7 @@
                   <li v-for="(error, key) in form.errors" :key="key">{{ error }}</li>
                 </ul>
               </div>
-              
+
               <div class="row">
                 <div class="col-md-6">
                   <div class="form-group">
@@ -158,13 +158,19 @@
                           :class="{ 'is-invalid': form.errors.contract_file }"
                         />
                         <label class="custom-file-label" for="contract_file">
-                          {{ form.contract_file ? (typeof form.contract_file === 'string' ? form.contract_file.split('/').pop() : form.contract_file.name) : 'Chọn file' }}
+                          {{
+                            form.contract_file
+                              ? typeof form.contract_file === 'string'
+                                ? form.contract_file.split('/').pop()
+                                : form.contract_file.name
+                              : 'Chọn file'
+                          }}
                         </label>
                       </div>
                     </div>
                     <div class="invalid-feedback" v-if="form.errors.contract_file">{{ form.errors.contract_file }}</div>
                     <small class="form-text text-muted">Định dạng hỗ trợ: PDF, DOC, DOCX. Tối đa 5MB</small>
-                    
+
                     <div v-if="loan.contract_file" class="mt-2">
                       <strong>File hiện tại:</strong>
                       <a :href="'/storage/' + loan.contract_file" target="_blank" class="ml-2">
@@ -191,7 +197,7 @@
               </div>
             </div>
             <div class="card-footer">
-              <div class="d-flex justify-content-between">
+              <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-primary" :disabled="form.processing">
                   <i class="fas fa-save mr-1"></i> {{ form.processing ? 'Đang xử lý...' : 'Lưu thay đổi' }}
                 </button>
@@ -226,8 +232,8 @@ const form = useForm({
   project_id: props.loan.project_id || '',
   amount: formatCurrency(props.loan.amount),
   interest_rate: props.loan.interest_rate,
-  start_date: props.loan.start_date,
-  end_date: props.loan.end_date,
+  start_date: props.loan.start_date.toString().split('T')[0],
+  end_date: props.loan.end_date.toString().split('T')[0],
   status: props.loan.status,
   notes: props.loan.notes || '',
   contract_file: null,
@@ -331,7 +337,7 @@ const safeDestroyInputPicker = (selector) => {
 const submit = () => {
   // Chuyển đổi số tiền từ định dạng tiền tệ sang số
   form.amount = parseCurrency(form.amount)
-  
+
   form.post(route('loans.update', props.loan.id), {
     preserveScroll: true,
     onSuccess: () => {

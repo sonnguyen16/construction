@@ -50,7 +50,11 @@
           <div class="card-header">
             <h3 class="card-title">Danh sách phiếu thu</h3>
             <div class="card-tools">
-              <Link :href="route('receipt-vouchers.create')" class="btn btn-sm btn-primary">
+              <Link 
+                v-if="can('receipt-vouchers.create')" 
+                :href="route('receipt-vouchers.create')" 
+                class="btn btn-sm btn-primary"
+              >
                 <i class="fas fa-plus"></i> Tạo phiếu thu mới
               </Link>
             </div>
@@ -198,16 +202,29 @@
                     <td>{{ formatDate(voucher.created_at) }}</td>
                     <td>
                       <div class="btn-group">
-                        <Link :href="route('receipt-vouchers.show', voucher.id)" class="btn btn-xs btn-info">
+                        <Link 
+                          v-if="can('receipt-vouchers.view')" 
+                          :href="route('receipt-vouchers.show', voucher.id)" 
+                          class="btn btn-xs btn-info"
+                        >
                           <i class="fas fa-eye"></i>
                         </Link>
-                        <Link :href="route('receipt-vouchers.edit', voucher.id)" class="btn btn-xs btn-primary">
+                        <Link 
+                          v-if="can('receipt-vouchers.edit')" 
+                          :href="route('receipt-vouchers.edit', voucher.id)" 
+                          class="btn btn-xs btn-primary"
+                        >
                           <i class="fas fa-edit"></i>
                         </Link>
-                        <button @click="confirmDelete(voucher)" class="btn btn-xs btn-danger">
+                        <button 
+                          v-if="can('receipt-vouchers.delete')" 
+                          @click="confirmDelete(voucher)" 
+                          class="btn btn-xs btn-danger"
+                        >
                           <i class="fas fa-trash"></i>
                         </button>
                         <a
+                          v-if="can('receipt-vouchers.print')"
                           :href="`/receipt-vouchers/${voucher.id}/print`"
                           target="_blank"
                           class="btn btn-xs btn-secondary"
@@ -236,10 +253,14 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { Link, router } from '@inertiajs/vue3'
-import { formatCurrency, formatDate, showConfirm, showSuccess } from '@/utils'
 import { ref, computed, watch } from 'vue'
+import { formatCurrency, formatDate, showConfirm, showSuccess } from '@/utils'
 import Pagination from '@/Components/Pagination.vue'
 import debounce from 'lodash/debounce'
+import { usePermission } from '@/Composables/usePermission'
+
+// Sử dụng composable phân quyền
+const { can } = usePermission()
 
 const props = defineProps({
   receiptVouchers: Object,
@@ -285,7 +306,7 @@ const applyFilters = () => {
       date_to: filters.value.date_to
     },
     {
-      preserveState: false,
+      preserveState: true,
       replace: true
     }
   )

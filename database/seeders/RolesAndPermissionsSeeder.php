@@ -141,7 +141,13 @@ class RolesAndPermissionsSeeder extends Seeder
         Permission::create(['name' => 'tasks.restore', 'guard_name' => 'web']);
         Permission::create(['name' => 'tasks.force-delete', 'guard_name' => 'web']);
         
-        // 20. Quyền cho module Quản lý phân quyền
+        // 20. Quyền cho module Quản lý khoản vay
+        Permission::create(['name' => 'loans.view', 'guard_name' => 'web']);
+        Permission::create(['name' => 'loans.create', 'guard_name' => 'web']);
+        Permission::create(['name' => 'loans.edit', 'guard_name' => 'web']);
+        Permission::create(['name' => 'loans.delete', 'guard_name' => 'web']);
+        
+        // 21. Quyền cho module Quản lý phân quyền
         Permission::create(['name' => 'roles.view', 'guard_name' => 'web']);
         Permission::create(['name' => 'roles.create', 'guard_name' => 'web']);
         Permission::create(['name' => 'roles.edit', 'guard_name' => 'web']);

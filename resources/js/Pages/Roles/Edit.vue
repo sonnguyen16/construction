@@ -4,113 +4,117 @@
     <template #breadcrumb>Quản lý vai trò / Chỉnh sửa vai trò</template>
 
     <form @submit.prevent="submitForm">
+      <div class="">
         <div class="">
-            <div class="">
-                <div class="form-group">
-                <label for="name" class="font-weight-bold">Tên vai trò <span class="text-danger">*</span></label>
-                <div class="input-group">
-                    <div class="input-group-prepend">
-                    <span class="input-group-text"><i class="fas fa-tag"></i></span>
-                    </div>
-                    <input
-                    type="text"
-                    class="form-control"
-                    id="name"
-                    v-model="form.name"
-                    :class="{ 'is-invalid': errors.name }"
-                    placeholder="Nhập tên vai trò"
-                    :disabled="role.name === 'Super Admin'"
-                    />
-                </div>
-                <div class="invalid-feedback" v-if="errors.name">{{ errors.name }}</div>
-                <small class="form-text text-muted" v-if="role.name === 'Super Admin'">
-                    <i class="fas fa-info-circle mr-1"></i> Vai trò Super Admin không thể chỉnh sửa
-                </small>
-                </div>
-
-                <div class="form-group mt-2">
-                <label class="font-weight-bold">Quyền <span class="text-danger">*</span></label>
-                <div v-if="errors.permissions" class="alert alert-danger">
-                    <i class="fas fa-exclamation-triangle mr-1"></i> {{ errors.permissions }}
-                </div>
-
-                <div class="card card-info card-outline" style="height: calc(100vh - 360px); overflow-y: auto;">
-                    <div class="card-header bg-light sticky-top">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div class="form-check">
-                        <input
-                            type="checkbox"
-                            class="form-check-input"
-                            id="selectAll"
-                            v-model="selectAllPermissions"
-                            @change="toggleAllPermissions"
-                            :disabled="role.name === 'Super Admin'"
-                        />
-                        <label class="form-check-label font-weight-bold" for="selectAll">
-                            <i class="fas fa-check-double mr-1"></i> Chọn tất cả quyền
-                        </label>
-                        </div>
-                        <span class="badge badge-info p-2">
-                        <i class="fas fa-shield-alt mr-1"></i> Tổng số quyền: {{ getTotalPermissions() }}
-                        </span>
-                    </div>
-                    </div>
-                    <div class="card-body">
-                    <div class="row">
-                        <div v-for="(modulePermissions, module) in permissions" :key="module" class="col-md-3 mb-3">
-                        <div class="card h-100 shadow-sm">
-                            <div class="card-header bg-gradient-info text-white">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="form-check">
-                                <input
-                                    type="checkbox"
-                                    class="form-check-input"
-                                    :id="'module-' + module"
-                                    v-model="moduleSelections[module]"
-                                    @change="toggleModulePermissions(module)"
-                                    :disabled="role.name === 'Super Admin'"
-                                />
-                                <label class="form-check-label" :for="'module-' + module">
-                                    <strong>{{ formatModuleName(module) }}</strong>
-                                </label>
-                                </div>
-                                <span class="badge badge-light">
-                                {{ modulePermissions.length }}
-                                </span>
-                            </div>
-                            </div>
-                            <div class="card-body" style="max-height: 180px; overflow-y: auto;">
-                            <div v-for="permission in modulePermissions" :key="permission.id" class="custom-control custom-checkbox mb-2">
-                                <input
-                                type="checkbox"
-                                class="custom-control-input"
-                                :id="'permission-' + permission.id"
-                                v-model="form.permissions"
-                                :value="permission.name"
-                                @change="updateModuleSelection(module)"
-                                :disabled="role.name === 'Super Admin'"
-                                />
-                                <label class="custom-control-label" :for="'permission-' + permission.id">
-                                {{ formatPermissionName(permission.name) }}
-                                </label>
-                            </div>
-                            </div>
-                        </div>
-                        </div>
-                    </div>
-                    </div>
-                </div>
-                </div>
+          <div class="form-group">
+            <label for="name" class="font-weight-bold">Tên vai trò <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <div class="input-group-prepend">
+                <span class="input-group-text"><i class="fas fa-tag"></i></span>
+              </div>
+              <input
+                type="text"
+                class="form-control"
+                id="name"
+                v-model="form.name"
+                :class="{ 'is-invalid': errors.name }"
+                placeholder="Nhập tên vai trò"
+                :disabled="role.name === 'Super Admin'"
+              />
             </div>
+            <div class="invalid-feedback" v-if="errors.name">{{ errors.name }}</div>
+            <small class="form-text text-muted" v-if="role.name === 'Super Admin'">
+              <i class="fas fa-info-circle mr-1"></i> Vai trò Super Admin không thể chỉnh sửa
+            </small>
+          </div>
+
+          <div class="form-group mt-2">
+            <label class="font-weight-bold">Quyền <span class="text-danger">*</span></label>
+            <div v-if="errors.permissions" class="alert alert-danger">
+              <i class="fas fa-exclamation-triangle mr-1"></i> {{ errors.permissions }}
+            </div>
+
+            <div class="card card-info card-outline" style="height: calc(100vh - 360px); overflow-y: auto">
+              <div class="card-header bg-light sticky-top">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div class="form-check">
+                    <input
+                      type="checkbox"
+                      class="form-check-input"
+                      id="selectAll"
+                      v-model="selectAllPermissions"
+                      @change="toggleAllPermissions"
+                      :disabled="role.name === 'Super Admin'"
+                    />
+                    <label class="form-check-label font-weight-bold" for="selectAll">
+                      <i class="fas fa-check-double mr-1"></i> Chọn tất cả quyền
+                    </label>
+                  </div>
+                  <span class="badge badge-info p-2">
+                    <i class="fas fa-shield-alt mr-1"></i> Tổng số quyền: {{ getTotalPermissions() }}
+                  </span>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div v-for="(modulePermissions, module) in permissions" :key="module" class="col-md-3 mb-3">
+                    <div class="card h-100 shadow-sm">
+                      <div class="card-header bg-gradient-info text-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                          <div class="form-check">
+                            <input
+                              type="checkbox"
+                              class="form-check-input"
+                              :id="'module-' + module"
+                              v-model="moduleSelections[module]"
+                              @change="toggleModulePermissions(module)"
+                              :disabled="role.name === 'Super Admin'"
+                            />
+                            <label class="form-check-label" :for="'module-' + module">
+                              <strong>{{ formatModuleName(module) }}</strong>
+                            </label>
+                          </div>
+                          <span class="badge badge-light">
+                            {{ modulePermissions.length }}
+                          </span>
+                        </div>
+                      </div>
+                      <div class="card-body" style="max-height: 180px; overflow-y: auto">
+                        <div
+                          v-for="permission in modulePermissions"
+                          :key="permission.id"
+                          class="custom-control custom-checkbox mb-2"
+                        >
+                          <input
+                            type="checkbox"
+                            class="custom-control-input"
+                            :id="'permission-' + permission.id"
+                            v-model="form.permissions"
+                            :value="permission.name"
+                            @change="updateModuleSelection(module)"
+                            :disabled="role.name === 'Super Admin'"
+                          />
+                          <label class="custom-control-label" :for="'permission-' + permission.id">
+                            {{ formatPermissionName(permission.name) }}
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="">
-            <button type="submit" class="btn btn-primary" :disabled="processing">
-                <i class="fas fa-save mr-1"></i> Lưu
-            </button>
-            <Link :href="route('roles.index')" class="btn btn-secondary ms-3">
-                <i class="fas fa-arrow-left mr-1"></i> Trở về
-            </Link>
-        </div>
+      </div>
+      <div class="">
+        <button type="submit" class="btn btn-primary" :disabled="processing">
+          <i class="fas fa-save mr-1"></i> Lưu
+        </button>
+        <Link :href="route('roles.index')" class="btn btn-secondary ms-3">
+          <i class="fas fa-arrow-left mr-1"></i> Trở về
+        </Link>
+      </div>
     </form>
   </AdminLayout>
 </template>
@@ -140,7 +144,7 @@ const moduleSelections = ref({})
 const selectAllPermissions = ref(false)
 
 // Khởi tạo trạng thái chọn cho từng module
-props.modules.forEach(module => {
+props.modules.forEach((module) => {
   moduleSelections.value[module] = false
 })
 
@@ -148,27 +152,28 @@ props.modules.forEach(module => {
 const formatModuleName = (module) => {
   // Chuyển đổi tên module thành dạng hiển thị đẹp hơn
   const moduleNames = {
-    'dashboard': 'Bảng điều khiển',
-    'users': 'Người dùng',
-    'contractors': 'Nhà thầu',
-    'projects': 'Dự án',
+    dashboard: 'Bảng điều khiển',
+    users: 'Người dùng',
+    contractors: 'Nhà thầu',
+    projects: 'Dự án',
     'bid-packages': 'Gói thầu',
-    'bids': 'Giá dự thầu',
-    'customers': 'Khách hàng',
+    bids: 'Giá dự thầu',
+    customers: 'Khách hàng',
     'payment-vouchers': 'Phiếu chi',
     'receipt-vouchers': 'Phiếu thu',
-    'categories': 'Danh mục',
-    'units': 'Đơn vị tính',
+    categories: 'Danh mục',
+    units: 'Đơn vị tính',
     'receipt-categories': 'Loại thu',
     'payment-categories': 'Loại chi',
     'project-categories': 'Danh mục dự án',
-    'products': 'Sản phẩm',
+    products: 'Sản phẩm',
     'import-vouchers': 'Phiếu nhập kho',
     'export-vouchers': 'Phiếu xuất kho',
-    'reports': 'Báo cáo',
-    'tasks': 'Công việc',
-    'roles': 'Vai trò',
-    'permissions': 'Quyền'
+    reports: 'Báo cáo',
+    tasks: 'Công việc',
+    roles: 'Vai trò',
+    permissions: 'Quyền',
+    loans: 'Khoản vay'
   }
 
   return moduleNames[module] || module.charAt(0).toUpperCase() + module.slice(1).replace(/-/g, ' ')
@@ -180,20 +185,20 @@ const formatPermissionName = (permissionName) => {
   const action = parts[1]
 
   const actionNames = {
-    'view': 'Xem',
-    'create': 'Thêm mới',
-    'edit': 'Chỉnh sửa',
-    'delete': 'Xóa',
+    view: 'Xem',
+    create: 'Thêm mới',
+    edit: 'Chỉnh sửa',
+    delete: 'Xóa',
     'update-status': 'Cập nhật trạng thái',
-    'print': 'In',
-    'expenses': 'Xem chi phí',
-    'profit': 'Xem lợi nhuận',
-    'commission': 'Cập nhật hoa hồng',
+    print: 'In',
+    expenses: 'Xem chi phí',
+    profit: 'Xem lợi nhuận',
+    commission: 'Cập nhật hoa hồng',
     'select-contractor': 'Chọn nhà thầu',
-    'trash': 'Xem thùng rác',
-    'restore': 'Khôi phục',
+    trash: 'Xem thùng rác',
+    restore: 'Khôi phục',
     'force-delete': 'Xóa vĩnh viễn',
-    'assign': 'Phân quyền'
+    assign: 'Phân quyền'
   }
 
   return actionNames[action] || action.charAt(0).toUpperCase() + action.slice(1).replace(/-/g, ' ')
@@ -202,18 +207,18 @@ const formatPermissionName = (permissionName) => {
 // Chọn/bỏ chọn tất cả quyền của một module
 const toggleModulePermissions = (module) => {
   const isSelected = moduleSelections.value[module]
-  const modulePermissionNames = props.permissions[module].map(p => p.name)
+  const modulePermissionNames = props.permissions[module].map((p) => p.name)
 
   if (isSelected) {
     // Thêm tất cả quyền của module vào danh sách đã chọn
-    modulePermissionNames.forEach(permName => {
+    modulePermissionNames.forEach((permName) => {
       if (!form.permissions.includes(permName)) {
         form.permissions.push(permName)
       }
     })
   } else {
     // Loại bỏ tất cả quyền của module khỏi danh sách đã chọn
-    form.permissions = form.permissions.filter(permName => !modulePermissionNames.includes(permName))
+    form.permissions = form.permissions.filter((permName) => !modulePermissionNames.includes(permName))
   }
 
   // Cập nhật trạng thái chọn tất cả
@@ -222,9 +227,9 @@ const toggleModulePermissions = (module) => {
 
 // Cập nhật trạng thái chọn của module dựa trên các quyền đã chọn
 const updateModuleSelection = (module) => {
-  const modulePermissionNames = props.permissions[module].map(p => p.name)
-  const allSelected = modulePermissionNames.every(permName => form.permissions.includes(permName))
-  const someSelected = modulePermissionNames.some(permName => form.permissions.includes(permName))
+  const modulePermissionNames = props.permissions[module].map((p) => p.name)
+  const allSelected = modulePermissionNames.every((permName) => form.permissions.includes(permName))
+  const someSelected = modulePermissionNames.some((permName) => form.permissions.includes(permName))
 
   moduleSelections.value[module] = allSelected
 
@@ -234,13 +239,13 @@ const updateModuleSelection = (module) => {
 
 // Cập nhật trạng thái chọn tất cả
 const updateSelectAllStatus = () => {
-  selectAllPermissions.value = Object.values(moduleSelections.value).every(selected => selected)
+  selectAllPermissions.value = Object.values(moduleSelections.value).every((selected) => selected)
 }
 
 // Đếm tổng số quyền
 const getTotalPermissions = () => {
   let total = 0
-  Object.values(props.permissions).forEach(modulePermissions => {
+  Object.values(props.permissions).forEach((modulePermissions) => {
     total += modulePermissions.length
   })
   return total
@@ -248,14 +253,16 @@ const getTotalPermissions = () => {
 
 // Chọn/bỏ chọn tất cả quyền
 const toggleAllPermissions = () => {
-  const allPermissionNames = Object.values(props.permissions).flat().map(p => p.name)
+  const allPermissionNames = Object.values(props.permissions)
+    .flat()
+    .map((p) => p.name)
 
   if (selectAllPermissions.value) {
     // Chọn tất cả quyền
     form.permissions = [...allPermissionNames]
 
     // Cập nhật trạng thái chọn của từng module
-    Object.keys(moduleSelections.value).forEach(module => {
+    Object.keys(moduleSelections.value).forEach((module) => {
       moduleSelections.value[module] = true
     })
   } else {
@@ -263,18 +270,22 @@ const toggleAllPermissions = () => {
     form.permissions = []
 
     // Cập nhật trạng thái chọn của từng module
-    Object.keys(moduleSelections.value).forEach(module => {
+    Object.keys(moduleSelections.value).forEach((module) => {
       moduleSelections.value[module] = false
     })
   }
 }
 
 // Theo dõi sự thay đổi của form.permissions để cập nhật trạng thái chọn của từng module
-watch(() => form.permissions, () => {
-  props.modules.forEach(module => {
-    updateModuleSelection(module)
-  })
-}, { deep: true })
+watch(
+  () => form.permissions,
+  () => {
+    props.modules.forEach((module) => {
+      updateModuleSelection(module)
+    })
+  },
+  { deep: true }
+)
 
 // Gửi form
 const submitForm = () => {
@@ -288,7 +299,7 @@ const submitForm = () => {
 
 // Khởi tạo trạng thái chọn của từng module khi component được mount
 onMounted(() => {
-  props.modules.forEach(module => {
+  props.modules.forEach((module) => {
     updateModuleSelection(module)
   })
   updateSelectAllStatus()

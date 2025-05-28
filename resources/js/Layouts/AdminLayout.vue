@@ -93,42 +93,42 @@
         <!-- Sidebar Menu -->
         <nav class="mt-2">
           <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
-            <li
-              v-for="(item, index) in menuItems"
-              :key="index"
-              class="nav-item"
-              :class="{ 'menu-open': item.children && isMenuActive(item) }"
-            >
-              <!-- Menu có submenu -->
-              <template v-if="item.children">
-                <a href="#" class="nav-link" :class="{ active: isMenuActive(item) }">
-                  <i :class="['nav-icon', item.icon]"></i>
-                  <p>
-                    {{ item.label }}
-                    <i class="right fas fa-angle-left"></i>
-                  </p>
-                </a>
-                <ul class="nav nav-treeview">
-                  <li v-for="(child, childIndex) in item.children" :key="childIndex" class="nav-item">
-                    <Link
-                      :href="child.href"
-                      class="nav-link"
-                      :class="{ active: child.isActive($page) }"
-                      style="padding-left: 25px"
-                    >
-                      <i :class="['nav-icon', child.icon]" style="font-size: 0.85em"></i>
-                      <p style="margin-left: 5px">{{ child.label }}</p>
-                    </Link>
-                  </li>
-                </ul>
-              </template>
+            <template v-for="item in menuItems">
+              <li
+                v-if="hasMenuAccess(item)"
+                class="nav-item"
+                :class="{ 'menu-open': item && item.children && isMenuActive(item) }"
+              >
+                <!-- Menu có submenu -->
+                <template v-if="item.children">
+                  <a href="#" class="nav-link" :class="{ active: isMenuActive(item) }">
+                    <i :class="[item.icon, 'nav-icon']"></i>
+                    <p>
+                      {{ item.label }}
+                      <i class="fas fa-angle-left right"></i>
+                    </p>
+                  </a>
+                  <ul class="nav nav-treeview">
+                    <template v-for="child in item.children">
+                      <li v-if="hasMenuItemAccess(child)" class="nav-item">
+                        <Link :href="child.href" class="nav-link" :class="{ active: child.isActive($page) }">
+                          <i :class="[child.icon, 'nav-icon']"></i>
+                          <p>{{ child.label }}</p>
+                        </Link>
+                      </li>
+                    </template>
+                  </ul>
+                </template>
 
-              <!-- Menu không có submenu -->
-              <Link v-else :href="item.href" class="nav-link" :class="{ active: item.isActive($page) }">
-                <i :class="['nav-icon', item.icon]"></i>
-                <p>{{ item.label }}</p>
-              </Link>
-            </li>
+                <!-- Menu không có submenu -->
+                <template v-else>
+                  <Link :href="item.href" class="nav-link" :class="{ active: item.isActive($page) }">
+                    <i :class="[item.icon, 'nav-icon']"></i>
+                    <p>{{ item.label }}</p>
+                  </Link>
+                </template>
+              </li>
+            </template>
           </ul>
         </nav>
         <!-- /.sidebar-menu -->
@@ -183,192 +183,38 @@
       <strong>Copyright &copy; 2025 <a href="/">Hoàng Tâm</a>.</strong>
     </footer>
   </div>
-  <!-- ./wrapper -->
 </template>
 
 <script setup>
 import { Link, router, usePage } from '@inertiajs/vue3'
 import { onMounted, watch, computed, ref } from 'vue'
-
-// Định nghĩa các mục menu
-const menuItems = [
-  {
-    href: '/',
-    icon: 'fas fa-tachometer-alt',
-    label: 'Bảng điều khiển',
-    isActive: (page) => page.url === '/'
-  },
-  {
-    label: 'Quản lý dự án',
-    icon: 'fas fa-project-diagram',
-    isActive: (page) => page.url.startsWith('/projects') || page.component.startsWith('ProjectCategories/'),
-    children: [
-      {
-        href: '/projects',
-        icon: 'fas fa-list',
-        label: 'Danh sách dự án',
-        isActive: (page) => page.url.startsWith('/projects') && !page.component.startsWith('ProjectCategories/')
-      },
-      {
-        href: route('project-categories.index'),
-        icon: 'fas fa-tags',
-        label: 'Danh mục dự án',
-        isActive: (page) => page.component.startsWith('ProjectCategories/')
-      }
-    ]
-  },
-
-  {
-    label: 'Quản lý thu chi',
-    icon: 'fas fa-money-bill',
-    isActive: (page) =>
-      page.component.startsWith('PaymentVouchers/') ||
-      page.component.startsWith('ReceiptVouchers/') ||
-      page.component.startsWith('PaymentCategories/') ||
-      page.component.startsWith('ReceiptCategories/') ||
-      page.component.startsWith('Reports/Financial') ||
-      page.component.startsWith('Reports/ContractorDebt') ||
-      page.component.startsWith('Reports/CustomerDebt') ||
-      page.component.startsWith('Loans/'),
-    children: [
-      {
-        href: route('payment-vouchers.index'),
-        icon: 'fas fa-money-check-alt',
-        label: 'Phiếu chi',
-        isActive: (page) => page.component.startsWith('PaymentVouchers/')
-      },
-      {
-        href: route('receipt-vouchers.index'),
-        icon: 'fas fa-money-bill-wave',
-        label: 'Phiếu thu',
-        isActive: (page) => page.component.startsWith('ReceiptVouchers/')
-      },
-      {
-        href: route('payment-categories.index'),
-        icon: 'fas fa-tags',
-        label: 'Loại chi',
-        isActive: (page) => page.component.startsWith('PaymentCategories/')
-      },
-      {
-        href: route('receipt-categories.index'),
-        icon: 'fas fa-tags',
-        label: 'Loại thu',
-        isActive: (page) => page.component.startsWith('ReceiptCategories/')
-      },
-      {
-        href: route('reports.financial'),
-        icon: 'fas fa-chart-pie',
-        label: 'Báo cáo thu chi',
-        isActive: (page) => page.component === 'Reports/Financial'
-      },
-      {
-        href: route('reports.contractor-debt'),
-        icon: 'fas fa-file-invoice-dollar',
-        label: 'Công nợ nhà cung cấp',
-        isActive: (page) => page.component === 'Reports/ContractorDebt'
-      },
-      {
-        href: route('reports.customer-debt'),
-        icon: 'fas fa-hand-holding-usd',
-        label: 'Công nợ khách hàng',
-        isActive: (page) => page.component === 'Reports/CustomerDebt'
-      },
-      {
-        href: route('loans.index'),
-        icon: 'fas fa-money-bill-wave',
-        label: 'Khoản vay',
-        isActive: (page) => page.component.startsWith('Loans/')
-      }
-    ]
-  },
-  {
-    label: 'Quản lý kho',
-    icon: 'fas fa-warehouse',
-    isActive: (page) =>
-      page.component.startsWith('Products/') ||
-      page.url.includes('/categories') ||
-      page.component.startsWith('Units/') ||
-      page.component.startsWith('ImportVouchers/') ||
-      page.component.startsWith('ExportVouchers/'),
-    children: [
-      {
-        href: route('products.index'),
-        icon: 'fas fa-boxes',
-        label: 'Sản phẩm',
-        isActive: (page) => page.component.startsWith('Products/')
-      },
-      {
-        href: route('categories.index'),
-        icon: 'fas fa-tags',
-        label: 'Loại sản phẩm',
-        isActive: (page) => page.url.includes('/categories')
-      },
-      {
-        href: route('units.index'),
-        icon: 'fas fa-ruler',
-        label: 'Đơn vị tính',
-        isActive: (page) => page.component.startsWith('Units/')
-      },
-      {
-        href: route('import-vouchers.index'),
-        icon: 'fas fa-file-import',
-        label: 'Phiếu nhập kho',
-        isActive: (page) => page.component.startsWith('ImportVouchers/')
-      },
-      {
-        href: route('export-vouchers.index'),
-        icon: 'fas fa-file-export',
-        label: 'Phiếu xuất kho',
-        isActive: (page) => page.component.startsWith('ExportVouchers/')
-      }
-    ]
-  },
-  {
-    label: 'Quản lý công việc',
-    icon: 'fas fa-tasks',
-    isActive: (page) => page.component.startsWith('Tasks/'),
-    href: route('tasks.index')
-  },
-  {
-    href: '/contractors',
-    icon: 'fas fa-hard-hat',
-    label: 'Quản lý nhà thầu',
-    isActive: (page) => page.url.startsWith('/contractors')
-  },
-  {
-    href: route('customers.index'),
-    icon: 'fas fa-users',
-    label: 'Quản lý khách hàng',
-    isActive: (page) => page.component.startsWith('Customers/')
-  },
-  {
-    label: 'Quản lý hệ thống',
-    icon: 'fas fa-cogs',
-    isActive: (page) => page.url.startsWith('/users') || page.url.startsWith('/roles'),
-    children: [
-      {
-        href: '/users',
-        icon: 'fas fa-users',
-        label: 'Quản lý người dùng',
-        isActive: (page) => page.url.startsWith('/users')
-      },
-      {
-        href: route('roles.index'),
-        icon: 'fas fa-user-tag',
-        label: 'Vai trò & Phân quyền',
-        isActive: (page) => page.url.startsWith('/roles')
-      }
-    ]
-  }
-]
-
-// Kiểm tra xem menu có đang được kích hoạt không
-const isMenuActive = (item) => {
-  return item.isActive($page)
-}
+import { usePermission } from '@/Composables/usePermission'
 import { showSuccess, showError, showWarning } from '@/utils'
 
 const $page = usePage()
+const { can } = usePermission()
+
+// Kiểm tra xem menu có đang được kích hoạt không
+const isMenuActive = (item) => {
+  if (item.children) {
+    return item.children.some((child) => child.isActive($page))
+  }
+  return item.isActive($page)
+}
+
+// Thay đổi hàm hasMenuAccess
+const hasMenuAccess = (menu) => {
+  console.log(menu)
+  if (menu.children && menu.children.length > 0) {
+    return menu.children.some((child) => hasMenuItemAccess(child))
+  }
+  return hasMenuItemAccess(menu)
+}
+
+// Thay đổi hàm hasMenuItemAccess
+const hasMenuItemAccess = (menuItem) => {
+  return can(menuItem?.permission || '')
+}
 
 const logout = () => {
   router.post('/logout')
@@ -377,15 +223,12 @@ const logout = () => {
 // Xử lý flash messages
 const showFlashMessages = () => {
   const { flash } = usePage().props
-
   if (flash.success) {
     showSuccess(flash.success)
   }
-
   if (flash.error) {
     showError(flash.error)
   }
-
   if (flash.warning) {
     showWarning(flash.warning)
   }
@@ -427,7 +270,7 @@ onMounted(() => {
     } catch (error) {
       console.error('Lỗi khi khởi tạo menu collapse:', error)
     }
-  }, 200) // Tăng thời gian chờ lên 200ms
+  }, 200) // Tăng thời gian c
 })
 
 // Theo dõi thay đổi của flash messages
@@ -440,8 +283,249 @@ watch(
   },
   { deep: true }
 )
-</script>
 
+const menuItems = [
+  {
+    href: '/',
+    icon: 'fas fa-tachometer-alt',
+    label: 'Bảng điều khiển',
+    permission: 'dashboard.view',
+    isActive(page) {
+      return page.component === 'Home'
+    }
+  },
+  {
+    label: 'Quản lý dự án',
+    icon: 'fas fa-project-diagram',
+    isActive(page) {
+      return page.component.startsWith('Projects') || page.component.startsWith('ProjectCategories')
+    },
+    children: [
+      {
+        href: '/projects',
+        icon: 'fas fa-list',
+        label: 'Danh sách dự án',
+        permission: 'projects.view',
+        isActive(page) {
+          return page.component.startsWith('Projects') && !page.component.includes('Categories')
+        }
+      },
+      {
+        href: route('project-categories.index'),
+        icon: 'fas fa-tags',
+        label: 'Danh mục dự án',
+        permission: 'project-categories.view',
+        isActive(page) {
+          return page.component.startsWith('ProjectCategories')
+        }
+      }
+    ]
+  },
+
+  {
+    label: 'Quản lý tài chính',
+    icon: 'fas fa-money-bill-wave',
+    isActive(page) {
+      return (
+        page.component.startsWith('PaymentVouchers') ||
+        page.component.startsWith('ReceiptVouchers') ||
+        page.component.startsWith('PaymentCategories') ||
+        page.component.startsWith('ReceiptCategories') ||
+        page.component.startsWith('Reports') ||
+        page.component.startsWith('Loans')
+      )
+    },
+    children: [
+      {
+        href: route('payment-vouchers.index'),
+        icon: 'fas fa-money-check-alt',
+        label: 'Phiếu chi',
+        permission: 'payment-vouchers.view',
+        isActive(page) {
+          return page.component.startsWith('PaymentVouchers')
+        }
+      },
+      {
+        href: route('receipt-vouchers.index'),
+        icon: 'fas fa-money-bill-wave',
+        label: 'Phiếu thu',
+        permission: 'receipt-vouchers.view',
+        isActive(page) {
+          return page.component.startsWith('ReceiptVouchers')
+        }
+      },
+      {
+        href: route('payment-categories.index'),
+        icon: 'fas fa-tags',
+        label: 'Loại chi',
+        permission: 'payment-categories.view',
+        isActive(page) {
+          return page.component.startsWith('PaymentCategories')
+        }
+      },
+      {
+        href: route('receipt-categories.index'),
+        icon: 'fas fa-tags',
+        label: 'Loại thu',
+        permission: 'receipt-categories.view',
+        isActive(page) {
+          return page.component.startsWith('ReceiptCategories')
+        }
+      },
+      {
+        href: route('reports.financial'),
+        icon: 'fas fa-chart-pie',
+        label: 'Báo cáo thu chi',
+        permission: 'reports.financial',
+        isActive(page) {
+          return page.component === 'Reports/Financial'
+        }
+      },
+      {
+        href: route('reports.contractor-debt'),
+        icon: 'fas fa-file-invoice-dollar',
+        label: 'Công nợ nhà cung cấp',
+        permission: 'reports.contractor-debt',
+        isActive(page) {
+          return page.component === 'Reports/ContractorDebt'
+        }
+      },
+      {
+        href: route('reports.customer-debt'),
+        icon: 'fas fa-hand-holding-usd',
+        label: 'Công nợ khách hàng',
+        permission: 'reports.customer-debt',
+        isActive(page) {
+          return page.component === 'Reports/CustomerDebt'
+        }
+      },
+      {
+        href: route('loans.index'),
+        icon: 'fas fa-money-bill-wave',
+        label: 'Khoản vay',
+        permission: 'loans.view',
+        isActive(page) {
+          return page.component.startsWith('Loans')
+        }
+      }
+    ]
+  },
+  {
+    label: 'Quản lý kho',
+    icon: 'fas fa-warehouse',
+    isActive(page) {
+      return (
+        page.component.startsWith('Products') ||
+        page.component.startsWith('Categories') ||
+        page.component.startsWith('Units') ||
+        page.component.startsWith('ImportVouchers') ||
+        page.component.startsWith('ExportVouchers')
+      )
+    },
+    children: [
+      {
+        href: route('products.index'),
+        icon: 'fas fa-boxes',
+        label: 'Sản phẩm',
+        permission: 'products.view',
+        isActive(page) {
+          return page.component.startsWith('Products')
+        }
+      },
+      {
+        href: route('categories.index'),
+        icon: 'fas fa-tags',
+        label: 'Loại sản phẩm',
+        permission: 'categories.view',
+        isActive(page) {
+          return page.component.startsWith('Categories')
+        }
+      },
+      {
+        href: route('units.index'),
+        icon: 'fas fa-ruler',
+        label: 'Đơn vị tính',
+        permission: 'units.view',
+        isActive(page) {
+          return page.component.startsWith('Units')
+        }
+      },
+      {
+        href: route('import-vouchers.index'),
+        icon: 'fas fa-file-import',
+        label: 'Phiếu nhập kho',
+        permission: 'import-vouchers.view',
+        isActive(page) {
+          return page.component.startsWith('ImportVouchers')
+        }
+      },
+      {
+        href: route('export-vouchers.index'),
+        icon: 'fas fa-file-export',
+        label: 'Phiếu xuất kho',
+        permission: 'export-vouchers.view',
+        isActive(page) {
+          return page.component.startsWith('ExportVouchers')
+        }
+      }
+    ]
+  },
+  {
+    label: 'Quản lý công việc',
+    icon: 'fas fa-tasks',
+    permission: 'tasks.view',
+    isActive(page) {
+      return page.component.startsWith('Tasks')
+    },
+    href: route('tasks.index')
+  },
+  {
+    href: '/contractors',
+    icon: 'fas fa-hard-hat',
+    label: 'Quản lý nhà thầu',
+    permission: 'contractors.view',
+    isActive(page) {
+      return page.component.startsWith('Contractors')
+    }
+  },
+  {
+    href: route('customers.index'),
+    icon: 'fas fa-users',
+    label: 'Quản lý khách hàng',
+    permission: 'customers.view',
+    isActive(page) {
+      return page.component.startsWith('Customers')
+    }
+  },
+  {
+    label: 'Quản lý hệ thống',
+    icon: 'fas fa-cogs',
+    isActive(page) {
+      return page.component.startsWith('Users') || page.component.startsWith('Roles')
+    },
+    children: [
+      {
+        href: '/users',
+        icon: 'fas fa-users',
+        label: 'Quản lý người dùng',
+        permission: 'users.view',
+        isActive(page) {
+          return page.component.startsWith('Users')
+        }
+      },
+      {
+        href: route('roles.index'),
+        icon: 'fas fa-user-tag',
+        label: 'Vai trò & Phân quyền',
+        permission: 'roles.view',
+        isActive(page) {
+          return page.component.startsWith('Roles')
+        }
+      }
+    ]
+  }
+]
+</script>
 <style>
 html,
 body {
@@ -451,6 +535,9 @@ body {
   overflow: hidden;
 }
 
+.nav-treeview .nav-link {
+  padding-left: 2rem;
+}
 .wrapper {
   height: 100vh;
   overflow: hidden;

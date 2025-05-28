@@ -89,12 +89,7 @@
               <div class="col-md-3">
                 <div class="form-group">
                   <label for="project_id">Dự án:</label>
-                  <select
-                    class="form-control"
-                    id="project_id"
-                    v-model="filters.project_id"
-                    @change="applyFilters"
-                  >
+                  <select class="form-control" id="project_id" v-model="filters.project_id" @change="applyFilters">
                     <option value="">-- Tất cả dự án --</option>
                     <option v-for="project in projects" :key="project.id" :value="project.id">
                       {{ project.name }}
@@ -105,12 +100,7 @@
               <div class="col-md-3">
                 <div class="form-group">
                   <label for="status">Trạng thái:</label>
-                  <select
-                    class="form-control"
-                    id="status"
-                    v-model="filters.status"
-                    @change="applyFilters"
-                  >
+                  <select class="form-control" id="status" v-model="filters.status" @change="applyFilters">
                     <option value="">-- Tất cả trạng thái --</option>
                     <option v-for="status in statuses" :key="status.value" :value="status.value">
                       {{ status.label }}
@@ -151,21 +141,18 @@
                     <td>{{ loan.project?.name || 'Không có' }}</td>
                     <td>{{ formatCurrency(loan.amount) }}</td>
                     <td>{{ loan.interest_rate }}%</td>
-                    <td>{{ formatDate(loan.start_date) }}</td>
-                    <td>{{ formatDate(loan.end_date) }}</td>
+                    <td>{{ new Date(loan.start_date).toLocaleDateString('vi-VN') }}</td>
+                    <td>{{ new Date(loan.end_date).toLocaleDateString('vi-VN') }}</td>
                     <td>
-                      <span
-                        class="badge"
-                        :class="loan.status === 'active' ? 'badge-primary' : 'badge-success'"
-                      >
+                      <span class="badge" :class="loan.status === 'active' ? 'badge-primary' : 'badge-success'">
                         {{ loan.status === 'active' ? 'Đang vay' : 'Đã hoàn thành' }}
                       </span>
                     </td>
                     <td>
                       <div class="btn-group">
-                        <Link :href="route('loans.show', loan.id)" class="btn btn-info btn-sm">
+                        <!-- <Link :href="route('loans.show', loan.id)" class="btn btn-info btn-sm">
                           <i class="fas fa-eye"></i>
-                        </Link>
+                        </Link> -->
                         <Link :href="route('loans.edit', loan.id)" class="btn btn-warning btn-sm">
                           <i class="fas fa-edit"></i>
                         </Link>
@@ -216,7 +203,7 @@ const totalLoanAmount = computed(() => {
 
 // Tính toán số khoản vay đang hoạt động
 const activeLoanCount = computed(() => {
-  return props.loans.data.filter(loan => loan.status === 'active').length
+  return props.loans.data.filter((loan) => loan.status === 'active').length
 })
 
 // Bộ lọc
@@ -235,20 +222,17 @@ const truncateText = (text, length) => {
 
 // Hàm xác nhận xóa khoản vay
 const confirmDelete = (loan) => {
-  showConfirm(
-    'Xác nhận xóa',
-    `Bạn có chắc chắn muốn xóa khoản vay "${loan.name}" không?`,
-    'Xóa',
-    'Hủy'
-  ).then((result) => {
-    if (result.isConfirmed) {
-      router.delete(route('loans.destroy', loan.id), {
-        onSuccess: () => {
-          showSuccess('Xóa khoản vay thành công!')
-        }
-      })
+  showConfirm('Xác nhận xóa', `Bạn có chắc chắn muốn xóa khoản vay "${loan.name}" không?`, 'Xóa', 'Hủy').then(
+    (result) => {
+      if (result.isConfirmed) {
+        router.delete(route('loans.destroy', loan.id), {
+          onSuccess: () => {
+            showSuccess('Xóa khoản vay thành công!')
+          }
+        })
+      }
     }
-  })
+  )
 }
 
 // Hàm áp dụng bộ lọc

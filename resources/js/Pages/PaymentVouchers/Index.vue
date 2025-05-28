@@ -60,7 +60,11 @@
           <div class="card-header">
             <h3 class="card-title">Danh sách phiếu chi</h3>
             <div class="card-tools">
-              <Link :href="route('payment-vouchers.create')" class="btn btn-sm btn-primary">
+              <Link 
+                v-if="can('payment-vouchers.create')" 
+                :href="route('payment-vouchers.create')" 
+                class="btn btn-sm btn-primary"
+              >
                 <i class="fas fa-plus"></i> Tạo phiếu chi mới
               </Link>
             </div>
@@ -241,16 +245,29 @@
                     </td>
                     <td>
                       <div class="btn-group">
-                        <Link :href="route('payment-vouchers.show', voucher.id)" class="btn btn-xs btn-info">
+                        <Link 
+                          v-if="can('payment-vouchers.view')" 
+                          :href="route('payment-vouchers.show', voucher.id)" 
+                          class="btn btn-xs btn-info"
+                        >
                           <i class="fas fa-eye"></i>
                         </Link>
-                        <Link :href="route('payment-vouchers.edit', voucher.id)" class="btn btn-xs btn-primary">
+                        <Link 
+                          v-if="can('payment-vouchers.edit')" 
+                          :href="route('payment-vouchers.edit', voucher.id)" 
+                          class="btn btn-xs btn-primary"
+                        >
                           <i class="fas fa-edit"></i>
                         </Link>
-                        <button @click="confirmDelete(voucher)" class="btn btn-xs btn-danger">
+                        <button 
+                          v-if="can('payment-vouchers.delete')" 
+                          @click="confirmDelete(voucher)" 
+                          class="btn btn-xs btn-danger"
+                        >
                           <i class="fas fa-trash"></i>
                         </button>
                         <a
+                          v-if="can('payment-vouchers.print')"
                           :href="`/payment-vouchers/${voucher.id}/print`"
                           target="_blank"
                           class="btn btn-xs btn-secondary"
@@ -279,6 +296,10 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { Link, router } from '@inertiajs/vue3'
+import { usePermission } from '@/Composables/usePermission'
+
+// Sử dụng composable phân quyền
+const { can } = usePermission()
 import { formatCurrency, formatDate, showConfirm, showSuccess } from '@/utils'
 import { ref, computed, watch } from 'vue'
 import Pagination from '@/Components/Pagination.vue'
@@ -345,7 +366,7 @@ const applyFilters = () => {
       status: filters.value.status
     },
     {
-      preserveState: false,
+      preserveState: true,
       replace: true
     }
   )

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\BidPackage;
 use App\Models\Contractor;
 use App\Models\Customer;
+use App\Models\Loan;
 use App\Models\PaymentVoucher;
 use App\Models\Project;
 use App\Models\ReceiptVoucher;
@@ -200,6 +201,11 @@ class HomeController extends Controller
             'payments' => [
                 'paid' => [],
                 'unpaid' => []
+            ],
+            'cashflow' => [
+                'expected' => [], // Dự thu chi
+                'actual' => [],   // Thu chi thực
+                'flow' => []      // Dòng tiền
             ]
         ];
 
@@ -212,6 +218,9 @@ class HomeController extends Controller
             $result['receipts']['unpaid'][$day] = 0;
             $result['payments']['paid'][$day] = 0;
             $result['payments']['unpaid'][$day] = 0;
+            $result['cashflow']['expected'][$day] = 0;
+            $result['cashflow']['actual'][$day] = 0;
+            $result['cashflow']['flow'][$day] = 0;
         }
 
         // Lấy dữ liệu phiếu thu theo ngày và trạng thái
@@ -251,12 +260,45 @@ class HomeController extends Controller
                 $result['payments']['unpaid'][$day] = (float) $payment->total_amount;
             }
         }
+        
+        // Lấy dữ liệu khoản vay theo ngày bắt đầu
+        $loanData = Loan::whereNull('deleted_at')
+            ->selectRaw('DAY(start_date) as day, SUM(amount) as total_amount')
+            ->whereYear('start_date', $year)
+            ->whereMonth('start_date', $month)
+            ->groupBy('day')
+            ->orderBy('day')
+            ->get();
+            
+        // Mảng để lưu trữ khoản vay theo ngày
+        $loans = array_fill(1, $daysInMonth, 0);
+        
+        // Cập nhật dữ liệu khoản vay
+        foreach ($loanData as $loan) {
+            $day = $loan->day;
+            $loans[$day] = (float) $loan->total_amount;
+        }
+
+        // Tính toán dữ liệu cho 3 đường biểu đồ mới
+        for ($day = 1; $day <= $daysInMonth; $day++) {
+            // 1. Dự thu chi = tổng dự thu - tổng dự chi
+            $result['cashflow']['expected'][$day] = $result['receipts']['unpaid'][$day] - $result['payments']['unpaid'][$day];
+            
+            // 2. Thu chi thực = đã thu + khoản vay - đã chi
+            $result['cashflow']['actual'][$day] = $result['receipts']['paid'][$day] + $loans[$day] - $result['payments']['paid'][$day];
+            
+            // 3. Dòng tiền = tổng thu - khoản vay - tổng chi
+            $result['cashflow']['flow'][$day] = $result['receipts']['paid'][$day] - $loans[$day] - $result['payments']['paid'][$day];
+        }
 
         // Chuyển dữ liệu từ dạng associative array sang dạng indexed array
         $result['receipts']['paid'] = array_values($result['receipts']['paid']);
         $result['receipts']['unpaid'] = array_values($result['receipts']['unpaid']);
         $result['payments']['paid'] = array_values($result['payments']['paid']);
         $result['payments']['unpaid'] = array_values($result['payments']['unpaid']);
+        $result['cashflow']['expected'] = array_values($result['cashflow']['expected']);
+        $result['cashflow']['actual'] = array_values($result['cashflow']['actual']);
+        $result['cashflow']['flow'] = array_values($result['cashflow']['flow']);
 
         return $result;
     }
@@ -275,6 +317,11 @@ class HomeController extends Controller
             'payments' => [
                 'paid' => array_fill(0, 12, 0),
                 'unpaid' => array_fill(0, 12, 0)
+            ],
+            'cashflow' => [
+                'expected' => array_fill(0, 12, 0), // Dự thu chi
+                'actual' => array_fill(0, 12, 0),   // Thu chi thực
+                'flow' => array_fill(0, 12, 0)      // Dòng tiền
             ]
         ];
 
@@ -313,6 +360,35 @@ class HomeController extends Controller
                 $result['payments']['unpaid'][$monthIndex] = (float) $payment->total_amount;
             }
         }
+        
+        // Lấy dữ liệu khoản vay theo tháng bắt đầu
+        $loanData = Loan::whereNull('deleted_at')
+            ->selectRaw('MONTH(start_date) as month, SUM(amount) as total_amount')
+            ->whereYear('start_date', $year)
+            ->groupBy('month')
+            ->orderBy('month')
+            ->get();
+            
+        // Mảng để lưu trữ khoản vay theo tháng
+        $loans = array_fill(0, 12, 0);
+        
+        // Cập nhật dữ liệu khoản vay
+        foreach ($loanData as $loan) {
+            $monthIndex = $loan->month - 1;
+            $loans[$monthIndex] = (float) $loan->total_amount;
+        }
+
+        // Tính toán dữ liệu cho 3 đường biểu đồ mới
+        for ($i = 0; $i < 12; $i++) {
+            // 1. Dự thu chi = tổng dự thu - tổng dự chi
+            $result['cashflow']['expected'][$i] = $result['receipts']['unpaid'][$i] - $result['payments']['unpaid'][$i];
+            
+            // 2. Thu chi thực = đã thu + khoản vay - đã chi
+            $result['cashflow']['actual'][$i] = $result['receipts']['paid'][$i] + $loans[$i] - $result['payments']['paid'][$i];
+            
+            // 3. Dòng tiền = tổng thu - khoản vay - tổng chi
+            $result['cashflow']['flow'][$i] = $result['receipts']['paid'][$i] - $loans[$i] - $result['payments']['paid'][$i];
+        }
 
         return $result;
     }
@@ -339,6 +415,11 @@ class HomeController extends Controller
             'payments' => [
                 'paid' => array_fill(0, $numberOfYears, 0),
                 'unpaid' => array_fill(0, $numberOfYears, 0)
+            ],
+            'cashflow' => [
+                'expected' => array_fill(0, $numberOfYears, 0), // Dự thu chi
+                'actual' => array_fill(0, $numberOfYears, 0),   // Thu chi thực
+                'flow' => array_fill(0, $numberOfYears, 0)      // Dòng tiền
             ]
         ];
 
@@ -378,6 +459,36 @@ class HomeController extends Controller
             } else {
                 $result['payments']['unpaid'][$yearIndex] = (float) $payment->total_amount;
             }
+        }
+        
+        // Lấy dữ liệu khoản vay theo năm bắt đầu
+        $loanData = Loan::whereNull('deleted_at')
+            ->selectRaw('YEAR(start_date) as year, SUM(amount) as total_amount')
+            ->whereYear('start_date', '>=', $startYear)
+            ->whereYear('start_date', '<=', $currentYear)
+            ->groupBy('year')
+            ->orderBy('year')
+            ->get();
+            
+        // Mảng để lưu trữ khoản vay theo năm
+        $loans = array_fill(0, $numberOfYears, 0);
+        
+        // Cập nhật dữ liệu khoản vay
+        foreach ($loanData as $loan) {
+            $yearIndex = $loan->year - $startYear;
+            $loans[$yearIndex] = (float) $loan->total_amount;
+        }
+
+        // Tính toán dữ liệu cho 3 đường biểu đồ mới
+        for ($i = 0; $i < $numberOfYears; $i++) {
+            // 1. Dự thu chi = tổng dự thu - tổng dự chi
+            $result['cashflow']['expected'][$i] = $result['receipts']['unpaid'][$i] - $result['payments']['unpaid'][$i];
+            
+            // 2. Thu chi thực = đã thu + khoản vay - đã chi
+            $result['cashflow']['actual'][$i] = $result['receipts']['paid'][$i] + $loans[$i] - $result['payments']['paid'][$i];
+            
+            // 3. Dòng tiền = tổng thu - khoản vay - tổng chi
+            $result['cashflow']['flow'][$i] = $result['receipts']['paid'][$i] - $loans[$i] - $result['payments']['paid'][$i];
         }
 
         return $result;
