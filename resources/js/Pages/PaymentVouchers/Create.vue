@@ -119,7 +119,7 @@
                     </div>
                   </div>
 
-                  <div class="form-group" v-if="form.status === 'paid'">
+                  <div class="form-group">
                     <label for="payment_date">Ngày chi</label>
                     <input
                       type="date"

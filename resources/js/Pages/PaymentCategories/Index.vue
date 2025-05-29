@@ -9,7 +9,11 @@
           <div class="card-header">
             <h3 class="card-title">Danh sách loại chi</h3>
             <div class="card-tools">
-              <Link v-if="can('payment_categories.create')" :href="route('payment-categories.create')" class="btn btn-sm btn-primary">
+              <Link
+                v-if="can('payment-categories.create')"
+                :href="route('payment-categories.create')"
+                class="btn btn-sm btn-primary"
+              >
                 <i class="fas fa-plus"></i> Thêm loại chi mới
               </Link>
             </div>
@@ -50,10 +54,18 @@
                     <td>{{ truncateText(category.note, 50) || '-' }}</td>
                     <td>
                       <div class="btn-group">
-                        <Link v-if="can('payment_categories.edit')" :href="route('payment-categories.edit', category.id)" class="btn btn-xs btn-primary">
+                        <Link
+                          v-if="can('payment-categories.edit')"
+                          :href="route('payment-categories.edit', category.id)"
+                          class="btn btn-xs btn-primary"
+                        >
                           <i class="fas fa-edit"></i> Sửa
                         </Link>
-                        <button v-if="can('payment_categories.delete')" @click="confirmDelete(category)" class="btn btn-xs btn-danger">
+                        <button
+                          v-if="can('payment-categories.delete')"
+                          @click="confirmDelete(category)"
+                          class="btn btn-xs btn-danger"
+                        >
                           <i class="fas fa-trash"></i> Xóa
                         </button>
                       </div>

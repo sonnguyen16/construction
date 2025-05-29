@@ -393,7 +393,11 @@ import { formatCurrency, formatDate } from '@/utils'
 import { onMounted, ref, computed } from 'vue'
 import { router } from '@inertiajs/vue3'
 import Chart from 'chart.js/auto'
+import annotationPlugin from 'chartjs-plugin-annotation'
 import { usePermission } from '@/Composables/usePermission'
+
+// Đăng ký plugin annotation
+Chart.register(annotationPlugin)
 
 const props = defineProps({
   stats: Object,
@@ -570,6 +574,25 @@ function handleCashflowChartClick(event, chartElements, chart) {
   }
 }
 
+// Hàm lấy vị trí đánh dấu thời gian hiện tại
+function getTimeMarkerPosition(chartData) {
+  if (!chartData) return null
+
+  // Xử lý theo chế độ xem
+  if (chartView.value === 'day' && chartData.currentDay) {
+    // Trả về vị trí ngày hiện tại trong mảng labels
+    return chartData.currentDay - 1 // Trừ 1 vì mảng bắt đầu từ 0
+  } else if (chartView.value === 'month' && chartData.currentMonth) {
+    // Trả về vị trí tháng hiện tại trong mảng labels
+    return chartData.currentMonth - 1 // Trừ 1 vì mảng bắt đầu từ 0
+  } else if (chartView.value === 'year' && chartData.currentYearIndex !== undefined) {
+    // Trả về vị trí năm hiện tại trong mảng labels
+    return chartData.currentYearIndex
+  }
+
+  return null // Không có đánh dấu nếu không phải thời gian hiện tại
+}
+
 // Hàm cập nhật biểu đồ dòng tiền tổng hợp
 function updateCashflowChart() {
   // Hủy biểu đồ cũ nếu có
@@ -650,6 +673,7 @@ function updateCashflowChart() {
       responsive: true,
       maintainAspectRatio: false,
       onClick: handleCashflowChartClick,
+
       scales: {
         y: {
           beginAtZero: false, // Cho phép giá trị âm
@@ -677,6 +701,30 @@ function updateCashflowChart() {
         },
         legend: {
           position: 'bottom'
+        },
+        // Thêm cấu hình đường dọc đánh dấu thời gian hiện tại
+        annotation: {
+          annotations: {
+            line1: {
+              type: 'line',
+              mode: 'vertical',
+              scaleID: 'x',
+              value: getTimeMarkerPosition(chartData),
+              borderColor: 'rgba(255, 0, 0, 0.8)',
+              borderWidth: 2,
+              borderDash: [6, 6], // Thêm đường nét đứt (6px đường, 6px khoảng trống),
+              label: {
+                content: 'Hiện tại',
+                enabled: true,
+                position: 'top',
+                backgroundColor: 'rgba(255, 0, 0, 0.8)',
+                color: 'white',
+                font: {
+                  weight: 'bold'
+                }
+              }
+            }
+          }
         }
       }
     }

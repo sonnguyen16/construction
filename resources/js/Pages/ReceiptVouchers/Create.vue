@@ -50,6 +50,18 @@
                     />
                     <div class="invalid-feedback" v-if="form.errors.project_id">{{ form.errors.project_id }}</div>
                   </div>
+
+                  <div class="form-group">
+                    <label for="payment_date">Ngày thu</label>
+                    <input
+                      type="date"
+                      class="form-control"
+                      id="payment_date"
+                      v-model="form.payment_date"
+                      :class="{ 'is-invalid': form.errors.payment_date }"
+                    />
+                    <div class="invalid-feedback" v-if="form.errors.payment_date">{{ form.errors.payment_date }}</div>
+                  </div>
                 </div>
 
                 <div class="col-md-6">
@@ -97,18 +109,6 @@
                     <div class="invalid-feedback" v-if="form.errors.receipt_category_id">
                       {{ form.errors.receipt_category_id }}
                     </div>
-                  </div>
-
-                  <div class="form-group" v-if="form.status === 'paid'">
-                    <label for="payment_date">Ngày thu</label>
-                    <input
-                      type="date"
-                      class="form-control"
-                      id="payment_date"
-                      v-model="form.payment_date"
-                      :class="{ 'is-invalid': form.errors.payment_date }"
-                    />
-                    <div class="invalid-feedback" v-if="form.errors.payment_date">{{ form.errors.payment_date }}</div>
                   </div>
                 </div>
 

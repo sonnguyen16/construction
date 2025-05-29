@@ -223,11 +223,11 @@ class HomeController extends Controller
             $result['cashflow']['flow'][$day] = 0;
         }
 
-        // Lấy dữ liệu phiếu thu theo ngày và trạng thái
+        // Lấy dữ liệu phiếu thu theo ngày và trạng thái (sử dụng payment_date thay vì created_at)
         $receiptData = ReceiptVoucher::whereNull('deleted_at')
-            ->selectRaw('DAY(created_at) as day, status, SUM(amount) as total_amount')
-            ->whereYear('created_at', $year)
-            ->whereMonth('created_at', $month)
+            ->selectRaw('DAY(payment_date) as day, status, SUM(amount) as total_amount')
+            ->whereYear('payment_date', $year)
+            ->whereMonth('payment_date', $month)
             ->groupBy('day', 'status')
             ->orderBy('day')
             ->get();
@@ -242,11 +242,11 @@ class HomeController extends Controller
             }
         }
 
-        // Lấy dữ liệu phiếu chi theo ngày và trạng thái
+        // Lấy dữ liệu phiếu chi theo ngày và trạng thái (sử dụng payment_date thay vì created_at)
         $paymentData = PaymentVoucher::whereNull('deleted_at')
-            ->selectRaw('DAY(created_at) as day, status, SUM(amount) as total_amount')
-            ->whereYear('created_at', $year)
-            ->whereMonth('created_at', $month)
+            ->selectRaw('DAY(payment_date) as day, status, SUM(amount) as total_amount')
+            ->whereYear('payment_date', $year)
+            ->whereMonth('payment_date', $month)
             ->groupBy('day', 'status')
             ->orderBy('day')
             ->get();
@@ -291,6 +291,14 @@ class HomeController extends Controller
             $result['cashflow']['flow'][$day] = $result['receipts']['paid'][$day] - $loans[$day] - $result['payments']['paid'][$day];
         }
 
+        // Thêm thông tin về ngày hiện tại
+        $currentDay = Carbon::now()->day;
+        if ($year == Carbon::now()->year && $month == Carbon::now()->month && $currentDay <= $daysInMonth) {
+            $result['currentDay'] = $currentDay;
+        } else {
+            $result['currentDay'] = null;
+        }
+        
         // Chuyển dữ liệu từ dạng associative array sang dạng indexed array
         $result['receipts']['paid'] = array_values($result['receipts']['paid']);
         $result['receipts']['unpaid'] = array_values($result['receipts']['unpaid']);
@@ -325,10 +333,10 @@ class HomeController extends Controller
             ]
         ];
 
-        // Lấy dữ liệu phiếu thu theo tháng và trạng thái
+        // Lấy dữ liệu phiếu thu theo tháng và trạng thái (sử dụng payment_date thay vì created_at)
         $receiptData = ReceiptVoucher::whereNull('deleted_at')
-            ->selectRaw('MONTH(created_at) as month, status, SUM(amount) as total_amount')
-            ->whereYear('created_at', $year)
+            ->selectRaw('MONTH(payment_date) as month, status, SUM(amount) as total_amount')
+            ->whereYear('payment_date', $year)
             ->groupBy('month', 'status')
             ->orderBy('month')
             ->get();
@@ -343,10 +351,10 @@ class HomeController extends Controller
             }
         }
 
-        // Lấy dữ liệu phiếu chi theo tháng và trạng thái
+        // Lấy dữ liệu phiếu chi theo tháng và trạng thái (sử dụng payment_date thay vì created_at)
         $paymentData = PaymentVoucher::whereNull('deleted_at')
-            ->selectRaw('MONTH(created_at) as month, status, SUM(amount) as total_amount')
-            ->whereYear('created_at', $year)
+            ->selectRaw('MONTH(payment_date) as month, status, SUM(amount) as total_amount')
+            ->whereYear('payment_date', $year)
             ->groupBy('month', 'status')
             ->orderBy('month')
             ->get();
@@ -390,6 +398,14 @@ class HomeController extends Controller
             $result['cashflow']['flow'][$i] = $result['receipts']['paid'][$i] - $loans[$i] - $result['payments']['paid'][$i];
         }
 
+        // Thêm thông tin về tháng hiện tại
+        $currentMonth = Carbon::now()->month;
+        if ($year == Carbon::now()->year) {
+            $result['currentMonth'] = $currentMonth;
+        } else {
+            $result['currentMonth'] = null;
+        }
+
         return $result;
     }
 
@@ -423,11 +439,11 @@ class HomeController extends Controller
             ]
         ];
 
-        // Lấy dữ liệu phiếu thu theo năm và trạng thái
+        // Lấy dữ liệu phiếu thu theo năm và trạng thái (sử dụng payment_date thay vì created_at)
         $receiptData = ReceiptVoucher::whereNull('deleted_at')
-            ->selectRaw('YEAR(created_at) as year, status, SUM(amount) as total_amount')
-            ->whereYear('created_at', '>=', $startYear)
-            ->whereYear('created_at', '<=', $currentYear)
+            ->selectRaw('YEAR(payment_date) as year, status, SUM(amount) as total_amount')
+            ->whereYear('payment_date', '>=', $startYear)
+            ->whereYear('payment_date', '<=', $currentYear)
             ->groupBy('year', 'status')
             ->orderBy('year')
             ->get();
@@ -442,11 +458,11 @@ class HomeController extends Controller
             }
         }
 
-        // Lấy dữ liệu phiếu chi theo năm và trạng thái
+        // Lấy dữ liệu phiếu chi theo năm và trạng thái (sử dụng payment_date thay vì created_at)
         $paymentData = PaymentVoucher::whereNull('deleted_at')
-            ->selectRaw('YEAR(created_at) as year, status, SUM(amount) as total_amount')
-            ->whereYear('created_at', '>=', $startYear)
-            ->whereYear('created_at', '<=', $currentYear)
+            ->selectRaw('YEAR(payment_date) as year, status, SUM(amount) as total_amount')
+            ->whereYear('payment_date', '>=', $startYear)
+            ->whereYear('payment_date', '<=', $currentYear)
             ->groupBy('year', 'status')
             ->orderBy('year')
             ->get();
@@ -490,6 +506,10 @@ class HomeController extends Controller
             // 3. Dòng tiền = tổng thu - khoản vay - tổng chi
             $result['cashflow']['flow'][$i] = $result['receipts']['paid'][$i] - $loans[$i] - $result['payments']['paid'][$i];
         }
+
+        // Thêm thông tin về năm hiện tại
+        $result['currentYear'] = $currentYear;
+        $result['currentYearIndex'] = $numberOfYears - 1; // Vị trí của năm hiện tại trong mảng (luôn là năm cuối cùng)
 
         return $result;
     }

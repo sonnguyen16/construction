@@ -94,13 +94,13 @@ class PaymentVoucherController extends Controller
 
         // Lọc theo khoảng thời gian
         if ($request->has('date_from') && $request->date_from) {
-            $query->whereDate('created_at', '>=', $request->date_from);
-            $statsQuery->whereDate('created_at', '>=', $request->date_from);
+            $query->whereDate('payment_date', '>=', $request->date_from);
+            $statsQuery->whereDate('payment_date', '>=', $request->date_from);
         }
 
         if ($request->has('date_to') && $request->date_to) {
-            $query->whereDate('created_at', '<=', $request->date_to);
-            $statsQuery->whereDate('created_at', '<=', $request->date_to);
+            $query->whereDate('payment_date', '<=', $request->date_to);
+            $statsQuery->whereDate('payment_date', '<=', $request->date_to);
         }
 
         // Tính toán thống kê dựa trên các filter đã áp dụng
