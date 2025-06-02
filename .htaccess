@@ -1,0 +1,9 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Nếu request KHÔNG bắt đầu bằng /public
+    RewriteCond %{REQUEST_URI} !^/public/
+    
+    # Chuyển hướng toàn bộ request vào /public
+    RewriteRule ^(.*)$ /public/$1 [L,QSA]
+</IfModule>
