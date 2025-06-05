@@ -9,7 +9,7 @@
           <div class="card-header">
             <h3 class="card-title">Danh sách phiếu xuất kho</h3>
             <div class="card-tools">
-              <Link v-if="can('export_vouchers.create')" :href="route('export-vouchers.create')" class="btn btn-sm btn-primary">
+              <Link v-if="can('export-vouchers.create')" :href="route('export-vouchers.create')" class="btn btn-sm btn-primary">
                 <i class="fas fa-plus"></i> Thêm phiếu xuất kho mới
               </Link>
             </div>
@@ -79,13 +79,13 @@
                     <td>{{ formatDateTime(voucher.created_at) }}</td>
                     <td>
                       <div class="btn-group">
-                        <Link v-if="can('export_vouchers.view')" :href="route('export-vouchers.show', voucher.id)" class="btn btn-xs btn-info">
+                        <Link v-if="can('export-vouchers.view')" :href="route('export-vouchers.show', voucher.id)" class="btn btn-xs btn-info">
                           <i class="fas fa-eye"></i> Xem
                         </Link>
-                        <Link v-if="can('export_vouchers.edit')" :href="route('export-vouchers.edit', voucher.id)" class="btn btn-xs btn-primary">
+                        <Link v-if="can('export-vouchers.edit')" :href="route('export-vouchers.edit', voucher.id)" class="btn btn-xs btn-primary">
                           <i class="fas fa-edit"></i> Sửa
                         </Link>
-                        <button v-if="can('export_vouchers.delete')" @click="confirmDelete(voucher)" class="btn btn-xs btn-danger">
+                        <button v-if="can('export-vouchers.delete')" @click="confirmDelete(voucher)" class="btn btn-xs btn-danger">
                           <i class="fas fa-trash"></i> Xóa
                         </button>
                       </div>
