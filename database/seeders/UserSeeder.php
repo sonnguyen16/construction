@@ -59,11 +59,6 @@ class UserSeeder extends Seeder
                 'remember_token' => Str::random(10),
                 'avatar' => 'https://i.pravatar.cc/150?img=' . $avatarIds[$i]
             ]);
-            
-            // Gán vai trò ngẫu nhiên cho người dùng
-            $roles = ['Quản lý', 'Kế toán', 'Quản lý dự án', 'Nhân viên'];
-            $randomRole = $roles[array_rand($roles)];
-            $user->assignRole($randomRole);
         }
     }
 
