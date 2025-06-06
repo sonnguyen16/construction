@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\Project;
 use App\Models\BidPackage;
 use App\Models\ReceiptCategory;
+use App\Helpers\ProjectPermission;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
@@ -86,6 +87,20 @@ class ReceiptVoucherController extends Controller
             $statsQuery->whereDate('payment_date', '<=', $request->date_to);
         }
 
+        // Lấy danh sách các dự án mà người dùng có quyền xem phiếu thu
+        $projectIds = ProjectPermission::getProjectsWithPermission('receipt-vouchers.view');
+
+        // Áp dụng phân quyền theo dự án (phải để cuối cùng để tránh bypass)
+        $query->where(function($q) use ($projectIds) {
+            $q->whereIn('project_id', $projectIds)
+              ->orWhereNull('project_id'); // Cho phép xem phiếu thu không thuộc dự án nào
+        });
+
+        $statsQuery->where(function($q) use ($projectIds) {
+            $q->whereIn('project_id', $projectIds)
+              ->orWhereNull('project_id');
+        });
+
         // Tính toán thống kê dựa trên các filter đã áp dụng
         $totalReceiptCount = $statsQuery->count();
 
@@ -102,7 +117,7 @@ class ReceiptVoucherController extends Controller
 
         // Lấy danh sách khách hàng, dự án và gói thầu cho bộ lọc
         $customers = Customer::orderBy('name')->whereNull('deleted_at')->get();
-        $projects = Project::orderBy('name')->whereNull('deleted_at')->get();
+        $projects = Project::orderBy('name')->whereNull('deleted_at')->whereIn('id', $projectIds)->get();
         $receiptCategories = ReceiptCategory::orderBy('name')->get();
 
         return Inertia::render('ReceiptVouchers/Index', [
@@ -123,8 +138,15 @@ class ReceiptVoucherController extends Controller
      */
     public function create(Request $request)
     {
+        // Kiểm tra quyền tạo phiếu thu
+        // Sẽ kiểm tra theo dự án sau khi người dùng chọn dự án trong form
+
         $customers = Customer::orderBy('name')->get();
-        $projects = Project::orderBy('name')->get();
+
+        // Chỉ hiển thị các dự án mà người dùng có quyền tạo phiếu thu
+        $projectIds = ProjectPermission::getProjectsWithPermission('receipt-vouchers.create');
+        $projects = Project::orderBy('name')->whereIn('id', $projectIds)->get();
+
         $receiptCategories = ReceiptCategory::orderBy('name')->get();
 
         // Lấy thông tin từ request nếu có
@@ -146,6 +168,11 @@ class ReceiptVoucherController extends Controller
      */
     public function store(Request $request)
     {
+        // Kiểm tra quyền tạo phiếu thu theo dự án
+        if ($request->project_id && !ProjectPermission::hasPermissionInProject('receipt-vouchers.create', $request->project_id)) {
+            return redirect()->back()->with('error', 'Bạn không có quyền tạo phiếu thu cho dự án này!');
+        }
+
         $validated = $request->validate([
             'customer_id' => 'required|exists:customers,id',
             'project_id' => 'nullable|exists:projects,id',
@@ -172,6 +199,12 @@ class ReceiptVoucherController extends Controller
      */
     public function show(ReceiptVoucher $receiptVoucher)
     {
+        // Kiểm tra quyền xem phiếu thu theo dự án
+        if ($receiptVoucher->project_id && !ProjectPermission::hasPermissionInProject('receipt-vouchers.view', $receiptVoucher->project_id)) {
+            return redirect()->route('receipt-vouchers.index')
+                ->with('error', 'Bạn không có quyền xem phiếu thu này!');
+        }
+
         $receiptVoucher->load(['customer', 'project', 'bidPackage', 'creator', 'updater']);
 
         return Inertia::render('ReceiptVouchers/Show', [
@@ -185,10 +218,20 @@ class ReceiptVoucherController extends Controller
      */
     public function edit(ReceiptVoucher $receiptVoucher)
     {
+        // Kiểm tra quyền sửa phiếu thu theo dự án
+        if ($receiptVoucher->project_id && !ProjectPermission::hasPermissionInProject('receipt-vouchers.edit', $receiptVoucher->project_id)) {
+            return redirect()->route('receipt-vouchers.index')
+                ->with('error', 'Bạn không có quyền sửa phiếu thu này!');
+        }
+
         $receiptVoucher->load(['customer', 'project', 'bidPackage', 'creator', 'updater', 'receiptCategory']);
 
         $customers = Customer::orderBy('name')->get();
-        $projects = Project::orderBy('name')->get();
+
+        // Chỉ hiển thị các dự án mà người dùng có quyền sửa phiếu thu
+        $projectIds = ProjectPermission::getProjectsWithPermission('receipt-vouchers.edit');
+        $projects = Project::orderBy('name')->whereIn('id', $projectIds)->get();
+
         $receiptCategories = ReceiptCategory::orderBy('name')->get();
 
         return Inertia::render('ReceiptVouchers/Edit', [
@@ -205,6 +248,18 @@ class ReceiptVoucherController extends Controller
      */
     public function update(Request $request, ReceiptVoucher $receiptVoucher)
     {
+        // Kiểm tra quyền sửa phiếu thu theo dự án
+        if ($receiptVoucher->project_id && !ProjectPermission::hasPermissionInProject('receipt-vouchers.edit', $receiptVoucher->project_id)) {
+            return redirect()->route('receipt-vouchers.index')
+                ->with('error', 'Bạn không có quyền sửa phiếu thu này!');
+        }
+
+        // Kiểm tra nếu người dùng đang cố gắng chuyển phiếu thu sang dự án khác mà họ không có quyền
+        if ($request->project_id && $request->project_id != $receiptVoucher->project_id &&
+            !ProjectPermission::hasPermissionInProject('receipt-vouchers.edit', $request->project_id)) {
+            return redirect()->back()->with('error', 'Bạn không có quyền chuyển phiếu thu sang dự án này!');
+        }
+
         $validated = $request->validate([
             'customer_id' => 'required|exists:customers,id',
             'project_id' => 'nullable|exists:projects,id',
@@ -231,6 +286,12 @@ class ReceiptVoucherController extends Controller
      */
     public function destroy(ReceiptVoucher $receiptVoucher)
     {
+        // Kiểm tra quyền xóa phiếu thu theo dự án
+        if ($receiptVoucher->project_id && !ProjectPermission::hasPermissionInProject('receipt-vouchers.delete', $receiptVoucher->project_id)) {
+            return redirect()->route('receipt-vouchers.index')
+                ->with('error', 'Bạn không có quyền xóa phiếu thu này!');
+        }
+
         $receiptVoucher->deleted_at = now();
         $receiptVoucher->save();
 
@@ -243,6 +304,12 @@ class ReceiptVoucherController extends Controller
      */
     public function updateStatus(Request $request, ReceiptVoucher $receiptVoucher)
     {
+        // Kiểm tra quyền cập nhật trạng thái phiếu thu theo dự án
+        if ($receiptVoucher->project_id && !ProjectPermission::hasPermissionInProject('receipt-vouchers.update-status', $receiptVoucher->project_id)) {
+            return redirect()->route('receipt-vouchers.index')
+                ->with('error', 'Bạn không có quyền cập nhật trạng thái phiếu thu này!');
+        }
+
         $validated = $request->validate([
             'status' => 'required|in:paid,unpaid',
             'payment_date' => 'nullable|date'
@@ -271,6 +338,12 @@ class ReceiptVoucherController extends Controller
      */
     public function print(ReceiptVoucher $receiptVoucher)
     {
+        // Kiểm tra quyền in phiếu thu theo dự án
+        if ($receiptVoucher->project_id && !ProjectPermission::hasPermissionInProject('receipt-vouchers.print', $receiptVoucher->project_id)) {
+            return redirect()->route('receipt-vouchers.index')
+                ->with('error', 'Bạn không có quyền in phiếu thu này!');
+        }
+
         $receiptVoucher->load(['customer', 'project', 'bidPackage', 'creator']);
 
         // Chuyển đổi số tiền thành chữ

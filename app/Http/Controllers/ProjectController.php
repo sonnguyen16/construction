@@ -3,12 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\Project;
+use App\Models\ProjectRole;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\BidPackage;
 use App\Models\Customer;
 use App\Models\Contractor;
 use App\Models\ProjectCategory;
+use Spatie\Permission\Models\Role;
+use Illuminate\Support\Facades\DB;
+use App\Helpers\ProjectPermission;
 class ProjectController extends Controller
 {
     /**
@@ -17,6 +22,11 @@ class ProjectController extends Controller
     public function index(Request $request)
     {
         $query = Project::query()->with('bidPackages')->whereNull('deleted_at');
+
+        // Chỉ hiển thị các dự án mà người dùng có vai trò
+        $projectIds = ProjectPermission::getAccessibleProjectIds();
+
+        $query->whereIn('id', $projectIds);
 
         // Tìm kiếm
         if ($request->has('search')) {
@@ -51,6 +61,11 @@ class ProjectController extends Controller
      */
     public function create()
     {
+        if (auth()->user()->id != 1) {
+            return redirect()->route('projects.index')
+                ->with('error', 'Bạn không có quyền tạo dự án.');
+        }
+
         $customers = Customer::whereNull('deleted_at')->get();
         $projectCategories = ProjectCategory::orderBy('name')->get();
         return Inertia::render('Projects/Create', [
@@ -64,6 +79,10 @@ class ProjectController extends Controller
      */
     public function store(Request $request)
     {
+        if (auth()->user()->id != 1) {
+            return redirect()->route('projects.index')
+                ->with('error', 'Bạn không có quyền tạo dự án.');
+        }
         $validated = $request->validate([
             'code' => 'required|string|max:50',
             'name' => 'required|string|max:255',
@@ -84,7 +103,20 @@ class ProjectController extends Controller
             }
         }
 
-        Project::create($validated);
+        // Tạo dự án mới
+        $project = Project::create($validated);
+
+        // Tự động gán vai trò Super Admin cho admin@example.com
+        $adminUser = User::where('email', 'admin@example.com')->first();
+        $superAdminRole = Role::where('name', 'Super Admin')->first();
+
+        if ($adminUser && $superAdminRole) {
+            ProjectRole::create([
+                'user_id' => $adminUser->id,
+                'project_id' => $project->id,
+                'role_id' => $superAdminRole->id
+            ]);
+        }
 
         return redirect()->route('projects.index')
             ->with('success', 'Dự án đã được tạo thành công.');
@@ -95,6 +127,12 @@ class ProjectController extends Controller
      */
     public function show(Project $project)
     {
+        // Kiểm tra người dùng có quyền truy cập dự án không
+        if (!ProjectPermission::hasPermissionInProject('projects.commission', $project->id)) {
+            return redirect()->route('projects.index')
+                ->with('error', 'Bạn không có quyền truy cập dự án này.');
+        }
+
         // Kiểm tra xem dự án có bị xóa không
         if ($project->deleted_at) {
             return redirect()->route('projects.index')
@@ -150,6 +188,10 @@ class ProjectController extends Controller
      */
     public function edit(Project $project)
     {
+        if (!ProjectPermission::hasPermissionInProject('projects.edit', $project->id)) {
+            return redirect()->route('projects.index')
+                ->with('error', 'Bạn không có quyền chỉnh sửa dự án này.');
+        }
         $customers = Customer::whereNull('deleted_at')->get();
         $projectCategories = ProjectCategory::orderBy('name')->get();
         return Inertia::render('Projects/Edit', [
@@ -164,6 +206,10 @@ class ProjectController extends Controller
      */
     public function update(Request $request, Project $project)
     {
+        if (!ProjectPermission::hasPermissionInProject('projects.edit', $project->id)) {
+            return redirect()->route('projects.index')
+                ->with('error', 'Bạn không có quyền chỉnh sửa dự án này.');
+        }
         $validated = $request->validate([
             'code' => 'required|string|max:50',
             'name' => 'required|string|max:255',
@@ -203,6 +249,10 @@ class ProjectController extends Controller
      */
     public function destroy(Project $project)
     {
+        if (!ProjectPermission::hasPermissionInProject('projects.delete', $project->id)) {
+            return redirect()->route('projects.index')
+                ->with('error', 'Bạn không có quyền xóa dự án này.');
+        }
         $project->deleted_at = now();
         $project->save();
 
@@ -212,6 +262,10 @@ class ProjectController extends Controller
 
     public function expenses(Project $project)
     {
+        if (!ProjectPermission::hasPermissionInProject('projects.expenses', $project->id)) {
+            return redirect()->route('projects.index')
+                ->with('error', 'Bạn không có quyền xem chi phí dự án này.');
+        }
         $project->load([
             'bidPackages.payment_vouchers.contractor',
             'bidPackages.payment_vouchers.project',
@@ -227,6 +281,10 @@ class ProjectController extends Controller
 
     public function profit(Project $project)
     {
+        if (!ProjectPermission::hasPermissionInProject('projects.profit', $project->id)) {
+            return redirect()->route('projects.index')
+                ->with('error', 'Bạn không có quyền xem lợi nhuận dự án này.');
+        }
         $project->load([
             'bidPackages.selectedContractor',
             'bidPackages.payment_vouchers',

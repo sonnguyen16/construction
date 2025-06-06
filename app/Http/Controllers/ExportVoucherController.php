@@ -7,6 +7,7 @@ use App\Models\ExportVoucherItem;
 use App\Models\Product;
 use App\Models\Project;
 use App\Models\Customer;
+use App\Helpers\ProjectPermission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -47,6 +48,12 @@ class ExportVoucherController extends Controller
         if ($request->has('date_to') && !empty($request->date_to)) {
             $query->whereDate('export_date', '<=', $request->date_to);
         }
+        
+        // Lấy danh sách các dự án mà người dùng có quyền xem phiếu xuất kho
+        $projectIds = ProjectPermission::getProjectsWithPermission('export-vouchers.view');
+        
+        // Áp dụng phân quyền theo dự án (phải để cuối cùng để tránh bypass)
+        $query->whereIn('project_id', $projectIds);
 
         $exportVouchers = $query->latest()->paginate(10)->withQueryString();
 
@@ -56,7 +63,8 @@ class ExportVoucherController extends Controller
             return $voucher;
         });
 
-        $projects = Project::whereNull('deleted_at')->get();
+        // Chỉ hiển thị các dự án mà người dùng có quyền xem
+        $projects = Project::whereNull('deleted_at')->whereIn('id', $projectIds)->get();
 
         return Inertia::render('ExportVouchers/Index', [
             'exportVouchers' => $exportVouchers,
@@ -70,7 +78,9 @@ class ExportVoucherController extends Controller
      */
     public function create()
     {
-        $projects = Project::all();
+        // Lấy danh sách các dự án mà người dùng có quyền tạo phiếu xuất kho
+        $projectIds = ProjectPermission::getProjectsWithPermission('export-vouchers.create');
+        $projects = Project::whereIn('id', $projectIds)->get();
         $customers = Customer::all();
         $products = Product::with('unit')->get();
 
@@ -101,6 +111,11 @@ class ExportVoucherController extends Controller
      */
     public function store(Request $request)
     {
+        // Kiểm tra quyền tạo phiếu xuất kho theo dự án
+        if (!ProjectPermission::hasPermissionInProject('export-vouchers.create', $request->project_id)) {
+            return redirect()->back()->with('error', 'Bạn không có quyền tạo phiếu xuất kho cho dự án này!');
+        }
+
         $request->validate([
             'code' => 'required|string|max:255',
             'project_id' => 'required|exists:projects,id',
@@ -153,6 +168,12 @@ class ExportVoucherController extends Controller
      */
     public function show(ExportVoucher $exportVoucher)
     {
+        // Kiểm tra quyền xem phiếu xuất kho theo dự án
+        if (!ProjectPermission::hasPermissionInProject('export-vouchers.view', $exportVoucher->project_id)) {
+            return redirect()->route('export-vouchers.index')
+                ->with('error', 'Bạn không có quyền xem phiếu xuất kho này!');
+        }
+
         $exportVoucher->load([
             'project', 'customer', 'creator', 'updater',
             'items.product.unit'
@@ -171,9 +192,17 @@ class ExportVoucherController extends Controller
      */
     public function edit(ExportVoucher $exportVoucher)
     {
+        // Kiểm tra quyền sửa phiếu xuất kho theo dự án
+        if (!ProjectPermission::hasPermissionInProject('export-vouchers.edit', $exportVoucher->project_id)) {
+            return redirect()->route('export-vouchers.index')
+                ->with('error', 'Bạn không có quyền sửa phiếu xuất kho này!');
+        }
+
         $exportVoucher->load(['items.product.unit']);
 
-        $projects = Project::all();
+        // Chỉ hiển thị các dự án mà người dùng có quyền sửa
+        $projectIds = ProjectPermission::getProjectsWithPermission('export-vouchers.edit');
+        $projects = Project::whereIn('id', $projectIds)->get();
         $customers = Customer::all();
         $products = Product::with('unit')->get();
 
@@ -190,6 +219,18 @@ class ExportVoucherController extends Controller
      */
     public function update(Request $request, ExportVoucher $exportVoucher)
     {
+        // Kiểm tra quyền sửa phiếu xuất kho theo dự án
+        if (!ProjectPermission::hasPermissionInProject('export-vouchers.edit', $exportVoucher->project_id)) {
+            return redirect()->route('export-vouchers.index')
+                ->with('error', 'Bạn không có quyền sửa phiếu xuất kho này!');
+        }
+        
+        // Kiểm tra nếu người dùng đang cố gắng chuyển phiếu xuất kho sang dự án khác mà họ không có quyền
+        if ($request->project_id != $exportVoucher->project_id && 
+            !ProjectPermission::hasPermissionInProject('export-vouchers.edit', $request->project_id)) {
+            return redirect()->back()->with('error', 'Bạn không có quyền chuyển phiếu xuất kho sang dự án này!');
+        }
+        
         $request->validate([
             'code' => 'required|string|max:255',
             'project_id' => 'required|exists:projects,id',
@@ -258,6 +299,12 @@ class ExportVoucherController extends Controller
      */
     public function destroy(ExportVoucher $exportVoucher)
     {
+        // Kiểm tra quyền xóa phiếu xuất kho theo dự án
+        if (!ProjectPermission::hasPermissionInProject('export-vouchers.delete', $exportVoucher->project_id)) {
+            return redirect()->route('export-vouchers.index')
+                ->with('error', 'Bạn không có quyền xóa phiếu xuất kho này!');
+        }
+
         try {
             // Delete export voucher (will cascade delete items due to foreign key constraint)
             $exportVoucher->deleted_at = now();

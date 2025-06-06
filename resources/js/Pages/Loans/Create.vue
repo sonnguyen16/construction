@@ -18,7 +18,7 @@
                   <li v-for="(error, key) in form.errors" :key="key">{{ error }}</li>
                 </ul>
               </div>
-              
+
               <div class="row">
                 <div class="col-md-6">
                   <div class="form-group">
@@ -184,7 +184,7 @@
               </div>
             </div>
             <div class="card-footer">
-              <div class="d-flex justify-content-between">
+              <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-primary" :disabled="form.processing">
                   <i class="fas fa-save mr-1"></i> {{ form.processing ? 'Đang xử lý...' : 'Lưu' }}
                 </button>
@@ -312,7 +312,7 @@ const safeDestroyInputPicker = (selector) => {
 const submit = () => {
   // Chuyển đổi số tiền từ định dạng tiền tệ sang số
   form.amount = parseCurrency(form.amount)
-  
+
   form.post(route('loans.store'), {
     preserveScroll: true,
     onSuccess: () => {

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Task;
 use App\Models\Project;
+use App\Helpers\ProjectPermission;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -14,14 +15,26 @@ class TaskController extends Controller
      */
     public function index(Request $request)
     {
-        // Lấy tất cả các dự án
-        $projects = Project::query()->whereNull('deleted_at')->orderBy('name')->get();
+        // Lấy danh sách các dự án mà người dùng có quyền xem công việc
+        $projectIds = ProjectPermission::getProjectsWithPermission('tasks.view');
+
+        // Lấy tất cả các dự án mà người dùng có quyền
+        $projects = Project::query()
+            ->whereIn('id', $projectIds)
+            ->whereNull('deleted_at')
+            ->orderBy('name')
+            ->get();
 
         // Kiểm tra nếu có project_id trong query param
         $projectId = $request->query('project_id');
         $defaultProject = null;
 
         if ($projectId) {
+            // Kiểm tra nếu người dùng có quyền xem dự án được chọn
+            if (!in_array($projectId, $projectIds)) {
+                return redirect()->route('tasks.index')->with('error', 'Bạn không có quyền xem công việc của dự án này!');
+            }
+
             // Tìm dự án theo ID
             $defaultProject = $projects->firstWhere('id', $projectId);
         }
@@ -42,6 +55,11 @@ class TaskController extends Controller
      */
     public function getTasksByProject(Project $project)
     {
+        // Kiểm tra nếu người dùng có quyền xem công việc của dự án
+        if (!ProjectPermission::hasPermissionInProject('tasks.view', $project->id)) {
+            return response()->json(['error' => 'Bạn không có quyền xem công việc của dự án này!'], 403);
+        }
+
         // Lấy tất cả các công việc của dự án
         $tasks = Task::where('project_id', $project->id)
             ->whereNull('deleted_at')
@@ -95,6 +113,11 @@ class TaskController extends Controller
             'parent_id' => 'nullable|exists:tasks,id',
         ]);
 
+        // Kiểm tra nếu người dùng có quyền tạo công việc trong dự án
+        if (!ProjectPermission::hasPermissionInProject('tasks.create', $validated['project_id'])) {
+            return response()->json(['error' => 'Bạn không có quyền tạo công việc trong dự án này!'], 403);
+        }
+
         // Xác định order cho task mới
         $maxOrder = Task::where('project_id', $validated['project_id'])
             ->where('parent_id', $validated['parent_id'])
@@ -127,6 +150,11 @@ class TaskController extends Controller
      */
     public function update(Request $request, Task $task)
     {
+        // Kiểm tra nếu người dùng có quyền cập nhật công việc trong dự án
+        if (!ProjectPermission::hasPermissionInProject('tasks.edit', $task->project_id)) {
+            return response()->json(['error' => 'Bạn không có quyền cập nhật công việc trong dự án này!'], 403);
+        }
+
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255',
             'start_date' => 'sometimes|required',
@@ -171,6 +199,11 @@ class TaskController extends Controller
      */
     public function destroy(Task $task)
     {
+        // Kiểm tra nếu người dùng có quyền xóa công việc trong dự án
+        if (!ProjectPermission::hasPermissionInProject('tasks.delete', $task->project_id)) {
+            return response()->json(['error' => 'Bạn không có quyền xóa công việc trong dự án này!'], 403);
+        }
+
         $task->deleted_at = now();
         $task->save();
 
@@ -187,14 +220,26 @@ class TaskController extends Controller
      */
     public function trash(Request $request)
     {
-        // Lấy tất cả các dự án
-        $projects = Project::query()->whereNull('deleted_at')->orderBy('name')->get();
+        // Lấy danh sách các dự án mà người dùng có quyền xem công việc
+        $projectIds = ProjectPermission::getProjectsWithPermission('tasks.trash');
+
+        // Lấy tất cả các dự án mà người dùng có quyền
+        $projects = Project::query()
+            ->whereIn('id', $projectIds)
+            ->whereNull('deleted_at')
+            ->orderBy('name')
+            ->get();
 
         // Kiểm tra nếu có project_id trong query param
         $projectId = $request->query('project_id');
         $defaultProject = null;
 
         if ($projectId) {
+            // Kiểm tra nếu người dùng có quyền xem dự án được chọn
+            if (!in_array($projectId, $projectIds)) {
+                return redirect()->route('tasks.trash')->with('error', 'Bạn không có quyền xem công việc đã xóa của dự án này!');
+            }
+
             // Tìm dự án theo ID
             $defaultProject = $projects->firstWhere('id', $projectId);
         }
@@ -215,6 +260,11 @@ class TaskController extends Controller
      */
     public function getDeletedTasksByProject(Project $project)
     {
+        // Kiểm tra nếu người dùng có quyền xem công việc đã xóa của dự án
+        if (!ProjectPermission::hasPermissionInProject('tasks.trash', $project->id)) {
+            return redirect()->route('tasks.trash')->with('error', 'Bạn không có quyền xem công việc đã xóa của dự án này!');
+        }
+
         // Lấy tất cả các công việc đã xóa của dự án
         $tasks = Task::withTrashed()
             ->where('project_id', $project->id)
@@ -245,6 +295,12 @@ class TaskController extends Controller
     public function restore($id)
     {
         $task = Task::withTrashed()->findOrFail($id);
+
+        // Kiểm tra nếu người dùng có quyền khôi phục công việc trong dự án
+        if (!ProjectPermission::hasPermissionInProject('tasks.trash', $task->project_id)) {
+            return redirect()->back()->with('error', 'Bạn không có quyền khôi phục công việc trong dự án này!');
+        }
+
         $task->deleted_at = null;
         $task->save();
 
@@ -262,6 +318,12 @@ class TaskController extends Controller
     public function forceDelete($id)
     {
         $task = Task::withTrashed()->findOrFail($id);
+
+        // Kiểm tra nếu người dùng có quyền xóa vĩnh viễn công việc trong dự án
+        if (!ProjectPermission::hasPermissionInProject('tasks.trash', $task->project_id)) {
+            return redirect()->back()->with('error', 'Bạn không có quyền xóa vĩnh viễn công việc trong dự án này!');
+        }
+
         $parentId = $task->parent_id;
 
         // Xóa vĩnh viễn task
@@ -280,6 +342,11 @@ class TaskController extends Controller
      */
     public function show(Task $task)
     {
+        // Kiểm tra nếu người dùng có quyền xem chi tiết công việc trong dự án
+        if (!ProjectPermission::hasPermissionInProject('tasks.view', $task->project_id)) {
+            return response()->json(['error' => 'Bạn không có quyền xem chi tiết công việc trong dự án này!'], 403);
+        }
+
         // Load dự án và các quan hệ liên quan
         $task->load(['project', 'parent', 'creator', 'updater']);
 
@@ -349,6 +416,11 @@ class TaskController extends Controller
         ]);
 
         $task = Task::findOrFail($validated['id']);
+
+        // Kiểm tra nếu người dùng có quyền di chuyển công việc trong dự án
+        if (!ProjectPermission::hasPermissionInProject('tasks.edit', $task->project_id)) {
+            return response()->json(['error' => 'Bạn không có quyền di chuyển công việc trong dự án này!'], 403);
+        }
         $oldParentId = $task->parent_id;
         $oldOrder = $task->order;
         $newParentId = $validated['parent_id'];

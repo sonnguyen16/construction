@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\TaskLink;
 use App\Models\Task;
 use Illuminate\Http\Request;
+use App\Helpers\ProjectPermission;
 
 class TaskLinkController extends Controller
 {
@@ -19,9 +20,14 @@ class TaskLinkController extends Controller
             'type' => 'required|integer|min:0|max:3',
         ]);
 
+        $task = Task::find($validated['source_id']);
+        if (!ProjectPermission::hasPermissionInProject('tasks.edit', $task->project_id)) {
+            return response()->json(['error' => 'Bạn không có quyền tạo liên kết giữa các công việc'], 403);
+        }
+
         // Kiểm tra source_id và target_id không được trùng nhau
         if ($validated['source_id'] == $validated['target_id']) {
-            return response()->json(['message' => 'Không thể tạo liên kết đến chính công việc'], 422);
+            return response()->json(['error' => 'Không thể tạo liên kết đến chính công việc'], 422);
         }
 
         // Kiểm tra liên kết đã tồn tại chưa
@@ -30,7 +36,7 @@ class TaskLinkController extends Controller
             ->first();
 
         if ($existingLink) {
-            return response()->json(['message' => 'Liên kết đã tồn tại'], 422);
+            return response()->json(['error' => 'Liên kết đã tồn tại'], 422);
         }
 
         $link = TaskLink::create($validated);
@@ -54,13 +60,18 @@ class TaskLinkController extends Controller
             'type' => 'sometimes|required|integer|min:0|max:3',
         ]);
 
+        $task = Task::find($validated['source_id']);
+        if (!ProjectPermission::hasPermissionInProject('tasks.edit', $task->project_id)) {
+            return response()->json(['error' => 'Bạn không có quyền cập nhật liên kết giữa các công việc'], 403);
+        }
+
         // Kiểm tra source_id và target_id không được trùng nhau
         if (
             (isset($validated['source_id']) && isset($validated['target_id']) && $validated['source_id'] == $validated['target_id']) ||
             (isset($validated['source_id']) && !isset($validated['target_id']) && $validated['source_id'] == $taskLink->target_id) ||
             (isset($validated['target_id']) && !isset($validated['source_id']) && $validated['target_id'] == $taskLink->source_id)
         ) {
-            return response()->json(['message' => 'Không thể tạo liên kết đến chính công việc'], 422);
+            return response()->json(['error' => 'Không thể tạo liên kết đến chính công việc'], 422);
         }
 
         $taskLink->update($validated);
@@ -78,6 +89,10 @@ class TaskLinkController extends Controller
      */
     public function destroy(TaskLink $taskLink)
     {
+        $task = Task::find($taskLink->source_id);
+        if (!ProjectPermission::hasPermissionInProject('tasks.edit', $task->project_id)) {
+            return response()->json(['error' => 'Bạn không có quyền xóa liên kết giữa các công việc'], 403);
+        }
         $taskLink->delete();
         return response()->json(['success' => true]);
     }

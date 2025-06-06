@@ -63,10 +63,18 @@
               <div class="text-sm text-gray-500">{{ task.deleted_at }}</div>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-              <button @click="restoreTask(task.id)" class="text-indigo-600 hover:text-indigo-900 mr-3">
+              <button
+                v-if="canInProject('tasks.trash', selectedProject.value || defaultProject.id)"
+                @click="restoreTask(task.id)"
+                class="text-indigo-600 hover:text-indigo-900 mr-3"
+              >
                 <i class="fas fa-trash-restore mr-1"></i> Khôi phục
               </button>
-              <button @click="confirmDelete(task)" class="text-red-600 hover:text-red-900">
+              <button
+                v-if="canInProject('tasks.trash', selectedProject.value || defaultProject.id)"
+                @click="confirmDelete(task)"
+                class="text-red-600 hover:text-red-900"
+              >
                 <i class="fas fa-trash-alt mr-1"></i> Xóa vĩnh viễn
               </button>
             </td>
@@ -80,14 +88,17 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
-import axios from 'axios'
+import { ref, onMounted, watch } from 'vue'
 import { Link } from '@inertiajs/vue3'
+import axios from 'axios'
+import { usePermission } from '@/Composables/usePermission'
+
 const props = defineProps({
   projects: Array,
   defaultProject: Object
 })
 
+const { can, canInProject } = usePermission()
 const selectedProject = ref(null)
 const deletedTasks = ref([])
 const loading = ref(false)

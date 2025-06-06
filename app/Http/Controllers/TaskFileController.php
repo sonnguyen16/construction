@@ -6,6 +6,7 @@ use App\Models\Task;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
+use App\Helpers\ProjectPermission;
 
 class TaskFileController extends Controller
 {
@@ -17,6 +18,10 @@ class TaskFileController extends Controller
      */
     public function index(Task $task)
     {
+        // Kiểm tra nếu người dùng có quyền xem chi tiết công việc trong dự án
+        if (!ProjectPermission::hasPermissionInProject('tasks.resources', $task->project_id)) {
+            return response()->json(['error' => 'Bạn không có quyền xem file công việc trong dự án này!'], 403);
+        }
         // Đảm bảo công việc tồn tại
         if (!$task) {
             abort(404, 'Công việc không tồn tại');

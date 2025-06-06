@@ -28,6 +28,7 @@ class DatabaseSeeder extends Seeder
             ProjectSeeder::class,
             PaymentVoucherSeeder::class,
             ReceiptVoucherSeeder::class,
+            ProjectRoleSeeder::class,
         ]);
     }
 }

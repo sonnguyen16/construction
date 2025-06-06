@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
+use App\Helpers\ProjectPermission;
 
 class LoanController extends Controller
 {
@@ -17,8 +18,12 @@ class LoanController extends Controller
      */
     public function index(Request $request)
     {
+        // Lấy danh sách dự án mà người dùng có quyền xem khoản vay
+        $projectIds = ProjectPermission::getProjectsWithPermission('loans.view');
+
         // Xử lý bộ lọc
         $query = Loan::with(['contractor', 'project', 'creator'])
+
             ->when($request->input('search'), function($query, $search) {
                 $query->where('name', 'like', "%{$search}%");
             })
@@ -26,25 +31,35 @@ class LoanController extends Controller
                 $query->where('contractor_id', $contractor_id);
             })
             ->when($request->input('project_id'), function($query, $project_id) {
-                $query->where('project_id', $project_id);
+                // Kiểm tra xem người dùng có quyền xem khoản vay trong dự án được chọn không
+                if (ProjectPermission::hasPermissionInProject('loans.view', $project_id)) {
+                    $query->where('project_id', $project_id);
+                }
             })
             ->when($request->input('status'), function($query, $status) {
                 $query->where('status', $status);
             })
+            ->whereIn('project_id', $projectIds)
             ->orderBy('created_at', 'desc');
 
         // Phân trang kết quả
         $loans = $query->paginate(10)->withQueryString();
 
+        // Lấy danh sách dự án mà người dùng có quyền xem
+        $projects = Project::whereIn('id', $projectIds)
+            ->orderBy('name')
+            ->get();
+
         return Inertia::render('Loans/Index', [
             'loans' => $loans,
             'contractors' => Contractor::orderBy('name')->get(),
-            'projects' => Project::orderBy('name')->get(),
+            'projects' => $projects,
             'statuses' => [
                 ['value' => 'active', 'label' => 'Đang vay'],
                 ['value' => 'completed', 'label' => 'Đã hoàn thành']
             ],
-            'filters' => $request->only(['search', 'contractor_id', 'project_id', 'status'])
+            'filters' => $request->only(['search', 'contractor_id', 'project_id', 'status']),
+            'defaultProject' => $projects->first() ? $projects->first()->id : null
         ]);
     }
 
@@ -53,8 +68,10 @@ class LoanController extends Controller
      */
     public function create()
     {
+        // Lấy danh sách dự án mà người dùng có quyền tạo khoản vay
+        $projectIds = ProjectPermission::getProjectsWithPermission('loans.create');
         $contractors = Contractor::orderBy('name')->get();
-        $projects = Project::orderBy('name')->get();
+        $projects = Project::whereIn('id', $projectIds)->orderBy('name')->get();
 
         return Inertia::render('Loans/Create', [
             'contractors' => $contractors,
@@ -62,7 +79,8 @@ class LoanController extends Controller
             'statuses' => [
                 ['value' => 'active', 'label' => 'Đang vay'],
                 ['value' => 'completed', 'label' => 'Đã hoàn thành']
-            ]
+            ],
+            'defaultProject' => $projects->first() ? $projects->first()->id : null
         ]);
     }
 
@@ -83,6 +101,12 @@ class LoanController extends Controller
             'notes' => 'nullable|string',
             'contract_file' => 'nullable|file|max:5120' // Tối đa 5MB
         ]);
+
+        // Kiểm tra quyền tạo khoản vay trong dự án
+        if (!ProjectPermission::hasPermissionInProject('loans.create', $validated['project_id'])) {
+            return redirect()->route('loans.index')
+                ->with('error', 'Bạn không có quyền tạo khoản vay trong dự án này.');
+        }
 
         // Xử lý file hợp đồng
         if ($request->hasFile('contract_file')) {
@@ -105,6 +129,12 @@ class LoanController extends Controller
      */
     public function show(Loan $loan)
     {
+        // Kiểm tra quyền xem khoản vay trong dự án
+        if (!ProjectPermission::hasPermissionInProject('loans.view', $loan->project_id)) {
+            return redirect()->route('loans.index')
+                ->with('error', 'Bạn không có quyền xem khoản vay trong dự án này.');
+        }
+
         $loan->load('contractor', 'creator', 'updater');
 
         return Inertia::render('Loans/Show', [
@@ -117,8 +147,17 @@ class LoanController extends Controller
      */
     public function edit(Loan $loan)
     {
+        // Kiểm tra quyền chỉnh sửa khoản vay trong dự án
+        if (!ProjectPermission::hasPermissionInProject('loans.edit', $loan->project_id)) {
+            return redirect()->route('loans.index')
+                ->with('error', 'Bạn không có quyền chỉnh sửa khoản vay trong dự án này.');
+        }
+
         $contractors = Contractor::orderBy('name')->get();
-        $projects = Project::orderBy('name')->get();
+
+        // Lấy danh sách dự án mà người dùng có quyền chỉnh sửa khoản vay
+        $projectIds = ProjectPermission::getProjectsWithPermission('loans.edit');
+        $projects = Project::whereIn('id', $projectIds)->orderBy('name')->get();
 
         return Inertia::render('Loans/Edit', [
             'loan' => $loan->load('contractor', 'project', 'creator', 'updater'),
@@ -136,6 +175,12 @@ class LoanController extends Controller
      */
     public function update(Request $request, Loan $loan)
     {
+        // Kiểm tra quyền chỉnh sửa khoản vay trong dự án hiện tại
+        if (!ProjectPermission::hasPermissionInProject('loans.edit', $loan->project_id)) {
+            return redirect()->route('loans.index')
+                ->with('error', 'Bạn không có quyền chỉnh sửa khoản vay trong dự án này.');
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'project_id' => 'required|exists:projects,id',
@@ -148,6 +193,13 @@ class LoanController extends Controller
             'notes' => 'nullable|string',
             'contract_file' => 'nullable|file|max:5120' // Tối đa 5MB
         ]);
+
+        // Nếu dự án được thay đổi, kiểm tra quyền trong dự án mới
+        if ($loan->project_id != $validated['project_id'] &&
+            !ProjectPermission::hasPermissionInProject('loans.edit', $validated['project_id'])) {
+            return redirect()->route('loans.index')
+                ->with('error', 'Bạn không có quyền chuyển khoản vay sang dự án này.');
+        }
 
         // Xử lý file hợp đồng
         if ($request->hasFile('contract_file')) {
@@ -174,6 +226,12 @@ class LoanController extends Controller
      */
     public function destroy(Loan $loan)
     {
+        // Kiểm tra quyền xóa khoản vay trong dự án
+        if (!ProjectPermission::hasPermissionInProject('loans.delete', $loan->project_id)) {
+            return redirect()->route('loans.index')
+                ->with('error', 'Bạn không có quyền xóa khoản vay trong dự án này.');
+        }
+
         // Xóa file hợp đồng nếu có
         if ($loan->contract_file) {
             Storage::disk('public')->delete($loan->contract_file);
@@ -190,6 +248,11 @@ class LoanController extends Controller
      */
     public function updateStatus(Request $request, Loan $loan)
     {
+        // Kiểm tra quyền cập nhật khoản vay trong dự án
+        if (!ProjectPermission::hasPermissionInProject('loans.edit', $loan->project_id)) {
+            return back()->with('error', 'Bạn không có quyền cập nhật trạng thái khoản vay trong dự án này.');
+        }
+
         $validated = $request->validate([
             'status' => 'required|in:active,completed'
         ]);

@@ -94,11 +94,7 @@
         <nav class="mt-2">
           <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
             <template v-for="item in menuItems">
-              <li
-                v-if="hasMenuAccess(item)"
-                class="nav-item"
-                :class="{ 'menu-open': item && item.children && isMenuActive(item) }"
-              >
+              <li class="nav-item" :class="{ 'menu-open': item && item.children && isMenuActive(item) }">
                 <!-- Menu có submenu -->
                 <template v-if="item.children">
                   <a href="#" class="nav-link" :class="{ active: isMenuActive(item) }">
@@ -110,7 +106,7 @@
                   </a>
                   <ul class="nav nav-treeview">
                     <template v-for="child in item.children">
-                      <li v-if="hasMenuItemAccess(child)" class="nav-item">
+                      <li class="nav-item">
                         <Link :href="child.href" class="nav-link" :class="{ active: child.isActive($page) }">
                           <i :class="[child.icon, 'nav-icon']"></i>
                           <p>{{ child.label }}</p>
@@ -202,19 +198,6 @@ const isMenuActive = (item) => {
   return item.isActive($page)
 }
 
-// Thay đổi hàm hasMenuAccess
-const hasMenuAccess = (menu) => {
-  if (menu.children && menu.children.length > 0) {
-    return menu.children.some((child) => hasMenuItemAccess(child))
-  }
-  return hasMenuItemAccess(menu)
-}
-
-// Thay đổi hàm hasMenuItemAccess
-const hasMenuItemAccess = (menuItem) => {
-  return can(menuItem?.permission || '')
-}
-
 const logout = () => {
   router.post('/logout')
 }
@@ -288,7 +271,6 @@ const menuItems = [
     href: '/',
     icon: 'fas fa-tachometer-alt',
     label: 'Bảng điều khiển',
-    permission: 'dashboard.view',
     isActive(page) {
       return page.component === 'Home'
     }
@@ -304,7 +286,6 @@ const menuItems = [
         href: '/projects',
         icon: 'fas fa-list',
         label: 'Danh sách dự án',
-        permission: 'projects.view',
         isActive(page) {
           return page.component.startsWith('Projects') && !page.component.includes('Categories')
         }
@@ -313,7 +294,6 @@ const menuItems = [
         href: route('project-categories.index'),
         icon: 'fas fa-tags',
         label: 'Danh mục dự án',
-        permission: 'project-categories.view',
         isActive(page) {
           return page.component.startsWith('ProjectCategories')
         }
@@ -339,7 +319,6 @@ const menuItems = [
         href: route('payment-vouchers.index'),
         icon: 'fas fa-money-check-alt',
         label: 'Phiếu chi',
-        permission: 'payment-vouchers.view',
         isActive(page) {
           return page.component.startsWith('PaymentVouchers')
         }
@@ -348,7 +327,6 @@ const menuItems = [
         href: route('receipt-vouchers.index'),
         icon: 'fas fa-money-bill-wave',
         label: 'Phiếu thu',
-        permission: 'receipt-vouchers.view',
         isActive(page) {
           return page.component.startsWith('ReceiptVouchers')
         }
@@ -357,7 +335,6 @@ const menuItems = [
         href: route('payment-categories.index'),
         icon: 'fas fa-tags',
         label: 'Loại chi',
-        permission: 'payment-categories.view',
         isActive(page) {
           return page.component.startsWith('PaymentCategories')
         }
@@ -366,7 +343,6 @@ const menuItems = [
         href: route('receipt-categories.index'),
         icon: 'fas fa-tags',
         label: 'Loại thu',
-        permission: 'receipt-categories.view',
         isActive(page) {
           return page.component.startsWith('ReceiptCategories')
         }
@@ -375,7 +351,6 @@ const menuItems = [
         href: route('reports.financial'),
         icon: 'fas fa-chart-pie',
         label: 'Báo cáo thu chi',
-        permission: 'reports.financial',
         isActive(page) {
           return page.component === 'Reports/Financial'
         }
@@ -384,7 +359,6 @@ const menuItems = [
         href: route('reports.contractor-debt'),
         icon: 'fas fa-file-invoice-dollar',
         label: 'Công nợ nhà cung cấp',
-        permission: 'reports.contractor-debt',
         isActive(page) {
           return page.component === 'Reports/ContractorDebt'
         }
@@ -393,7 +367,6 @@ const menuItems = [
         href: route('reports.customer-debt'),
         icon: 'fas fa-hand-holding-usd',
         label: 'Công nợ khách hàng',
-        permission: 'reports.customer-debt',
         isActive(page) {
           return page.component === 'Reports/CustomerDebt'
         }
@@ -402,7 +375,6 @@ const menuItems = [
         href: route('loans.index'),
         icon: 'fas fa-money-bill-wave',
         label: 'Khoản vay',
-        permission: 'loans.view',
         isActive(page) {
           return page.component.startsWith('Loans')
         }
@@ -426,7 +398,6 @@ const menuItems = [
         href: route('products.index'),
         icon: 'fas fa-boxes',
         label: 'Sản phẩm',
-        permission: 'products.view',
         isActive(page) {
           return page.component.startsWith('Products')
         }
@@ -435,7 +406,6 @@ const menuItems = [
         href: route('categories.index'),
         icon: 'fas fa-tags',
         label: 'Loại sản phẩm',
-        permission: 'categories.view',
         isActive(page) {
           return page.component.startsWith('Categories')
         }
@@ -444,7 +414,6 @@ const menuItems = [
         href: route('units.index'),
         icon: 'fas fa-ruler',
         label: 'Đơn vị tính',
-        permission: 'units.view',
         isActive(page) {
           return page.component.startsWith('Units')
         }
@@ -453,7 +422,6 @@ const menuItems = [
         href: route('import-vouchers.index'),
         icon: 'fas fa-file-import',
         label: 'Phiếu nhập kho',
-        permission: 'import-vouchers.view',
         isActive(page) {
           return page.component.startsWith('ImportVouchers')
         }
@@ -462,7 +430,6 @@ const menuItems = [
         href: route('export-vouchers.index'),
         icon: 'fas fa-file-export',
         label: 'Phiếu xuất kho',
-        permission: 'export-vouchers.view',
         isActive(page) {
           return page.component.startsWith('ExportVouchers')
         }
@@ -472,7 +439,6 @@ const menuItems = [
   {
     label: 'Quản lý công việc',
     icon: 'fas fa-tasks',
-    permission: 'tasks.view',
     isActive(page) {
       return page.component.startsWith('Tasks')
     },
@@ -482,7 +448,6 @@ const menuItems = [
     href: '/contractors',
     icon: 'fas fa-hard-hat',
     label: 'Quản lý nhà thầu',
-    permission: 'contractors.view',
     isActive(page) {
       return page.component.startsWith('Contractors')
     }
@@ -491,7 +456,6 @@ const menuItems = [
     href: route('customers.index'),
     icon: 'fas fa-users',
     label: 'Quản lý khách hàng',
-    permission: 'customers.view',
     isActive(page) {
       return page.component.startsWith('Customers')
     }
@@ -507,7 +471,6 @@ const menuItems = [
         href: '/users',
         icon: 'fas fa-users',
         label: 'Quản lý người dùng',
-        permission: 'users.view',
         isActive(page) {
           return page.component.startsWith('Users')
         }
@@ -516,7 +479,6 @@ const menuItems = [
         href: route('roles.index'),
         icon: 'fas fa-user-tag',
         label: 'Vai trò & Phân quyền',
-        permission: 'roles.view',
         isActive(page) {
           return page.component.startsWith('Roles')
         }

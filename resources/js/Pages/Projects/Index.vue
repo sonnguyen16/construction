@@ -10,7 +10,7 @@
         <div class="card">
           <div class="card-header">
             <div class="d-flex justify-content-between align-items-center">
-              <Link v-if="can('projects.create')" :href="route('projects.create')" class="btn btn-primary">
+              <Link v-if="user.id === 1" :href="route('projects.create')" class="btn btn-primary">
                 <i class="fas fa-plus mr-1"></i> Thêm dự án
               </Link>
               <div class="d-flex">
@@ -38,7 +38,7 @@
               </div>
             </div>
           </div>
-          <div class="card-body table-responsive p-0">
+          <div style="height: calc(100vh - 300px)" class="card-body table-responsive p-0">
             <table class="table table-hover text-nowrap">
               <thead>
                 <tr>
@@ -85,37 +85,52 @@
                       </button>
                       <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                         <Link
-                          v-if="can('projects.edit')"
+                          v-if="canInProject('projects.edit', project.id)"
                           :href="route('projects.edit', project.id)"
                           class="dropdown-item"
                         >
                           <i class="fas fa-edit"></i> Sửa
                         </Link>
                         <Link
-                          v-if="can('projects.commission')"
+                          v-if="canInProject('projects.commission', project.id)"
                           :href="route('projects.show', project.id)"
                           class="dropdown-item"
                         >
                           <i class="fas fa-eye"></i> Chi tiết
                         </Link>
                         <Link
-                          v-if="can('projects.expenses')"
+                          v-if="canInProject('projects.expenses', project.id)"
                           :href="route('projects.expenses', project.id)"
                           class="dropdown-item"
                         >
                           <i class="fas fa-money-bill"></i> Chi phí
                         </Link>
                         <Link
-                          v-if="can('projects.profit')"
+                          v-if="canInProject('projects.profit', project.id)"
                           :href="route('projects.profit', project.id)"
                           class="dropdown-item"
                         >
                           <i class="fas fa-chart-line"></i> Lợi nhuận
                         </Link>
-                        <Link :href="route('projects.files', project.id)" class="dropdown-item">
+                        <Link
+                          v-if="canInProject('projects.files', project.id)"
+                          :href="route('projects.files', project.id)"
+                          class="dropdown-item"
+                        >
                           <i class="fas fa-file"></i> Files
                         </Link>
-                        <button v-if="can('projects.delete')" @click="confirmDelete(project)" class="dropdown-item">
+                        <Link
+                          v-if="canInProject('permissions.view', project.id)"
+                          :href="route('projects.roles.index', project.id)"
+                          class="dropdown-item"
+                        >
+                          <i class="fas fa-user-shield"></i> Phân quyền
+                        </Link>
+                        <button
+                          v-if="canInProject('projects.delete', project.id)"
+                          @click="confirmDelete(project)"
+                          class="dropdown-item"
+                        >
                           <i class="fas fa-trash"></i> Xóa
                         </button>
                       </div>
@@ -181,7 +196,9 @@ const props = defineProps({
   statuses: Object
 })
 
-const { can } = usePermission()
+// Sử dụng composable usePermission với các hàm kiểm tra quyền theo dự án
+const { page, canInProject } = usePermission()
+const user = page.props.auth.user
 
 const search = ref(props.filters?.search || '')
 const status = ref(props.filters?.status || 'all')

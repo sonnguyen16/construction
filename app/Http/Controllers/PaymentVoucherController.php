@@ -7,6 +7,7 @@ use App\Models\Contractor;
 use App\Models\BidPackage;
 use App\Models\Project;
 use App\Models\PaymentCategory;
+use App\Helpers\ProjectPermission;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -103,6 +104,20 @@ class PaymentVoucherController extends Controller
             $statsQuery->whereDate('payment_date', '<=', $request->date_to);
         }
 
+        // Lấy danh sách các dự án mà người dùng có quyền xem phiếu chi
+        $projectIds = ProjectPermission::getProjectsWithPermission('payment-vouchers.view');
+
+        // Áp dụng phân quyền theo dự án (phải để cuối cùng để tránh bypass)
+        $query->where(function($q) use ($projectIds) {
+            $q->whereIn('project_id', $projectIds)
+              ->orWhereNull('project_id'); // Cho phép xem phiếu chi không thuộc dự án nào
+        });
+
+        $statsQuery->where(function($q) use ($projectIds) {
+            $q->whereIn('project_id', $projectIds)
+              ->orWhereNull('project_id');
+        });
+
         // Tính toán thống kê dựa trên các filter đã áp dụng
         $totalPaymentCount = $statsQuery->count();
         $totalPaymentAmount = clone $statsQuery;
@@ -121,8 +136,13 @@ class PaymentVoucherController extends Controller
 
         // Lấy danh sách nhà thầu và gói thầu cho bộ lọc
         $contractors = Contractor::orderBy('name')->whereNull('deleted_at')->get();
-        $projects = Project::orderBy('name')->whereNull('deleted_at')->get();
-        $bidPackages = BidPackage::orderBy('created_at', 'desc')->whereNull('deleted_at')->get();
+        $projects = Project::orderBy('name')->whereNull('deleted_at')->whereIn('id', $projectIds)->get();
+        $bidPackages = BidPackage::orderBy('created_at', 'desc')->whereNull('deleted_at')
+            ->where(function($q) use ($projectIds) {
+                $q->whereIn('project_id', $projectIds)
+                  ->orWhereNull('project_id');
+            })
+            ->get();
         $paymentCategories = PaymentCategory::orderBy('name')->get();
 
         return Inertia::render('PaymentVouchers/Index', [
@@ -145,6 +165,9 @@ class PaymentVoucherController extends Controller
      */
     public function create()
     {
+        // Lấy danh sách các dự án mà người dùng có quyền tạo phiếu chi
+        $projectIds = ProjectPermission::getProjectsWithPermission('payment-vouchers.create');
+
         $contractors = Contractor::select('id', 'name', 'phone')
             ->orderBy('name')
             ->whereNull('deleted_at')
@@ -153,11 +176,16 @@ class PaymentVoucherController extends Controller
         $projects = Project::select('id', 'name', 'code')
             ->orderBy('name')
             ->whereNull('deleted_at')
+            ->whereIn('id', $projectIds)
             ->get();
 
         $bidPackages = BidPackage::select('id', 'project_id', 'name', 'code')
             ->with('project:id,name')
             ->whereNull('deleted_at')
+            ->where(function($query) use ($projectIds) {
+                $query->whereIn('project_id', $projectIds)
+                      ->orWhereNull('project_id');
+            })
             ->get()
             ->map(function ($bidPackage) {
                 $bidPackage->display_name = "{$bidPackage->code} - {$bidPackage->name}";
@@ -184,6 +212,11 @@ class PaymentVoucherController extends Controller
      */
     public function store(Request $request)
     {
+        // Kiểm tra quyền tạo phiếu chi theo dự án
+        if ($request->project_id && !ProjectPermission::hasPermissionInProject('payment-vouchers.create', $request->project_id)) {
+            return redirect()->back()->with('error', 'Bạn không có quyền tạo phiếu chi cho dự án này!');
+        }
+
         $rules = [
             'contractor_id' => 'required|exists:contractors,id',
             'project_id' => 'nullable|exists:projects,id',
@@ -227,6 +260,12 @@ class PaymentVoucherController extends Controller
      */
     public function show(PaymentVoucher $paymentVoucher)
     {
+        // Kiểm tra quyền xem phiếu chi theo dự án
+        if ($paymentVoucher->project_id && !ProjectPermission::hasPermissionInProject('payment-vouchers.view', $paymentVoucher->project_id)) {
+            return redirect()->route('payment-vouchers.index')
+                ->with('error', 'Bạn không có quyền xem phiếu chi này!');
+        }
+
         $paymentVoucher->load(['contractor', 'project', 'bidPackage', 'creator', 'updater', 'paymentCategory']);
 
         return Inertia::render('PaymentVouchers/Show', [
@@ -240,11 +279,25 @@ class PaymentVoucherController extends Controller
      */
     public function edit(PaymentVoucher $paymentVoucher)
     {
+        // Kiểm tra quyền chỉnh sửa phiếu chi theo dự án
+        if ($paymentVoucher->project_id && !ProjectPermission::hasPermissionInProject('payment-vouchers.edit', $paymentVoucher->project_id)) {
+            return redirect()->route('payment-vouchers.index')
+                ->with('error', 'Bạn không có quyền chỉnh sửa phiếu chi này!');
+        }
+
         $paymentVoucher->load(['contractor', 'bidPackage', 'creator', 'updater', 'paymentCategory']);
 
+        // Lấy danh sách các dự án mà người dùng có quyền chỉnh sửa phiếu chi
+        $projectIds = ProjectPermission::getProjectsWithPermission('payment-vouchers.edit');
+
         $contractors = Contractor::orderBy('name')->whereNull('deleted_at')->get();
-        $projects = Project::orderBy('name')->whereNull('deleted_at')-> get();
-        $bidPackages = BidPackage::with('project')->orderBy('created_at', 'desc')->get();
+        $projects = Project::orderBy('name')->whereNull('deleted_at')->whereIn('id', $projectIds)->get();
+        $bidPackages = BidPackage::with('project')->orderBy('created_at', 'desc')
+            ->where(function($query) use ($projectIds) {
+                $query->whereIn('project_id', $projectIds)
+                      ->orWhereNull('project_id');
+            })
+            ->get();
         $paymentCategories = PaymentCategory::orderBy('name')->get();
 
         return Inertia::render('PaymentVouchers/Edit', [
@@ -262,6 +315,19 @@ class PaymentVoucherController extends Controller
      */
     public function update(Request $request, PaymentVoucher $paymentVoucher)
     {
+        // Kiểm tra quyền chỉnh sửa phiếu chi theo dự án hiện tại
+        if ($paymentVoucher->project_id && !ProjectPermission::hasPermissionInProject('payment-vouchers.edit', $paymentVoucher->project_id)) {
+            return redirect()->route('payment-vouchers.index')
+                ->with('error', 'Bạn không có quyền chỉnh sửa phiếu chi này!');
+        }
+
+        // Kiểm tra quyền nếu đang chuyển phiếu chi sang dự án khác
+        if ($request->project_id && $request->project_id != $paymentVoucher->project_id
+            && !ProjectPermission::hasPermissionInProject('payment-vouchers.edit', $request->project_id)) {
+            return redirect()->back()
+                ->with('error', 'Bạn không có quyền chuyển phiếu chi sang dự án này!');
+        }
+
         $rules = [
             'contractor_id' => 'required|exists:contractors,id',
             'project_id' => 'nullable|exists:projects,id',
@@ -308,6 +374,12 @@ class PaymentVoucherController extends Controller
      */
     public function destroy(PaymentVoucher $paymentVoucher)
     {
+        // Kiểm tra quyền xóa phiếu chi theo dự án
+        if ($paymentVoucher->project_id && !ProjectPermission::hasPermissionInProject('payment-vouchers.delete', $paymentVoucher->project_id)) {
+            return redirect()->route('payment-vouchers.index')
+                ->with('error', 'Bạn không có quyền xóa phiếu chi này!');
+        }
+
         $paymentVoucher->deleted_at = now();
         $paymentVoucher->save();
 
@@ -320,6 +392,11 @@ class PaymentVoucherController extends Controller
      */
     public function updateStatus(Request $request, PaymentVoucher $paymentVoucher)
     {
+        // Kiểm tra quyền cập nhật trạng thái phiếu chi theo dự án
+        if ($paymentVoucher->project_id && !ProjectPermission::hasPermissionInProject('payment-vouchers.update-status', $paymentVoucher->project_id)) {
+            return back()->with('error', 'Bạn không có quyền cập nhật trạng thái phiếu chi này!');
+        }
+
         $validated = $request->validate([
             'status' => 'required',
             'payment_date' => 'nullable|date'
@@ -350,6 +427,12 @@ class PaymentVoucherController extends Controller
      */
     public function print(PaymentVoucher $paymentVoucher)
     {
+        // Kiểm tra quyền in phiếu chi theo dự án
+        if ($paymentVoucher->project_id && !ProjectPermission::hasPermissionInProject('payment-vouchers.print', $paymentVoucher->project_id)) {
+            return redirect()->route('payment-vouchers.index')
+                ->with('error', 'Bạn không có quyền in phiếu chi này!');
+        }
+
         $paymentVoucher->load(['contractor', 'project', 'bidPackage', 'creator']);
 
         // Chuyển đổi số tiền thành chữ

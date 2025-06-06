@@ -3,7 +3,6 @@
     <template #header>{{ project.name }}</template>
     <template #breadcrumb>Chi phí dự án</template>
 
-
     <!-- Thông tin dự án -->
     <div class="row">
       <div class="col-md-12">
@@ -11,7 +10,7 @@
           <div class="card-header">
             <h3 class="card-title">Chi phí dự án</h3>
             <div class="card-tools">
-              <Link :href="route('projects.show', project.id)" class="btn btn-sm btn-info">
+              <Link :href="route('projects.index')" class="btn btn-sm btn-info">
                 <i class="fas fa-arrow-left"></i> Quay lại
               </Link>
             </div>
@@ -39,7 +38,11 @@
                   <td>{{ bidPackage.code }}</td>
                   <td>
                     <div class="d-flex align-items-center">
-                      <button @click="openEditBidPackageModal(bidPackage)" class="btn btn-sm btn-info mr-2">
+                      <button
+                        v-if="canInProject('bid-packages.edit', project.id)"
+                        @click="openEditBidPackageModal(bidPackage)"
+                        class="btn btn-sm btn-info mr-2"
+                      >
                         <i class="fas fa-edit"></i>
                       </button>
                       {{ bidPackage.name }}
@@ -52,29 +55,40 @@
                   <td class="">
                     <div class="text-right" v-if="getPaymentVoucherAtIndex(bidPackage, 0)">
                       <button
+                        v-if="canInProject('payment-vouchers.view', project.id)"
                         @click="viewPaymentVoucher(getPaymentVoucherAtIndex(bidPackage, 0))"
                         class="btn font-bold pt-0 pe-0"
                       >
                         {{ formatCurrency(getPaymentVoucherAtIndex(bidPackage, 0).amount) }}
                       </button>
+                      <span v-else>{{ formatCurrency(getPaymentVoucherAtIndex(bidPackage, 0).amount) }}</span>
                     </div>
-                    <button v-else @click="goToCreatePaymentVoucher(bidPackage)" class="btn btn-sm btn-success">
+                    <button
+                      v-else-if="canInProject('payment-vouchers.create', project.id)"
+                      @click="goToCreatePaymentVoucher(bidPackage)"
+                      class="btn btn-sm btn-success"
+                    >
                       <i class="fas fa-plus me-1 mb-1"></i> Tạo
                     </button>
+                    <span v-else>-</span>
                   </td>
 
                   <!-- Chi lần 2 -->
                   <td class="">
                     <div class="text-right" v-if="getPaymentVoucherAtIndex(bidPackage, 1)">
                       <button
+                        v-if="canInProject('payment-vouchers.view', project.id)"
                         @click="viewPaymentVoucher(getPaymentVoucherAtIndex(bidPackage, 1))"
                         class="btn font-bold pt-0 pe-0"
                       >
                         {{ formatCurrency(getPaymentVoucherAtIndex(bidPackage, 1).amount) }}
                       </button>
+                      <span v-else>{{ formatCurrency(getPaymentVoucherAtIndex(bidPackage, 1).amount) }}</span>
                     </div>
                     <button
-                      v-else-if="getPaymentVoucherAtIndex(bidPackage, 0)"
+                      v-else-if="
+                        getPaymentVoucherAtIndex(bidPackage, 0) && canInProject('payment-vouchers.create', project.id)
+                      "
                       @click="goToCreatePaymentVoucher(bidPackage)"
                       class="btn btn-sm btn-success"
                     >
@@ -87,14 +101,18 @@
                   <td class="">
                     <div class="text-right" v-if="getPaymentVoucherAtIndex(bidPackage, 2)">
                       <button
+                        v-if="canInProject('payment-vouchers.view', project.id)"
                         @click="viewPaymentVoucher(getPaymentVoucherAtIndex(bidPackage, 2))"
                         class="btn font-bold pt-0 pe-0"
                       >
                         {{ formatCurrency(getPaymentVoucherAtIndex(bidPackage, 2).amount) }}
                       </button>
+                      <span v-else>{{ formatCurrency(getPaymentVoucherAtIndex(bidPackage, 2).amount) }}</span>
                     </div>
                     <button
-                      v-else-if="getPaymentVoucherAtIndex(bidPackage, 1)"
+                      v-else-if="
+                        getPaymentVoucherAtIndex(bidPackage, 1) && canInProject('payment-vouchers.create', project.id)
+                      "
                       @click="goToCreatePaymentVoucher(bidPackage)"
                       class="btn btn-sm btn-success"
                     >
@@ -114,7 +132,9 @@
                       </button>
                     </div>
                     <button
-                      v-else-if="getPaymentVoucherAtIndex(bidPackage, 2)"
+                      v-else-if="
+                        getPaymentVoucherAtIndex(bidPackage, 2) && canInProject('payment-vouchers.create', project.id)
+                      "
                       @click="goToCreatePaymentVoucher(bidPackage)"
                       class="btn btn-sm btn-success"
                     >
@@ -134,7 +154,9 @@
                       </button>
                     </div>
                     <button
-                      v-else-if="getPaymentVoucherAtIndex(bidPackage, 3)"
+                      v-else-if="
+                        getPaymentVoucherAtIndex(bidPackage, 3) && canInProject('payment-vouchers.create', project.id)
+                      "
                       @click="goToCreatePaymentVoucher(bidPackage)"
                       class="btn btn-sm btn-success"
                     >
@@ -259,7 +281,7 @@
             <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
             <button
               @click="editPaymentVoucher(selectedPaymentVoucher)"
-              v-if="selectedPaymentVoucher"
+              v-if="selectedPaymentVoucher && canInProject('payment-vouchers.edit', project.id)"
               class="btn btn-primary"
             >
               <i class="fas fa-edit"></i> Sửa phiếu chi
@@ -395,12 +417,13 @@ import {
   parseCurrency,
   formatNumberInput
 } from '@/utils'
+import { usePermission } from '@/Composables/usePermission'
 
 const props = defineProps({
   project: Object
 })
 
-
+const { canInProject } = usePermission()
 
 const selectedPaymentVoucher = ref(null)
 const selectedBidPackage = ref(null)

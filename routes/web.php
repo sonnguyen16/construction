@@ -27,6 +27,7 @@ use App\Http\Controllers\TaskFileController;
 use App\Http\Controllers\TaskUserController;
 use App\Http\Controllers\TaskProductController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\ProjectRoleController;
 
 /*
 |--------------------------------------------------------------------------
@@ -53,6 +54,11 @@ Route::middleware('auth')->group(function () {
     Route::resource('contractors', ContractorController::class);
     // Quản lý dự án
     Route::resource('projects', ProjectController::class);
+    
+    // Quản lý phân quyền theo dự án
+    Route::get('projects/{project}/roles', [ProjectRoleController::class, 'index'])->name('projects.roles.index');
+    Route::post('projects/{project}/roles', [ProjectRoleController::class, 'store'])->name('projects.roles.store');
+    Route::delete('projects/{project}/roles/{projectRole}', [ProjectRoleController::class, 'destroy'])->name('projects.roles.destroy');
     // Quản lý gói thầu
     Route::post('projects/{project}/bid-packages', [BidPackageController::class, 'store'])->name('bid-packages.store');
     Route::put('bid-packages/{bidPackage}', [BidPackageController::class, 'update'])->name('bid-packages.update');

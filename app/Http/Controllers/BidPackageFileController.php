@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\BidPackage;
-use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
+use App\Helpers\ProjectPermission;
 
 class BidPackageFileController extends Controller
 {
@@ -17,6 +17,9 @@ class BidPackageFileController extends Controller
      */
     public function index(BidPackage $bidPackage)
     {
+        if (!ProjectPermission::hasPermissionInProject('bid-packages.files', $bidPackage->project_id)) {
+            return redirect()->back()->with('error', 'Bạn không có quyền xem gói thầu.');
+        }
         // Đảm bảo gói thầu tồn tại
         if (!$bidPackage) {
             abort(404, 'Gói thầu không tồn tại');

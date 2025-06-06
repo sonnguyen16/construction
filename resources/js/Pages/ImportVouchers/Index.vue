@@ -9,11 +9,7 @@
           <div class="card-header">
             <h3 class="card-title">Danh sách phiếu nhập kho</h3>
             <div class="card-tools">
-              <Link
-                v-if="can('import-vouchers.create')"
-                :href="route('import-vouchers.create')"
-                class="btn btn-sm btn-primary"
-              >
+              <Link :href="route('import-vouchers.create')" class="btn btn-sm btn-primary">
                 <i class="fas fa-plus"></i> Thêm phiếu nhập kho mới
               </Link>
             </div>
@@ -84,21 +80,21 @@
                     <td>
                       <div class="btn-group">
                         <Link
-                          v-if="can('import-vouchers.view')"
+                          v-if="canInProject('import-vouchers.view', voucher.project_id)"
                           :href="route('import-vouchers.show', voucher.id)"
                           class="btn btn-xs btn-info"
                         >
                           <i class="fas fa-eye"></i> Xem
                         </Link>
                         <Link
-                          v-if="can('import-vouchers.edit')"
+                          v-if="canInProject('import-vouchers.edit', voucher.project_id)"
                           :href="route('import-vouchers.edit', voucher.id)"
                           class="btn btn-xs btn-primary"
                         >
                           <i class="fas fa-edit"></i> Sửa
                         </Link>
                         <button
-                          v-if="can('import-vouchers.delete')"
+                          v-if="canInProject('import-vouchers.delete', voucher.project_id)"
                           @click="confirmDelete(voucher)"
                           class="btn btn-xs btn-danger"
                         >
@@ -138,7 +134,7 @@ const props = defineProps({
   filters: Object
 })
 
-const { can } = usePermission()
+const { canInProject } = usePermission()
 
 const search = ref(props.filters?.search || '')
 const selectedProject = ref(props.filters?.project_id || '')

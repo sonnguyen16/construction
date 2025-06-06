@@ -50,11 +50,7 @@
           <div class="card-header">
             <h3 class="card-title">Danh sách phiếu thu</h3>
             <div class="card-tools">
-              <Link 
-                v-if="can('receipt-vouchers.create')" 
-                :href="route('receipt-vouchers.create')" 
-                class="btn btn-sm btn-primary"
-              >
+              <Link :href="route('receipt-vouchers.create')" class="btn btn-sm btn-primary">
                 <i class="fas fa-plus"></i> Tạo phiếu thu mới
               </Link>
             </div>
@@ -202,35 +198,35 @@
                     <td>{{ formatDate(voucher.created_at) }}</td>
                     <td>
                       <div class="btn-group">
-                        <Link 
-                          v-if="can('receipt-vouchers.view')" 
-                          :href="route('receipt-vouchers.show', voucher.id)" 
+                        <Link
+                          v-if="voucher.project_id ? canInProject('receipt-vouchers.view', voucher.project_id) : true"
+                          :href="route('receipt-vouchers.show', voucher.id)"
                           class="btn btn-xs btn-info"
                         >
                           <i class="fas fa-eye"></i>
                         </Link>
-                        <Link 
-                          v-if="can('receipt-vouchers.edit')" 
-                          :href="route('receipt-vouchers.edit', voucher.id)" 
+                        <Link
+                          v-if="voucher.project_id ? canInProject('receipt-vouchers.edit', voucher.project_id) : true"
+                          :href="route('receipt-vouchers.edit', voucher.id)"
                           class="btn btn-xs btn-primary"
                         >
                           <i class="fas fa-edit"></i>
                         </Link>
-                        <button 
-                          v-if="can('receipt-vouchers.delete')" 
-                          @click="confirmDelete(voucher)" 
+                        <button
+                          v-if="voucher.project_id ? canInProject('receipt-vouchers.delete', voucher.project_id) : true"
+                          @click="confirmDelete(voucher)"
                           class="btn btn-xs btn-danger"
                         >
                           <i class="fas fa-trash"></i>
                         </button>
-                        <a
-                          v-if="can('receipt-vouchers.print')"
-                          :href="`/receipt-vouchers/${voucher.id}/print`"
+                        <Link
+                          v-if="voucher.project_id ? canInProject('receipt-vouchers.print', voucher.project_id) : true"
+                          :href="route('receipt-vouchers.print', voucher.id)"
                           target="_blank"
                           class="btn btn-xs btn-secondary"
                         >
                           <i class="fas fa-print"></i>
-                        </a>
+                        </Link>
                       </div>
                     </td>
                   </tr>
@@ -260,7 +256,7 @@ import debounce from 'lodash/debounce'
 import { usePermission } from '@/Composables/usePermission'
 
 // Sử dụng composable phân quyền
-const { can } = usePermission()
+const { canInProject } = usePermission()
 
 const props = defineProps({
   receiptVouchers: Object,

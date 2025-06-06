@@ -60,11 +60,7 @@
           <div class="card-header">
             <h3 class="card-title">Danh sách phiếu chi</h3>
             <div class="card-tools">
-              <Link 
-                v-if="can('payment-vouchers.create')" 
-                :href="route('payment-vouchers.create')" 
-                class="btn btn-sm btn-primary"
-              >
+              <Link :href="route('payment-vouchers.create')" class="btn btn-sm btn-primary">
                 <i class="fas fa-plus"></i> Tạo phiếu chi mới
               </Link>
             </div>
@@ -245,29 +241,45 @@
                     </td>
                     <td>
                       <div class="btn-group">
-                        <Link 
-                          v-if="can('payment-vouchers.view')" 
-                          :href="route('payment-vouchers.show', voucher.id)" 
+                        <Link
+                          v-if="
+                            voucher.bid_package && voucher.bid_package.project
+                              ? canInProject('payment-vouchers.view', voucher.bid_package.project.id)
+                              : true
+                          "
+                          :href="route('payment-vouchers.show', voucher.id)"
                           class="btn btn-xs btn-info"
                         >
                           <i class="fas fa-eye"></i>
                         </Link>
-                        <Link 
-                          v-if="can('payment-vouchers.edit')" 
-                          :href="route('payment-vouchers.edit', voucher.id)" 
+                        <Link
+                          v-if="
+                            voucher.bid_package && voucher.bid_package.project
+                              ? canInProject('payment-vouchers.edit', voucher.bid_package.project.id)
+                              : true
+                          "
+                          :href="route('payment-vouchers.edit', voucher.id)"
                           class="btn btn-xs btn-primary"
                         >
                           <i class="fas fa-edit"></i>
                         </Link>
-                        <button 
-                          v-if="can('payment-vouchers.delete')" 
-                          @click="confirmDelete(voucher)" 
+                        <button
+                          v-if="
+                            voucher.bid_package && voucher.bid_package.project
+                              ? canInProject('payment-vouchers.delete', voucher.bid_package.project.id)
+                              : true
+                          "
+                          @click="confirmDelete(voucher)"
                           class="btn btn-xs btn-danger"
                         >
                           <i class="fas fa-trash"></i>
                         </button>
                         <a
-                          v-if="can('payment-vouchers.print')"
+                          v-if="
+                            voucher.bid_package && voucher.bid_package.project
+                              ? canInProject('payment-vouchers.print', voucher.bid_package.project.id)
+                              : true
+                          "
                           :href="`/payment-vouchers/${voucher.id}/print`"
                           target="_blank"
                           class="btn btn-xs btn-secondary"
@@ -299,7 +311,7 @@ import { Link, router } from '@inertiajs/vue3'
 import { usePermission } from '@/Composables/usePermission'
 
 // Sử dụng composable phân quyền
-const { can } = usePermission()
+const { canInProject } = usePermission()
 import { formatCurrency, formatDate, showConfirm, showSuccess } from '@/utils'
 import { ref, computed, watch } from 'vue'
 import Pagination from '@/Components/Pagination.vue'

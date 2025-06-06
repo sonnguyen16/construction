@@ -49,7 +49,7 @@
           <div class="card-header">
             <h3 class="card-title">Danh sách khoản vay</h3>
             <div class="card-tools">
-              <Link v-if="can('loans.create')" :href="route('loans.create')" class="btn btn-sm btn-primary">
+              <Link :href="route('loans.create')" class="btn btn-sm btn-primary">
                 <i class="fas fa-plus"></i> Thêm khoản vay mới
               </Link>
             </div>
@@ -150,13 +150,21 @@
                     </td>
                     <td>
                       <div class="btn-group">
-                        <!-- <Link v-if="can('loans.view')" :href="route('loans.show', loan.id)" class="btn btn-info btn-sm">
+                        <!-- <Link v-if="canInProject('loans.view', loan.project_id)" :href="route('loans.show', loan.id)" class="btn btn-info btn-sm">
                           <i class="fas fa-eye"></i>
                         </Link> -->
-                        <Link v-if="can('loans.edit')" :href="route('loans.edit', loan.id)" class="btn btn-warning btn-sm">
+                        <Link
+                          v-if="canInProject('loans.edit', loan.project_id)"
+                          :href="route('loans.edit', loan.id)"
+                          class="btn btn-warning btn-sm"
+                        >
                           <i class="fas fa-edit"></i>
                         </Link>
-                        <button v-if="can('loans.delete')" @click="confirmDelete(loan)" class="btn btn-danger btn-sm">
+                        <button
+                          v-if="canInProject('loans.delete', loan.project_id)"
+                          @click="confirmDelete(loan)"
+                          class="btn btn-danger btn-sm"
+                        >
                           <i class="fas fa-trash"></i>
                         </button>
                       </div>
@@ -191,10 +199,11 @@ const props = defineProps({
   contractors: Array,
   projects: Array,
   statuses: Array,
-  filters: Object
+  filters: Object,
+  defaultProject: Number
 })
 
-const { can } = usePermission()
+const { canInProject } = usePermission()
 
 // Tính toán tổng số khoản vay
 const totalLoanCount = computed(() => props.loans.total || 0)

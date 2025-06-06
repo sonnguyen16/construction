@@ -3,7 +3,7 @@
     <template #header>Bảng điều khiển</template>
     <template #breadcrumb>Bảng điều khiển</template>
 
-    <div v-show="can('dashboard.view')">
+    <div>
       <!-- Thống kê tổng quan -->
       <div class="row">
         <!-- Thông tin dự án -->

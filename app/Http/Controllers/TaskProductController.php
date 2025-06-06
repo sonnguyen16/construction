@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\TaskProduct;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use App\Helpers\ProjectPermission;
 
 class TaskProductController extends Controller
 {
@@ -18,6 +19,9 @@ class TaskProductController extends Controller
      */
     public function index(Task $task)
     {
+        if (!ProjectPermission::hasPermissionInProject('tasks.resources', $task->project_id)) {
+            return response()->json(['error' => 'Bạn không có quyền xem vật tư công việc trong dự án này!'], 403);
+        }
         $products = $task->products()
             ->with(['unit', 'category'])
             ->get()
@@ -48,6 +52,9 @@ class TaskProductController extends Controller
      */
     public function store(Request $request, Task $task)
     {
+        if (!ProjectPermission::hasPermissionInProject('tasks.resources', $task->project_id)) {
+            return response()->json(['error' => 'Bạn không có quyền thêm vật tư vào công việc trong dự án này!'], 403);
+        }
         $validator = Validator::make($request->all(), [
             'product_id' => 'required|exists:products,id',
             'duration' => 'required|integer|min:1',
@@ -100,6 +107,9 @@ class TaskProductController extends Controller
      */
     public function update(Request $request, Task $task, Product $product)
     {
+        if (!ProjectPermission::hasPermissionInProject('tasks.resources', $task->project_id)) {
+            return response()->json(['error' => 'Bạn không có quyền cập nhật vật tư công việc trong dự án này!'], 403);
+        }
         $validator = Validator::make($request->all(), [
             'quantity' => 'required|numeric|min:0.01',
             'duration' => 'required|integer|min:1',
@@ -148,6 +158,9 @@ class TaskProductController extends Controller
      */
     public function destroy(Task $task, Product $product)
     {
+        if (!ProjectPermission::hasPermissionInProject('tasks.resources', $task->project_id)) {
+            return response()->json(['error' => 'Bạn không có quyền xóa vật tư công việc trong dự án này!'], 403);
+        }
         // Xóa vật tư khỏi công việc
         $task->products()->detach($product->id);
 

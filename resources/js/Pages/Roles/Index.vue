@@ -41,14 +41,14 @@
                       </td>
                       <td>
                         <div class="btn-group">
-                          <Link
+                          <!-- <Link
                             v-if="user.can.includes('roles.view')"
                             :href="route('roles.show', role.id)"
                             class="btn btn-info btn-sm"
                             title="Xem chi tiết"
                           >
                             <i class="fas fa-eye"></i>
-                          </Link>
+                          </Link> -->
                           <Link
                             v-if="user.can.includes('roles.edit') && role.name !== 'Super Admin'"
                             :href="route('roles.edit', role.id)"
@@ -81,7 +81,14 @@
     </div>
 
     <!-- Modal xác nhận xóa -->
-    <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div
+      class="modal fade"
+      id="deleteModal"
+      tabindex="-1"
+      role="dialog"
+      aria-labelledby="deleteModalLabel"
+      aria-hidden="true"
+    >
       <div class="modal-dialog" role="document">
         <div class="modal-content">
           <div class="modal-header">
@@ -91,7 +98,8 @@
             </button>
           </div>
           <div class="modal-body">
-            Bạn có chắc chắn muốn xóa vai trò <strong>{{ selectedRole?.name }}</strong>?
+            Bạn có chắc chắn muốn xóa vai trò <strong>{{ selectedRole?.name }}</strong
+            >?
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>

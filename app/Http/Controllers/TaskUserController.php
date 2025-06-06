@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\TaskUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use App\Helpers\ProjectPermission;
 
 class TaskUserController extends Controller
 {
@@ -18,6 +19,9 @@ class TaskUserController extends Controller
      */
     public function index(Task $task)
     {
+        if (!ProjectPermission::hasPermissionInProject('tasks.resources', $task->project_id)) {
+            return response()->json(['error' => 'Bạn không có quyền xem người dùng công việc trong dự án này!'], 403);
+        }
         $users = $task->users()
             ->get()
             ->map(function ($user) {
@@ -44,6 +48,9 @@ class TaskUserController extends Controller
      */
     public function store(Request $request, Task $task)
     {
+        if (!ProjectPermission::hasPermissionInProject('tasks.resources', $task->project_id)) {
+            return response()->json(['error' => 'Bạn không có quyền thêm người dùng vào công việc trong dự án này!'], 403);
+        }
         $validator = Validator::make($request->all(), [
             'user_id' => 'required|exists:users,id',
             'duration' => 'required|integer|min:1',
@@ -95,6 +102,9 @@ class TaskUserController extends Controller
      */
     public function destroy(Task $task, User $user, Request $request)
     {
+        if (!ProjectPermission::hasPermissionInProject('tasks.resources', $task->project_id)) {
+            return response()->json(['error' => 'Bạn không có quyền xóa người dùng khỏi công việc trong dự án này!'], 403);
+        }
         $role = $request->query('role', null);
 
         if ($role !== null) {

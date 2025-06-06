@@ -15,7 +15,6 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        // Tạo tài khoản admin và gán vai trò Super Admin
         $admin = User::create([
             'name' => 'Admin',
             'email' => 'admin@example.com',
@@ -24,7 +23,6 @@ class UserSeeder extends Seeder
             'remember_token' => Str::random(10),
             'avatar' => 'https://i.pravatar.cc/150?img=1'
         ]);
-        $admin->assignRole('Super Admin');
 
         // Tạo 20 người dùng fake
         $avatarIds = range(2, 70); // IDs cho pravatar.cc

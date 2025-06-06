@@ -3,7 +3,7 @@
     <template #header>Chi tiết công việc</template>
     <template #breadcrumb>Chi tiết công việc</template>
 
-    <div class="row">
+    <div v-if="canInProject('tasks.resources', project.id)" class="row">
       <!-- Tabs cho Nhân sự, Vật tư và Tài liệu -->
       <div class="col-md-12">
         <div class="card">
@@ -78,6 +78,9 @@
         </div>
       </div>
     </div>
+    <div v-else>
+      <h1 class="text-center">Bạn không có quyền truy cập vào trang này</h1>
+    </div>
   </AdminLayout>
 </template>
 
@@ -88,6 +91,7 @@ import { ref, computed, onMounted } from 'vue'
 import { formatDate } from '@/utils'
 import TaskUsers from './Components/TaskUsers.vue'
 import TaskProducts from './Components/TaskProducts.vue'
+import { usePermission } from '@/Composables/usePermission'
 
 const props = defineProps({
   task: Object,
@@ -95,6 +99,8 @@ const props = defineProps({
 })
 
 const activeTab = ref('users')
+
+const { canInProject } = usePermission()
 
 // Tạo đường dẫn thư mục của task
 const taskFolder = computed(() => {

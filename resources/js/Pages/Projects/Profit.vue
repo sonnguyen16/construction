@@ -16,12 +16,12 @@
                 <div class="form-group">
                   <label>Phần trăm hoa hồng (%)</label>
                   <div class="input-group">
-                    <input 
-                      type="number" 
-                      class="form-control" 
-                      v-model="commissionPercentage" 
-                      min="0" 
-                      max="100" 
+                    <input
+                      type="number"
+                      class="form-control"
+                      v-model="commissionPercentage"
+                      min="0"
+                      max="100"
                       step="0.01"
                     />
                     <div class="input-group-append">
@@ -54,7 +54,7 @@
         </div>
       </div>
     </div>
-    
+
     <!-- Thông tin dự án -->
     <div class="row">
       <div class="col-md-12">
@@ -62,7 +62,7 @@
           <div class="card-header">
             <h3 class="card-title">Lợi nhuận dự án</h3>
             <div class="card-tools">
-              <Link :href="route('projects.show', project.id)" class="btn btn-sm btn-info">
+              <Link :href="route('projects.index')" class="btn btn-sm btn-info">
                 <i class="fas fa-arrow-left"></i> Quay lại
               </Link>
             </div>
@@ -151,12 +151,11 @@ const commissionAmount = computed(() => {
 // Cập nhật % hoa hồng
 const updateCommissionPercentage = () => {
   isUpdatingCommission.value = true
-  
+
   router.put(route('projects.update-commission', props.project.id), {
     commission_percentage: commissionPercentage.value
   })
 }
-
 
 // Tính lợi nhuận cho một gói thầu: Lợi nhuận = giá dự thầu - giá giao thầu
 const calculateProfit = (bidPackage) => {
@@ -211,7 +210,9 @@ const getProfitClass = (profit) => {
 // Tính tổng chi cho một gói thầu
 const getTotalPaymentAmount = (bidPackage) => {
   const totalPaid = bidPackage.payment_vouchers
-    ? bidPackage.payment_vouchers.filter(voucher => voucher.status === 'paid').reduce((total, voucher) => total + parseInt(voucher.amount || 0), 0)
+    ? bidPackage.payment_vouchers
+        .filter((voucher) => voucher.status === 'paid')
+        .reduce((total, voucher) => total + parseInt(voucher.amount || 0), 0)
     : 0
   return totalPaid
 }
@@ -226,9 +227,11 @@ const totalPaidAmount = computed(() => {
 // Tính tổng thu từ phiếu thu của dự án
 const getTotalReceiptAmount = () => {
   if (!props.project.receipt_vouchers) return 0
-  return props.project.receipt_vouchers.filter(receipt => receipt.status === 'paid').reduce((total, receipt) => {
-    return total + parseInt(receipt.amount || 0)
-  }, 0)
+  return props.project.receipt_vouchers
+    .filter((receipt) => receipt.status === 'paid')
+    .reduce((total, receipt) => {
+      return total + parseInt(receipt.amount || 0)
+    }, 0)
 }
 
 // Tổng thu từ phiếu thu của dự án

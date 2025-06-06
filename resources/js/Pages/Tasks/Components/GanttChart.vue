@@ -5,7 +5,7 @@
         <div class="flex align-items-center gap-2">
           <label class="text-md font-normal">Dự án:</label>
           <select v-model="selectedProject" @change="loadTasks" class="select">
-            <option v-for="project in projects" :key="project.id" :value="project.id">{{ project.name }}</option>
+            <option v-for="project in props.projects" :key="project.id" :value="project.id">{{ project.name }}</option>
           </select>
         </div>
         <div class="flex align-items-center gap-2">
@@ -19,7 +19,7 @@
         </div>
       </div>
       <div>
-        <Link v-if="can('tasks.trash')" :href="route('tasks.trash')" class="btn btn-sm btn-secondary">
+        <Link :href="route('tasks.trash')" class="btn btn-sm btn-secondary">
           <i class="fas fa-trash mr-1"></i> Công việc đã xóa
         </Link>
       </div>
@@ -40,9 +40,12 @@ import { showWarning } from '@/utils'
 const ganttContainer = ref(null)
 const currentView = ref(localStorage.getItem('gantt_view_mode') || 'day')
 const selectedProject = ref(localStorage.getItem('gantt_project_id') || null)
-const projects = ref([])
+const props = defineProps({
+  projects: Array,
+  defaultProject: Object
+})
 
-const { can } = usePermission()
+const { canInProject } = usePermission()
 
 // Đổi chế độ xem
 function changeView() {
@@ -157,15 +160,14 @@ function initGantt() {
       editor: { type: 'number', map_to: 'progress' }
     },
     {
-      name: can('tasks.create') ? 'add' : '',
+      name: 'add',
       label: '',
       width: 100,
+      align: 'center',
       template: (task) => {
         let html = ''
-        // Nút thêm task con - chỉ hiển thị khi có quyền tạo công việc
-        if (can('tasks.create')) {
-          html += `<button class='add-subtask-btn gantt-action-btn' title='Thêm công việc con' data-taskid='${task.id}'>➕</button>`
-        }
+        // Nút thêm task con - chỉ hiển thị khi có quyền tạo công việc trong dự án
+        html += `<button class='add-subtask-btn gantt-action-btn' title='Thêm công việc con' data-taskid='${task.id}'>➕</button>`
         return html
       }
     },
@@ -176,10 +178,8 @@ function initGantt() {
       align: 'center',
       template: (task) => {
         let html = ''
-        // Nút quản lý vật tư và nhân sự - chỉ hiển thị khi có quyền xem chi tiết
-        if (can('tasks.resources')) {
-          html += `<a href='/tasks/${task.id}' class='gantt-action-btn' title='Quản lý vật tư và nhân sự'><i class='fas fa-cog'></i></a>`
-        }
+        // Nút quản lý vật tư và nhân sự - chỉ hiển thị khi có quyền xem chi tiết trong dự án
+        html += `<a href='/tasks/${task.id}' class='gantt-action-btn' title='Quản lý vật tư và nhân sự'><i class='fas fa-cog'></i></a>`
         return html
       }
     }
@@ -194,17 +194,6 @@ function initGantt() {
   gantt.attachEvent('onRowDragEnd', function (id, target) {
     const task = gantt.getTask(id)
     handleTaskDrag(id, task.parent, gantt.getTaskIndex(id))
-  })
-
-  // Xử lý sự kiện thêm công việc
-  gantt.attachEvent('onBeforeTaskAdd', function (id, task) {
-    // Kiểm tra quyền trước khi cho phép thêm công việc
-    if (!can('tasks.create')) {
-      showWarning('Bạn không có quyền thêm công việc.')
-      loadTasks()
-      return false
-    }
-    return true
   })
 
   gantt.attachEvent('onAfterTaskAdd', async function (id, task) {
@@ -222,18 +211,9 @@ function initGantt() {
       // Cập nhật ID từ server
       gantt.changeTaskId(id, response.data.id)
     } catch (error) {
-      console.error('Lỗi khi thêm công việc:', error)
-    }
-  })
-
-  // Xử lý sự kiện cập nhật công việc
-  gantt.attachEvent('onBeforeTaskUpdate', function (id, task) {
-    if (!can('tasks.edit')) {
-      showWarning('Bạn không có quyền sửa công việc.')
+      showWarning('Lỗi khi thêm công việc: ' + error.response.data.error)
       loadTasks()
-      return false
     }
-    return true
   })
 
   gantt.attachEvent('onAfterTaskUpdate', async function (id, task) {
@@ -247,18 +227,9 @@ function initGantt() {
         parent_id: task.parent > 0 ? task.parent : null
       })
     } catch (error) {
-      console.error('Lỗi khi cập nhật công việc:', error)
-    }
-  })
-
-  // Xử lý sự kiện xóa công việc
-  gantt.attachEvent('onBeforeTaskDelete', function (id, task) {
-    if (!can('tasks.delete')) {
-      showWarning('Bạn không có quyền xóa công việc.')
+      showWarning('Lỗi khi cập nhật công việc: ' + error.response.data.error)
       loadTasks()
-      return false
     }
-    return true
   })
 
   gantt.attachEvent('onAfterTaskDelete', async function (id) {
@@ -266,7 +237,8 @@ function initGantt() {
       await axios.delete(`/tasks/${id}`)
       loadTasks()
     } catch (error) {
-      console.error('Lỗi khi xóa công việc:', error)
+      showWarning('Lỗi khi xóa công việc: ' + error.response.data.error)
+      loadTasks()
     }
   })
 
@@ -282,8 +254,8 @@ function initGantt() {
       // Cập nhật ID từ server
       gantt.changeLinkId(id, response.data.id)
     } catch (error) {
-      console.error('Lỗi khi tạo liên kết:', error)
-      gantt.deleteLink(id)
+      showWarning('Lỗi khi tạo liên kết: ' + error.response.data.error)
+      loadTasks()
     }
   })
 
@@ -292,7 +264,7 @@ function initGantt() {
     try {
       await axios.delete(`/task-links/${id}`)
     } catch (error) {
-      console.error('Lỗi khi xóa liên kết:', error)
+      showWarning('Lỗi khi xóa liên kết: ' + error.response.data.error)
     }
   })
 
@@ -302,24 +274,21 @@ function initGantt() {
 // Tải danh sách dự án
 async function loadProjects() {
   try {
-    const response = await axios.get('/api/projects')
-    projects.value = response.data
-
     const project_id_from_storage = localStorage.getItem('gantt_project_id')
 
     let selected_id = null
 
     if (project_id_from_storage) {
       // Nếu không có trong URL nhưng có trong localStorage, kiểm tra xem dự án có tồn tại không
-      const project_exists = projects.value.some((project) => project.id == project_id_from_storage)
+      const project_exists = props.projects.some((project) => project.id == project_id_from_storage)
       if (project_exists) {
         selected_id = project_id_from_storage
       }
     }
 
     // Nếu không có hoặc dự án không tồn tại, sử dụng dự án đầu tiên
-    if (!selected_id && projects.value.length > 0) {
-      selected_id = projects.value[0].id
+    if (!selected_id && props.projects.length > 0) {
+      selected_id = props.defaultProject?.id || props.projects[0].id
       localStorage.setItem('gantt_project_id', selected_id)
     }
 
@@ -333,8 +302,8 @@ async function loadProjects() {
 }
 
 onMounted(() => {
-  initGantt()
   loadProjects()
+  initGantt()
 })
 
 watch(selectedProject, () => {

@@ -4,9 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Bid;
 use App\Models\BidPackage;
-use App\Models\Contractor;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
+use App\Helpers\ProjectPermission;
 
 class BidController extends Controller
 {
@@ -15,6 +14,10 @@ class BidController extends Controller
      */
     public function store(Request $request, BidPackage $bidPackage)
     {
+        if (!ProjectPermission::hasPermissionInProject('bids.create',$bidPackage->project_id)) {
+            return redirect()->back()->with('error', 'Bạn không có quyền tạo giá dự thầu.');
+        }
+
         $validated = $request->validate([
             'contractor_id' => 'required|exists:contractors,id',
             'price' => 'required|numeric|min:0',
@@ -32,6 +35,10 @@ class BidController extends Controller
      */
     public function update(Request $request, Bid $bid)
     {
+        if (!ProjectPermission::hasPermissionInProject('bids.edit',$bid->bidPackage->project_id)) {
+            return redirect()->back()->with('error', 'Bạn không có quyền cập nhật giá dự thầu.');
+        }
+
         $validated = $request->validate([
             'contractor_id' => 'sometimes|required|exists:contractors,id',
             'price' => 'required|numeric|min:0',
@@ -57,6 +64,10 @@ class BidController extends Controller
      */
     public function destroy(Bid $bid)
     {
+        if (!ProjectPermission::hasPermissionInProject('bids.delete',$bid->bidPackage->project_id)) {
+            return redirect()->back()->with('error', 'Bạn không có quyền xóa giá dự thầu.');
+        }
+
         $projectId = $bid->bidPackage->project_id;
 
         // Nếu giá dự thầu này đã được chọn, cập nhật gói thầu
@@ -79,8 +90,12 @@ class BidController extends Controller
     /**
      * Chọn nhà thầu cho gói thầu
      */
-    public function selectContractor(Request $request, Bid $bid)
+    public function selectContractor(Bid $bid)
     {
+        if (!ProjectPermission::hasPermissionInProject('bids.select-contractor',$bid->bidPackage->project_id)) {
+            return redirect()->back()->with('error', 'Bạn không có quyền chọn nhà thầu.');
+        }
+
         $bidPackage = $bid->bidPackage;
 
         // Bỏ chọn tất cả các giá dự thầu khác

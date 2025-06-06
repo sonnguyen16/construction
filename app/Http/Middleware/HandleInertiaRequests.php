@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\ProjectRole;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -42,8 +43,18 @@ class HandleInertiaRequests extends Middleware
                     'name' => $request->user()->name,
                     'email' => $request->user()->email,
                     'avatar' => $request->user()->avatar,
-                    'can' => $request->user()->getAllPermissions()->pluck('name'),
-                    'roles' => $request->user()->roles->pluck('name'),
+                    'project_roles' => $request->user()->projectRoles()->with(['project', 'role'])->get()->map(function ($projectRole) {
+                        // Lấy danh sách quyền của vai trò trong dự án
+                        $permissions = $projectRole->role->permissions->pluck('name')->toArray();
+                        
+                        return [
+                            'project_id' => $projectRole->project_id,
+                            'project_name' => $projectRole->project->name,
+                            'role_id' => $projectRole->role_id,
+                            'role_name' => $projectRole->role->name,
+                            'permissions' => $permissions,
+                        ];
+                    }),
                 ] : null,
             ],
             'flash' => [

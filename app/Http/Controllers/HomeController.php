@@ -12,6 +12,7 @@ use App\Models\ReceiptVoucher;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Carbon\Carbon;
+use App\Helpers\ProjectPermission;
 
 class HomeController extends Controller
 {
@@ -20,9 +21,21 @@ class HomeController extends Controller
      */
     public function index(Request $request)
     {
-        $totalProjects = Project::whereNull('deleted_at')->count();
-        $completedProjects = Project::whereNull('deleted_at')->where('status', 'completed')->count();
-        $inProgressProjects = Project::whereNull('deleted_at')->where('status', 'active')->count();
+        // Lấy danh sách các dự án mà người dùng có quyền truy cập
+        $accessibleProjectIds = ProjectPermission::getAccessibleProjectIds();
+
+        // Áp dụng phân quyền theo dự án cho tất cả người dùng
+        $totalProjects = Project::whereNull('deleted_at')
+            ->whereIn('id', $accessibleProjectIds)
+            ->count();
+        $completedProjects = Project::whereNull('deleted_at')
+            ->whereIn('id', $accessibleProjectIds)
+            ->where('status', 'completed')
+            ->count();
+        $inProgressProjects = Project::whereNull('deleted_at')
+            ->whereIn('id', $accessibleProjectIds)
+            ->where('status', 'active')
+            ->count();
 
         // Lấy thông tin ngày hiện tại hoặc từ request
         $currentDate = Carbon::now();
@@ -31,8 +44,10 @@ class HomeController extends Controller
         $view = $request->input('view', null);
 
         // Lấy các gói thầu gốc (không có parent_id hoặc parent_id = null)
+        // Áp dụng phân quyền theo dự án cho tất cả người dùng
         $rootBidPackages = BidPackage::whereNull('deleted_at')
             ->whereNull('parent_id')
+            ->whereIn('project_id', $accessibleProjectIds)
             ->get();
 
         // Tính toán doanh thu (tổng giá dự thầu hiển thị - display_estimated_price)
@@ -41,8 +56,10 @@ class HomeController extends Controller
         });
 
         // Tính toán tổng thu (phiếu thu có trạng thái paid)
+        // Áp dụng phân quyền theo dự án cho tất cả người dùng
         $totalReceiptAmount = ReceiptVoucher::whereNull('deleted_at')
             ->where('status', 'paid')
+            ->whereIn('project_id', $accessibleProjectIds)
             ->sum('amount');
 
         // Tính toán phải thu (tổng giá dự thầu - tổng thu)
@@ -54,8 +71,10 @@ class HomeController extends Controller
         });
 
         // Tính toán tổng chi (phiếu chi có trạng thái paid)
+        // Áp dụng phân quyền theo dự án cho tất cả người dùng
         $totalPaymentAmount = PaymentVoucher::whereNull('deleted_at')
             ->where('status', 'paid')
+            ->whereIn('project_id', $accessibleProjectIds)
             ->sum('amount');
 
         // Tính toán phải chi (tổng giá giao thầu - tổng chi)
@@ -65,14 +84,33 @@ class HomeController extends Controller
         $profit = $totalRevenue - $totalExpense;
 
         // Đề xuất thu (phiếu thu có trạng thái unpaid)
-        $pendingReceiptCount = ReceiptVoucher::whereNull('deleted_at')->where('status', 'unpaid')->count();
-        $pendingReceiptAmount = ReceiptVoucher::whereNull('deleted_at')->where('status', 'unpaid')->sum('amount');
+
+        // Người dùng thường chỉ lấy đề xuất thu thuộc dự án có quyền truy cập
+        $pendingReceiptCount = ReceiptVoucher::whereNull('deleted_at')
+            ->where('status', 'unpaid')
+            ->whereIn('project_id', $accessibleProjectIds)
+            ->count();
+        $pendingReceiptAmount = ReceiptVoucher::whereNull('deleted_at')
+            ->where('status', 'unpaid')
+            ->whereIn('project_id', $accessibleProjectIds)
+            ->sum('amount');
+
 
         // Đề xuất chi (phiếu chi có trạng thái approved)
-        $pendingPaymentCount = PaymentVoucher::whereNull('deleted_at')->where('status', 'proposed')->count();
-        $pendingPaymentAmount = PaymentVoucher::whereNull('deleted_at')->where('status', 'proposed')->sum('amount');
+        // Áp dụng phân quyền theo dự án cho tất cả người dùng
+        $pendingPaymentCount = PaymentVoucher::whereNull('deleted_at')
+            ->where('status', 'proposed')
+            ->whereIn('project_id', $accessibleProjectIds)
+            ->count();
+        $pendingPaymentAmount = PaymentVoucher::whereNull('deleted_at')
+            ->where('status', 'proposed')
+            ->whereIn('project_id', $accessibleProjectIds)
+            ->sum('amount');
         // Lấy tổng tiền chi theo nhà thầu
-        $paymentsByContractor = PaymentVoucher::whereNull('deleted_at')->selectRaw('contractor_id, SUM(amount) as total_amount')
+        // Áp dụng phân quyền theo dự án cho tất cả người dùng
+        $paymentsByContractor = PaymentVoucher::whereNull('deleted_at')
+            ->whereIn('project_id', $accessibleProjectIds)
+            ->selectRaw('contractor_id, SUM(amount) as total_amount')
             ->with('contractor')
             ->groupBy('contractor_id')
             ->orderByDesc('total_amount')
@@ -80,7 +118,10 @@ class HomeController extends Controller
             ->get();
 
         // Lấy tổng tiền thu theo khách hàng
-        $receiptsByCustomer = ReceiptVoucher::whereNull('deleted_at')->selectRaw('customer_id, SUM(amount) as total_amount')
+        // Áp dụng phân quyền theo dự án cho tất cả người dùng
+        $receiptsByCustomer = ReceiptVoucher::whereNull('deleted_at')
+            ->whereIn('project_id', $accessibleProjectIds)
+            ->selectRaw('customer_id, SUM(amount) as total_amount')
             ->with('customer')
             ->groupBy('customer_id')
             ->orderByDesc('total_amount')
@@ -89,10 +130,13 @@ class HomeController extends Controller
 
         // Lấy tổng tiền chi theo tháng trong năm hiện tại, phân tách theo trạng thái
         $currentYearForPayments = Carbon::now()->year;
+        $currentYearForReceipts = Carbon::now()->year;
         $paymentsByMonth = [];
 
         // Lấy dữ liệu phiếu chi theo tháng và trạng thái
+        // Áp dụng phân quyền theo dự án cho tất cả người dùng
         $paymentData = PaymentVoucher::whereNull('deleted_at')
+            ->whereIn('project_id', $accessibleProjectIds)
             ->selectRaw('MONTH(created_at) as month, status, SUM(amount) as total_amount')
             ->whereYear('created_at', $currentYearForPayments)
             ->groupBy('month', 'status')
@@ -132,9 +176,11 @@ class HomeController extends Controller
         $receiptsByMonth = [];
 
         // Lấy dữ liệu phiếu thu theo tháng và trạng thái
+        // Áp dụng phân quyền theo dự án cho tất cả người dùng
         $receiptData = ReceiptVoucher::whereNull('deleted_at')
+            ->whereIn('project_id', $accessibleProjectIds)
             ->selectRaw('MONTH(created_at) as month, status, SUM(amount) as total_amount')
-            ->whereYear('created_at', $currentYear)
+            ->whereYear('created_at', $currentYearForReceipts)
             ->groupBy('month', 'status')
             ->orderBy('month')
             ->get();
@@ -192,6 +238,9 @@ class HomeController extends Controller
      */
     private function getDailyVoucherData($year, $month, $daysInMonth)
     {
+        // Lấy danh sách các dự án mà người dùng có quyền truy cập
+        $accessibleProjectIds = ProjectPermission::getAccessibleProjectIds();
+
         $result = [
             'labels' => [],
             'receipts' => [
@@ -224,7 +273,9 @@ class HomeController extends Controller
         }
 
         // Lấy dữ liệu phiếu thu theo ngày và trạng thái (sử dụng payment_date thay vì created_at)
+        // Áp dụng phân quyền theo dự án cho tất cả người dùng
         $receiptData = ReceiptVoucher::whereNull('deleted_at')
+            ->whereIn('project_id', $accessibleProjectIds)
             ->selectRaw('DAY(payment_date) as day, status, SUM(amount) as total_amount')
             ->whereYear('payment_date', $year)
             ->whereMonth('payment_date', $month)
@@ -244,6 +295,7 @@ class HomeController extends Controller
 
         // Lấy dữ liệu phiếu chi theo ngày và trạng thái (sử dụng payment_date thay vì created_at)
         $paymentData = PaymentVoucher::whereNull('deleted_at')
+            ->whereIn('project_id', $accessibleProjectIds)
             ->selectRaw('DAY(payment_date) as day, status, SUM(amount) as total_amount')
             ->whereYear('payment_date', $year)
             ->whereMonth('payment_date', $month)
@@ -260,19 +312,20 @@ class HomeController extends Controller
                 $result['payments']['unpaid'][$day] = (float) $payment->total_amount;
             }
         }
-        
+
         // Lấy dữ liệu khoản vay theo ngày bắt đầu
         $loanData = Loan::whereNull('deleted_at')
+            ->whereIn('project_id', $accessibleProjectIds)
             ->selectRaw('DAY(start_date) as day, SUM(amount) as total_amount')
             ->whereYear('start_date', $year)
             ->whereMonth('start_date', $month)
             ->groupBy('day')
             ->orderBy('day')
             ->get();
-            
+
         // Mảng để lưu trữ khoản vay theo ngày
         $loans = array_fill(1, $daysInMonth, 0);
-        
+
         // Cập nhật dữ liệu khoản vay
         foreach ($loanData as $loan) {
             $day = $loan->day;
@@ -283,10 +336,10 @@ class HomeController extends Controller
         for ($day = 1; $day <= $daysInMonth; $day++) {
             // 1. Dự thu chi = tổng dự thu - tổng dự chi
             $result['cashflow']['expected'][$day] = $result['receipts']['unpaid'][$day] - $result['payments']['unpaid'][$day];
-            
+
             // 2. Thu chi thực = đã thu + khoản vay - đã chi
             $result['cashflow']['actual'][$day] = $result['receipts']['paid'][$day] + $loans[$day] - $result['payments']['paid'][$day];
-            
+
             // 3. Dòng tiền = tổng thu - khoản vay - tổng chi
             $result['cashflow']['flow'][$day] = $result['receipts']['paid'][$day] - $loans[$day] - $result['payments']['paid'][$day];
         }
@@ -298,7 +351,7 @@ class HomeController extends Controller
         } else {
             $result['currentDay'] = null;
         }
-        
+
         // Chuyển dữ liệu từ dạng associative array sang dạng indexed array
         $result['receipts']['paid'] = array_values($result['receipts']['paid']);
         $result['receipts']['unpaid'] = array_values($result['receipts']['unpaid']);
@@ -316,6 +369,9 @@ class HomeController extends Controller
      */
     private function getMonthlyVoucherData($year)
     {
+        // Lấy danh sách các dự án mà người dùng có quyền truy cập
+        $accessibleProjectIds = ProjectPermission::getAccessibleProjectIds();
+
         $result = [
             'labels' => ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'],
             'receipts' => [
@@ -334,7 +390,9 @@ class HomeController extends Controller
         ];
 
         // Lấy dữ liệu phiếu thu theo tháng và trạng thái (sử dụng payment_date thay vì created_at)
+        // Áp dụng phân quyền theo dự án cho tất cả người dùng
         $receiptData = ReceiptVoucher::whereNull('deleted_at')
+            ->whereIn('project_id', $accessibleProjectIds)
             ->selectRaw('MONTH(payment_date) as month, status, SUM(amount) as total_amount')
             ->whereYear('payment_date', $year)
             ->groupBy('month', 'status')
@@ -352,7 +410,9 @@ class HomeController extends Controller
         }
 
         // Lấy dữ liệu phiếu chi theo tháng và trạng thái (sử dụng payment_date thay vì created_at)
+        // Áp dụng phân quyền theo dự án cho tất cả người dùng
         $paymentData = PaymentVoucher::whereNull('deleted_at')
+            ->whereIn('project_id', $accessibleProjectIds)
             ->selectRaw('MONTH(payment_date) as month, status, SUM(amount) as total_amount')
             ->whereYear('payment_date', $year)
             ->groupBy('month', 'status')
@@ -368,18 +428,20 @@ class HomeController extends Controller
                 $result['payments']['unpaid'][$monthIndex] = (float) $payment->total_amount;
             }
         }
-        
+
         // Lấy dữ liệu khoản vay theo tháng bắt đầu
+        // Áp dụng phân quyền theo dự án cho tất cả người dùng
         $loanData = Loan::whereNull('deleted_at')
+            ->whereIn('project_id', $accessibleProjectIds)
             ->selectRaw('MONTH(start_date) as month, SUM(amount) as total_amount')
             ->whereYear('start_date', $year)
             ->groupBy('month')
             ->orderBy('month')
             ->get();
-            
+
         // Mảng để lưu trữ khoản vay theo tháng
         $loans = array_fill(0, 12, 0);
-        
+
         // Cập nhật dữ liệu khoản vay
         foreach ($loanData as $loan) {
             $monthIndex = $loan->month - 1;
@@ -390,10 +452,10 @@ class HomeController extends Controller
         for ($i = 0; $i < 12; $i++) {
             // 1. Dự thu chi = tổng dự thu - tổng dự chi
             $result['cashflow']['expected'][$i] = $result['receipts']['unpaid'][$i] - $result['payments']['unpaid'][$i];
-            
+
             // 2. Thu chi thực = đã thu + khoản vay - đã chi
             $result['cashflow']['actual'][$i] = $result['receipts']['paid'][$i] + $loans[$i] - $result['payments']['paid'][$i];
-            
+
             // 3. Dòng tiền = tổng thu - khoản vay - tổng chi
             $result['cashflow']['flow'][$i] = $result['receipts']['paid'][$i] - $loans[$i] - $result['payments']['paid'][$i];
         }
@@ -414,6 +476,9 @@ class HomeController extends Controller
      */
     private function getYearlyVoucherData($numberOfYears)
     {
+        // Lấy danh sách các dự án mà người dùng có quyền truy cập
+        $accessibleProjectIds = ProjectPermission::getAccessibleProjectIds();
+
         $currentYear = Carbon::now()->year;
         $startYear = $currentYear - $numberOfYears + 1;
 
@@ -440,7 +505,9 @@ class HomeController extends Controller
         ];
 
         // Lấy dữ liệu phiếu thu theo năm và trạng thái (sử dụng payment_date thay vì created_at)
+        // Áp dụng phân quyền theo dự án cho tất cả người dùng
         $receiptData = ReceiptVoucher::whereNull('deleted_at')
+            ->whereIn('project_id', $accessibleProjectIds)
             ->selectRaw('YEAR(payment_date) as year, status, SUM(amount) as total_amount')
             ->whereYear('payment_date', '>=', $startYear)
             ->whereYear('payment_date', '<=', $currentYear)
@@ -459,7 +526,9 @@ class HomeController extends Controller
         }
 
         // Lấy dữ liệu phiếu chi theo năm và trạng thái (sử dụng payment_date thay vì created_at)
+        // Áp dụng phân quyền theo dự án cho tất cả người dùng
         $paymentData = PaymentVoucher::whereNull('deleted_at')
+            ->whereIn('project_id', $accessibleProjectIds)
             ->selectRaw('YEAR(payment_date) as year, status, SUM(amount) as total_amount')
             ->whereYear('payment_date', '>=', $startYear)
             ->whereYear('payment_date', '<=', $currentYear)
@@ -476,19 +545,21 @@ class HomeController extends Controller
                 $result['payments']['unpaid'][$yearIndex] = (float) $payment->total_amount;
             }
         }
-        
+
         // Lấy dữ liệu khoản vay theo năm bắt đầu
+        // Áp dụng phân quyền theo dự án cho tất cả người dùng
         $loanData = Loan::whereNull('deleted_at')
+            ->whereIn('project_id', $accessibleProjectIds)
             ->selectRaw('YEAR(start_date) as year, SUM(amount) as total_amount')
             ->whereYear('start_date', '>=', $startYear)
             ->whereYear('start_date', '<=', $currentYear)
             ->groupBy('year')
             ->orderBy('year')
             ->get();
-            
+
         // Mảng để lưu trữ khoản vay theo năm
         $loans = array_fill(0, $numberOfYears, 0);
-        
+
         // Cập nhật dữ liệu khoản vay
         foreach ($loanData as $loan) {
             $yearIndex = $loan->year - $startYear;
@@ -499,10 +570,10 @@ class HomeController extends Controller
         for ($i = 0; $i < $numberOfYears; $i++) {
             // 1. Dự thu chi = tổng dự thu - tổng dự chi
             $result['cashflow']['expected'][$i] = $result['receipts']['unpaid'][$i] - $result['payments']['unpaid'][$i];
-            
+
             // 2. Thu chi thực = đã thu + khoản vay - đã chi
             $result['cashflow']['actual'][$i] = $result['receipts']['paid'][$i] + $loans[$i] - $result['payments']['paid'][$i];
-            
+
             // 3. Dòng tiền = tổng thu - khoản vay - tổng chi
             $result['cashflow']['flow'][$i] = $result['receipts']['paid'][$i] - $loans[$i] - $result['payments']['paid'][$i];
         }

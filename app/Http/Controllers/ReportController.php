@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ProjectPermission;
 use App\Models\BidPackage;
 use App\Models\Contractor;
 use App\Models\Customer;
@@ -20,6 +21,9 @@ class ReportController extends Controller
      */
     public function contractorDebtReport()
     {
+        // Lấy danh sách các dự án mà người dùng có quyền xem báo cáo
+        $projectIds = ProjectPermission::getProjectsWithPermission('reports.contractor-debt');
+
         // Lấy danh sách nhà thầu/nhà cung cấp có phiếu chi
         $contractors = Contractor::whereHas('paymentVouchers')->whereNull('deleted_at')->get();
 
@@ -31,6 +35,7 @@ class ReportController extends Controller
             $contractorBidPackages = BidPackage::whereNull('parent_id')
                 ->where('selected_contractor_id', $contractor->id)
                 ->whereNull('deleted_at')
+                ->whereIn('project_id', $projectIds)
                 ->get();
 
             foreach ($contractorBidPackages as $bidPackage) {
@@ -41,6 +46,10 @@ class ReportController extends Controller
             $totalPaid = PaymentVoucher::where('contractor_id', $contractor->id)
                 ->where('status', 'paid')
                 ->whereNull('deleted_at')
+                ->where(function($query) use ($projectIds) {
+                    $query->whereIn('project_id', $projectIds)
+                          ->orWhereNull('project_id');
+                })
                 ->sum('amount');
 
             // Còn lại: tổng giao thầu trừ đi tổng chi trả
@@ -49,6 +58,7 @@ class ReportController extends Controller
             // Lấy chi tiết theo từng dự án
             $projectDetails = [];
             $contractorProjects = Project::whereNull('deleted_at')
+                ->whereIn('id', $projectIds)
                 ->whereHas('bidPackages', function ($query) use ($contractor) {
                     $query->where('selected_contractor_id', $contractor->id);
                 })->get();
@@ -108,14 +118,20 @@ class ReportController extends Controller
      */
     public function customerDebtReport()
     {
+        // Lấy danh sách các dự án mà người dùng có quyền xem báo cáo
+        $projectIds = ProjectPermission::getProjectsWithPermission('reports.customer-debt');
+
         // Lấy danh sách khách hàng có phiếu thu
         $customers = Customer::whereHas('receiptVouchers')->get();
 
         $debtData = [];
 
         foreach ($customers as $customer) {
-            // Lấy các dự án của khách hàng
-            $customerProjects = Project::where('customer_id', $customer->id)->whereNull('deleted_at')->get();
+            // Lấy các dự án của khách hàng mà người dùng có quyền xem
+            $customerProjects = Project::where('customer_id', $customer->id)
+                ->whereIn('id', $projectIds)
+                ->whereNull('deleted_at')
+                ->get();
 
             // Tổng dự án: tổng display_estimated_price của các gói thầu cha
             $totalProject = 0;
@@ -158,6 +174,10 @@ class ReportController extends Controller
             $totalPaid = ReceiptVoucher::where('customer_id', $customer->id)
                 ->where('status', 'paid')
                 ->whereNull('deleted_at')
+                ->where(function($query) use ($projectIds) {
+                    $query->whereIn('project_id', $projectIds)
+                          ->orWhereNull('project_id');
+                })
                 ->sum('amount');
 
             // Còn lại: tổng dự án trừ đi tổng chi trả
@@ -185,11 +205,27 @@ class ReportController extends Controller
      */
     public function financialReport(Request $request)
     {
+        // Lấy danh sách các dự án mà người dùng có quyền xem báo cáo
+        $projectIds = ProjectPermission::getProjectsWithPermission('reports.financial');
+
         // Lấy danh sách dự án để filter
-        $projects = Project::whereNull('deleted_at')->orderBy('name')->get();
+        $projects = Project::whereNull('deleted_at')
+            ->whereIn('id', $projectIds)
+            ->orderBy('name')
+            ->get();
 
         // Lấy project_id từ request hoặc lấy dự án đầu tiên nếu không có
-        $projectId = $request->input('project_id', $projects->first()->id ?? null);
+        $projectId = $request->input('project_id');
+
+        // Kiểm tra nếu project_id được chọn có trong danh sách các dự án được phép xem
+        if ($projectId && !in_array($projectId, $projectIds)) {
+            return redirect()->back()->with('error', 'Bạn không có quyền xem báo cáo của dự án này!');
+        }
+
+        // Nếu không có project_id hoặc project_id không hợp lệ, lấy dự án đầu tiên
+        if (!$projectId) {
+            $projectId = $projects->first()->id ?? null;
+        }
 
         // Nếu không có dự án nào, trả về trang báo cáo trống
         if (!$projectId) {

@@ -47,6 +47,60 @@ class Project extends Model
     }
 
     /**
+     * Lấy danh sách người dùng có vai trò trong dự án
+     */
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'project_roles')
+            ->withPivot('role_id')
+            ->withTimestamps();
+    }
+    
+    /**
+     * Lấy danh sách vai trò trong dự án
+     */
+    public function projectRoles()
+    {
+        return $this->hasMany(ProjectRole::class);
+    }
+    
+    /**
+     * Kiểm tra người dùng có vai trò trong dự án không
+     * 
+     * @param User|int $user Người dùng hoặc ID người dùng
+     * @param string|array|null $roles Tên vai trò hoặc mảng tên vai trò, null để chỉ kiểm tra có vai trò không
+     * @return bool
+     */
+    public function hasUserWithRole($user, $roles = null)
+    {
+        $userId = $user instanceof User ? $user->id : $user;
+        
+        // Lấy vai trò của người dùng trong dự án
+        $projectRole = $this->projectRoles()
+            ->where('user_id', $userId)
+            ->first();
+            
+        if (!$projectRole) {
+            return false;
+        }
+        
+        // Nếu không cần kiểm tra tên vai trò cụ thể
+        if ($roles === null) {
+            return true;
+        }
+        
+        // Lấy tên vai trò
+        $roleName = $projectRole->role->name;
+        
+        // Kiểm tra vai trò
+        if (is_array($roles)) {
+            return in_array($roleName, $roles);
+        }
+        
+        return $roleName === $roles;
+    }
+    
+    /**
      * Tính tổng giá giao thầu của tất cả các gói thầu
      */
     public function getTotalClientPriceAttribute()

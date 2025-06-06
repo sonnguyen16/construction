@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Bid;
+
 use App\Models\BidPackage;
 use App\Models\Project;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
+use App\Helpers\ProjectPermission;
 
 class BidPackageController extends Controller
 {
@@ -15,6 +15,9 @@ class BidPackageController extends Controller
      */
     public function store(Request $request, Project $project)
     {
+        if (!ProjectPermission::hasPermissionInProject('bid-packages.create',$project->id)) {
+            return redirect()->back()->with('error', 'Bạn không có quyền tạo gói thầu.');
+        }
         $validated = $request->validate([
             'code' => 'required|string|max:50',
             'name' => 'required|string|max:255',
@@ -62,6 +65,10 @@ class BidPackageController extends Controller
      */
     public function update(Request $request, BidPackage $bidPackage)
     {
+        if (!ProjectPermission::hasPermissionInProject('bid-packages.edit',$bidPackage->project_id)) {
+            return redirect()->back()->with('error', 'Bạn không có quyền cập nhật gói thầu.');
+        }
+
         $validated = $request->validate([
             'project_id' => 'required|exists:projects,id',
             'code' => 'required|string|max:50',
@@ -138,6 +145,9 @@ class BidPackageController extends Controller
 
     public function destroy(BidPackage $bidPackage)
     {
+        if (!ProjectPermission::hasPermissionInProject('bid-packages.delete',$bidPackage->project_id)) {
+            return redirect()->back()->with('error', 'Bạn không có quyền xóa gói thầu.');
+        }
         $projectId = $bidPackage->project_id;
 
         try {
@@ -159,6 +169,9 @@ class BidPackageController extends Controller
 
     public function updateAdditionalPrice(Request $request, BidPackage $bidPackage)
     {
+        if (!ProjectPermission::hasPermissionInProject('bid-packages.edit',$bidPackage->project_id)) {
+            return redirect()->back()->with('error', 'Bạn không có quyền cập nhật gói thầu.');
+        }
         $validated = $request->validate([
             'additional_price' => 'required|numeric|min:0',
         ]);
@@ -187,6 +200,9 @@ class BidPackageController extends Controller
      */
     public function updateOrder(Request $request)
     {
+        if (!ProjectPermission::hasPermissionInProject('bid-packages.edit',$request->input('packages')[0]['project_id'])) {
+            return redirect()->back()->with('error', 'Bạn không có quyền cập nhật gói thầu.');
+        }
         try {
             $packages = $request->input('packages', []);
 

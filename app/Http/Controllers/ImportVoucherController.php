@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use App\Helpers\ProjectPermission;
 
 class ImportVoucherController extends Controller
 {
@@ -48,6 +49,10 @@ class ImportVoucherController extends Controller
             $query->whereDate('import_date', '<=', $request->date_to);
         }
 
+        $projectIds = ProjectPermission::getProjectsWithPermission('import-vouchers.view');
+
+        $query->whereIn('project_id', $projectIds);
+
         $importVouchers = $query->latest()->paginate(10)->withQueryString();
 
         // Load tổng tiền cho mỗi phiếu nhập
@@ -56,7 +61,7 @@ class ImportVoucherController extends Controller
             return $voucher;
         });
 
-        $projects = Project::whereNull('deleted_at')->get();
+        $projects = Project::whereNull('deleted_at')->whereIn('id', $projectIds)->get();
 
         return Inertia::render('ImportVouchers/Index', [
             'importVouchers' => $importVouchers,
@@ -70,9 +75,10 @@ class ImportVoucherController extends Controller
      */
     public function create()
     {
+        $projectIds = ProjectPermission::getProjectsWithPermission('import-vouchers.create');
         $projects = Project::with(['bidPackages' => function($query) {
             $query->whereNull('deleted_at');
-        }])->get();
+        }])->whereIn('id', $projectIds)->get();
         $contractors = Contractor::all();
         $products = Product::with('unit')->get();
 
@@ -103,6 +109,9 @@ class ImportVoucherController extends Controller
      */
     public function store(Request $request)
     {
+        if (!ProjectPermission::hasPermissionInProject('import-vouchers.create', $request->project_id)) {
+            return redirect()->back()->with('error', 'Bạn không có quyền tạo phiếu nhập.');
+        }
         $request->validate([
             'code' => 'required|string|max:255',
             'project_id' => 'required|exists:projects,id',
@@ -157,6 +166,10 @@ class ImportVoucherController extends Controller
      */
     public function show(ImportVoucher $importVoucher)
     {
+        if (!ProjectPermission::hasPermissionInProject('import-vouchers.view', $importVoucher->project_id)) {
+            return redirect()->back()->with('error', 'Bạn không có quyền xem phiếu nhập.');
+        }
+
         $importVoucher->load([
             'project', 'contractor', 'creator', 'updater',
             'items.product.unit', 'bidPackage'
@@ -175,11 +188,14 @@ class ImportVoucherController extends Controller
      */
     public function edit(ImportVoucher $importVoucher)
     {
+        if (!ProjectPermission::hasPermissionInProject('import-vouchers.edit', $importVoucher->project_id)) {
+            return redirect()->back()->with('error', 'Bạn không có quyền chỉnh sửa phiếu nhập.');
+        }
         $importVoucher->load(['items.product.unit', 'bidPackage']);
-
+        $projectIds = ProjectPermission::getProjectsWithPermission('import-vouchers.edit');
         $projects = Project::with(['bidPackages' => function($query) {
             $query->whereNull('deleted_at');
-        }])->get();
+        }])->whereIn('id', $projectIds)->get();
         $contractors = Contractor::all();
         $products = Product::with('unit')->get();
 
@@ -196,6 +212,16 @@ class ImportVoucherController extends Controller
      */
     public function update(Request $request, ImportVoucher $importVoucher)
     {
+        if (!ProjectPermission::hasPermissionInProject('import-vouchers.edit', $importVoucher->project_id)) {
+            return redirect()->back()->with('error', 'Bạn không có quyền chỉnh sửa phiếu nhập.');
+        }
+
+        // Kiểm tra nếu người dùng đang cố gắng chuyển phiếu xuất kho sang dự án khác mà họ không có quyền
+        if ($request->project_id != $importVoucher->project_id &&
+            !ProjectPermission::hasPermissionInProject('import-vouchers.edit', $request->project_id)) {
+            return redirect()->back()->with('error', 'Bạn không có quyền chuyển phiếu nhập sang dự án này!');
+        }
+
         $request->validate([
             'code' => 'required|string|max:255',
             'project_id' => 'required|exists:projects,id',
@@ -266,6 +292,9 @@ class ImportVoucherController extends Controller
      */
     public function destroy(ImportVoucher $importVoucher)
     {
+        if (!ProjectPermission::hasPermissionInProject('import-vouchers.delete', $importVoucher->project_id)) {
+            return redirect()->back()->with('error', 'Bạn không có quyền xóa phiếu nhập.');
+        }
         try {
             // Delete import voucher (will cascade delete items due to foreign key constraint)
             $importVoucher->deleted_at = now();

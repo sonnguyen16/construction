@@ -16,7 +16,6 @@
 <script setup>
 import TrashList from '@/Pages/Tasks/Components/TrashList.vue'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
-import { Link } from '@inertiajs/vue3'
 
 defineProps({
   projects: Array,
