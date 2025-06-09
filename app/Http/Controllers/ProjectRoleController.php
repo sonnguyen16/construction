@@ -24,8 +24,10 @@ class ProjectRoleController extends Controller
         if (!ProjectPermission::hasPermissionInProject('permissions.view', $project->id)) {
             return redirect()->back()->with('error', 'Bạn không có quyền xem phân quyền dự án.');
         }
-        // Lấy danh sách vai trò
-        $roles = Role::with('permissions')->get();
+        // Lấy danh sách vai trò với quyền và thông tin scope
+        $roles = Role::with(['permissions' => function($query) {
+            $query->select('permissions.id', 'permissions.name', 'permissions.guard_name', 'permissions.scope');
+        }])->get();
 
         // Lấy danh sách người dùng
         $users = User::all();

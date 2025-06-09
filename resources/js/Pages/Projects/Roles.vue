@@ -87,8 +87,24 @@
                       </div>
                     </div>
                     <div class="card-body">
-                      <p class="text-muted">{{ role.permissions.length }} quyền</p>
-                      <div class="mt-2">
+                      <!-- Hiển thị số lượng quyền theo phạm vi -->
+                      <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Tổng số quyền:</span>
+                        <span class="badge badge-info">{{ role.permissions.length }}</span>
+                      </div>
+                      <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Quyền cục bộ:</span>
+                        <span class="badge badge-primary">{{
+                          getPermissionCountByScope(role.permissions, 'global')
+                        }}</span>
+                      </div>
+                      <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Quyền theo dự án:</span>
+                        <span class="badge badge-success">{{
+                          getPermissionCountByScope(role.permissions, 'project')
+                        }}</span>
+                      </div>
+                      <div class="mt-3">
                         <Link
                           v-if="canInProject('roles.edit', project.id)"
                           :href="route('roles.edit', role.id)"
@@ -221,6 +237,10 @@ const selectedUser = ref('')
 const selectedRole = ref('')
 const userToRemove = ref(null)
 
+// Biến quản lý hiển thị chi tiết quyền
+const showPermissionDetails = ref({})
+const activePermissionTab = ref({})
+
 // InputPicker instances để có thể hủy khi component unmount
 let userPicker = null
 let rolePicker = null
@@ -230,6 +250,34 @@ const filteredUsers = computed(() => {
   const assignedUserIds = props.projectRoles.map((pr) => pr.user_id)
   return props.users.filter((user) => !assignedUserIds.includes(user.id))
 })
+
+// Lấy danh sách quyền theo phạm vi
+function getPermissionsByScope(permissions, scope) {
+  return permissions.filter((permission) => permission.scope === scope)
+}
+
+// Đếm số lượng quyền theo phạm vi
+function getPermissionCountByScope(permissions, scope) {
+  return getPermissionsByScope(permissions, scope).length
+}
+
+// Chuyển đổi trạng thái hiển thị chi tiết quyền
+function togglePermissionDetails(roleId) {
+  if (!showPermissionDetails.value[roleId]) {
+    // Nếu chưa có, khởi tạo với giá trị true
+    showPermissionDetails.value[roleId] = true
+    // Mặc định tab là global
+    activePermissionTab.value[roleId] = 'global'
+  } else {
+    // Nếu đã có, đảo ngược giá trị
+    showPermissionDetails.value[roleId] = !showPermissionDetails.value[roleId]
+  }
+}
+
+// Đặt tab quyền hiện tại
+function setActivePermissionTab(roleId, tab) {
+  activePermissionTab.value[roleId] = tab
+}
 
 // Format tên quyền để hiển thị
 function formatPermissionName(permissionName) {
@@ -255,12 +303,12 @@ function formatPermissionName(permissionName) {
 function showAssignModal() {
   selectedUser.value = ''
   selectedRole.value = ''
-  
+
   // Reset các input picker
   if (userPicker) {
     window.$('#userSelect').inputpicker('val', '')
   }
-  
+
   if (rolePicker) {
     window.$('#roleSelect').inputpicker('val', '')
   }
@@ -364,9 +412,7 @@ onMounted(() => {
       value: role.id,
       text: role.name
     })),
-    fields: [
-      { name: 'text', text: 'Tên vai trò' }
-    ],
+    fields: [{ name: 'text', text: 'Tên vai trò' }],
     fieldText: 'text',
     fieldValue: 'value',
     filterOpen: true,

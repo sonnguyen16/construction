@@ -9,7 +9,7 @@
           <div class="card-header">
             <h3 class="card-title">Danh sách khách hàng</h3>
             <div class="card-tools">
-              <Link v-if="can('customers.create')" :href="route('customers.create')" class="btn btn-sm btn-primary">
+              <Link v-if="hasGlobalPermission('customers.create')" :href="route('customers.create')" class="btn btn-sm btn-primary">
                 <i class="fas fa-plus"></i> Thêm khách hàng mới
               </Link>
             </div>
@@ -52,13 +52,13 @@
                     <td>{{ truncateText(customer.address, 30) }}</td>
                     <td>
                       <div class="btn-group">
-                        <Link v-if="can('customers.view')" :href="route('customers.show', customer.id)" class="btn btn-xs btn-info">
+                        <Link v-if="hasGlobalPermission('customers.view')" :href="route('customers.show', customer.id)" class="btn btn-xs btn-info">
                           <i class="fas fa-eye"></i> Xem
                         </Link>
-                        <Link v-if="can('customers.edit')" :href="route('customers.edit', customer.id)" class="btn btn-xs btn-primary">
+                        <Link v-if="hasGlobalPermission('customers.edit')" :href="route('customers.edit', customer.id)" class="btn btn-xs btn-primary">
                           <i class="fas fa-edit"></i> Sửa
                         </Link>
-                        <button v-if="can('customers.delete')" @click="confirmDelete(customer)" class="btn btn-xs btn-danger">
+                        <button v-if="hasGlobalPermission('customers.delete')" @click="confirmDelete(customer)" class="btn btn-xs btn-danger">
                           <i class="fas fa-trash"></i> Xóa
                         </button>
                       </div>
@@ -94,7 +94,7 @@ const props = defineProps({
   filters: Object
 })
 
-const { can } = usePermission()
+const { can, hasGlobalPermission } = usePermission()
 
 const search = ref(props.filters.search || '')
 

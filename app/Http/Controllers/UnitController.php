@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Unit;
+use App\Helpers\ProjectPermission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
@@ -14,6 +15,11 @@ class UnitController extends Controller
      */
     public function index(Request $request)
     {
+        // Kiểm tra quyền global để xem danh sách đơn vị
+        if (!ProjectPermission::hasGlobalPermission('units.view')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền xem danh sách đơn vị');
+        }
+        
         $search = $request->input('search');
 
         $units = Unit::query()
@@ -37,6 +43,11 @@ class UnitController extends Controller
      */
     public function create()
     {
+        // Kiểm tra quyền global để tạo đơn vị
+        if (!ProjectPermission::hasGlobalPermission('units.create')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền tạo đơn vị');
+        }
+        
         return Inertia::render('Units/Create');
     }
 
@@ -45,6 +56,11 @@ class UnitController extends Controller
      */
     public function store(Request $request)
     {
+        // Kiểm tra quyền global để tạo đơn vị
+        if (!ProjectPermission::hasGlobalPermission('units.create')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền tạo đơn vị');
+        }
+        
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'note' => 'nullable|string',
@@ -60,6 +76,11 @@ class UnitController extends Controller
      */
     public function edit(Unit $unit)
     {
+        // Kiểm tra quyền global để sửa đơn vị
+        if (!ProjectPermission::hasGlobalPermission('units.edit')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền sửa đơn vị');
+        }
+        
         return Inertia::render('Units/Edit', [
             'unit' => $unit
         ]);
@@ -70,6 +91,11 @@ class UnitController extends Controller
      */
     public function update(Request $request, Unit $unit)
     {
+        // Kiểm tra quyền global để sửa đơn vị
+        if (!ProjectPermission::hasGlobalPermission('units.edit')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền sửa đơn vị');
+        }
+        
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'note' => 'nullable|string',
@@ -85,6 +111,11 @@ class UnitController extends Controller
      */
     public function destroy(Unit $unit)
     {
+        // Kiểm tra quyền global để xóa đơn vị
+        if (!ProjectPermission::hasGlobalPermission('units.delete')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền xóa đơn vị');
+        }
+        
         $unit->deleted_at = now();
         $unit->save();
         return Redirect::route('units.index')->with('success', 'Đơn vị đã được xóa thành công.');

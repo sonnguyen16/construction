@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\PaymentCategory;
+use App\Helpers\ProjectPermission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
@@ -14,6 +15,11 @@ class PaymentCategoryController extends Controller
      */
     public function index(Request $request)
     {
+        // Kiểm tra quyền global để xem danh sách loại chi
+        if (!ProjectPermission::hasGlobalPermission('payment-categories.view')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền xem danh sách loại chi');
+        }
+        
         $search = $request->input('search');
 
         $paymentCategories = PaymentCategory::query()
@@ -36,6 +42,11 @@ class PaymentCategoryController extends Controller
      */
     public function create()
     {
+        // Kiểm tra quyền global để tạo loại chi
+        if (!ProjectPermission::hasGlobalPermission('payment-categories.create')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền tạo loại chi');
+        }
+        
         return Inertia::render('PaymentCategories/Create');
     }
 
@@ -44,6 +55,11 @@ class PaymentCategoryController extends Controller
      */
     public function store(Request $request)
     {
+        // Kiểm tra quyền global để tạo loại chi
+        if (!ProjectPermission::hasGlobalPermission('payment-categories.create')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền tạo loại chi');
+        }
+        
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'note' => 'nullable|string',
@@ -59,6 +75,11 @@ class PaymentCategoryController extends Controller
      */
     public function edit(PaymentCategory $paymentCategory)
     {
+        // Kiểm tra quyền global để sửa loại chi
+        if (!ProjectPermission::hasGlobalPermission('payment-categories.edit')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền sửa loại chi');
+        }
+        
         return Inertia::render('PaymentCategories/Edit', [
             'paymentCategory' => $paymentCategory
         ]);
@@ -69,6 +90,11 @@ class PaymentCategoryController extends Controller
      */
     public function update(Request $request, PaymentCategory $paymentCategory)
     {
+        // Kiểm tra quyền global để sửa loại chi
+        if (!ProjectPermission::hasGlobalPermission('payment-categories.edit')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền sửa loại chi');
+        }
+        
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'note' => 'nullable|string',
@@ -84,6 +110,11 @@ class PaymentCategoryController extends Controller
      */
     public function destroy(PaymentCategory $paymentCategory)
     {
+        // Kiểm tra quyền global để xóa loại chi
+        if (!ProjectPermission::hasGlobalPermission('payment-categories.delete')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền xóa loại chi');
+        }
+        
         $paymentCategory->delete();
 
         return Redirect::route('payment-categories.index')->with('success', 'Loại chi đã được xóa thành công.');

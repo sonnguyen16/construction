@@ -8,6 +8,41 @@ use Illuminate\Support\Facades\DB;
 class ProjectPermission
 {
     /**
+     * Kiểm tra xem người dùng có quyền global trong bất kỳ dự án nào không
+     * 
+     * @param string|array $permissions Tên quyền hoặc mảng tên quyền cần kiểm tra
+     * @return bool
+     */
+    public static function hasGlobalPermission($permissions)
+    {
+        $user = Auth::user();
+        
+        // Lấy tất cả vai trò của người dùng trong các dự án
+        $roleIds = DB::table('project_roles')
+            ->where('user_id', $user->id)
+            ->pluck('role_id')
+            ->toArray();
+            
+        if (empty($roleIds)) {
+            return false;
+        }
+        
+        // Tạo query để lấy quyền global của các vai trò
+        $query = DB::table('role_has_permissions')
+            ->join('permissions', 'role_has_permissions.permission_id', '=', 'permissions.id')
+            ->whereIn('role_has_permissions.role_id', $roleIds)
+            ->where('permissions.scope', 'global');
+            
+        if (is_array($permissions)) {
+            $query->whereIn('permissions.name', $permissions);
+        } else {
+            $query->where('permissions.name', $permissions);
+        }
+        
+        // Kiểm tra xem có quyền nào thỏa mãn không
+        return $query->exists();
+    }
+    /**
      * Kiểm tra xem người dùng có vai trò Super Admin trong dự án không
      *
      * @param int $projectId ID của dự án

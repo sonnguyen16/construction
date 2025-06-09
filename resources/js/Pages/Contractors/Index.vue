@@ -8,7 +8,7 @@
         <div class="card">
           <div class="card-header">
             <div class="d-flex justify-content-between align-items-center">
-              <Link v-if="can('contractors.create')" :href="route('contractors.create')" class="btn btn-primary">
+              <Link v-if="hasGlobalPermission('contractors.create')" :href="route('contractors.create')" class="btn btn-primary">
                 <i class="fas fa-plus mr-1"></i> Thêm nhà thầu
               </Link>
               <div class="input-group" style="width: 200px">
@@ -46,10 +46,10 @@
                   <td>{{ contractor.address || '-' }}</td>
                   <td>
                     <div class="btn-group">
-                      <Link v-if="can('contractors.edit')" :href="route('contractors.edit', contractor.id)" class="btn btn-sm btn-primary">
+                      <Link v-if="hasGlobalPermission('contractors.edit')" :href="route('contractors.edit', contractor.id)" class="btn btn-sm btn-primary">
                         <i class="fas fa-edit"></i> Sửa
                       </Link>
-                      <button v-if="can('contractors.delete')" @click="confirmDelete(contractor)" class="btn btn-sm btn-danger">
+                      <button v-if="hasGlobalPermission('contractors.delete')" @click="confirmDelete(contractor)" class="btn btn-sm btn-danger">
                         <i class="fas fa-trash"></i> Xóa
                       </button>
                     </div>
@@ -113,7 +113,7 @@ const props = defineProps({
   filters: Object
 })
 
-const { can } = usePermission()
+const { can, hasGlobalPermission } = usePermission()
 
 const search = ref(props.filters?.search || '')
 const selectedContractor = ref(null)

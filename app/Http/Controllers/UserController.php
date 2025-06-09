@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Helpers\ProjectPermission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -17,6 +18,11 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
+        // Kiểm tra quyền global để xem danh sách người dùng
+        if (!ProjectPermission::hasGlobalPermission('users.view')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền xem danh sách người dùng');
+        }
+        
         $query = User::query()->whereNull('deleted_at');
 
         // Tìm kiếm
@@ -41,6 +47,11 @@ class UserController extends Controller
      */
     public function create()
     {
+        // Kiểm tra quyền global để tạo người dùng
+        if (!ProjectPermission::hasGlobalPermission('users.create')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền tạo người dùng');
+        }
+        
         return Inertia::render('Users/Create');
     }
 
@@ -49,6 +60,11 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
+        // Kiểm tra quyền global để tạo người dùng
+        if (!ProjectPermission::hasGlobalPermission('users.create')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền tạo người dùng');
+        }
+        
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
@@ -77,6 +93,11 @@ class UserController extends Controller
      */
     public function edit(User $user)
     {
+        // Kiểm tra quyền global để sửa người dùng
+        if (!ProjectPermission::hasGlobalPermission('users.edit')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền sửa thông tin người dùng');
+        }
+        
         return Inertia::render('Users/Edit', [
             'user' => $user,
             'avatar' => $user->avatar,
@@ -88,6 +109,11 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user)
     {
+        // Kiểm tra quyền global để sửa người dùng
+        if (!ProjectPermission::hasGlobalPermission('users.edit')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền sửa thông tin người dùng');
+        }
+        
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => [
@@ -129,6 +155,11 @@ class UserController extends Controller
      */
     public function destroy(User $user)
     {
+        // Kiểm tra quyền global để xóa người dùng
+        if (!ProjectPermission::hasGlobalPermission('users.delete')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền xóa người dùng');
+        }
+        
         // Xóa avatar nếu có
         if ($user->avatar && Storage::disk('public')->exists(str_replace('/storage', '', $user->avatar))) {
             Storage::disk('public')->delete(str_replace('/storage', '', $user->avatar));

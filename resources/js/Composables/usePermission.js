@@ -71,6 +71,30 @@ export function usePermission() {
     }
 
     /**
+     * Kiểm tra xem người dùng có quyền global trong bất kỳ dự án nào không
+     * @param {string|array} permissions - Tên quyền hoặc mảng tên quyền cần kiểm tra
+     * @returns {boolean} - Trả về true nếu có quyền global trong bất kỳ dự án nào, ngược lại false
+     */
+    function hasGlobalPermission(permissions) {
+        // Kiểm tra tất cả các dự án của người dùng
+        for (const projectRole of userProjectRoles.value) {
+            // Lấy danh sách quyền global của vai trò trong dự án
+            const globalPermissions = projectRole.permissions || [];
+
+            // Kiểm tra quyền
+            if (Array.isArray(permissions)) {
+                if (permissions.some(p => globalPermissions.includes(p))) {
+                    return true;
+                }
+            } else if (globalPermissions.includes(permissions)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Kiểm tra xem người dùng có phải là Super Admin trong dự án không
      * @param {number} projectId - ID của dự án cần kiểm tra
      * @returns {boolean} - Trả về true nếu là Super Admin trong dự án, ngược lại false
@@ -98,6 +122,7 @@ export function usePermission() {
         userProjects,
         hasRoleInProject,
         canInProject,
+        hasGlobalPermission,
         isSuperAdminInProject
     };
 }

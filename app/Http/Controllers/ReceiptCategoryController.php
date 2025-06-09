@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ReceiptCategory;
+use App\Helpers\ProjectPermission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
@@ -14,6 +15,11 @@ class ReceiptCategoryController extends Controller
      */
     public function index(Request $request)
     {
+        // Kiểm tra quyền global để xem danh sách loại thu
+        if (!ProjectPermission::hasGlobalPermission('receipt-categories.view')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền xem danh sách loại thu');
+        }
+        
         $search = $request->input('search');
 
         $receiptCategories = ReceiptCategory::query()
@@ -36,6 +42,11 @@ class ReceiptCategoryController extends Controller
      */
     public function create()
     {
+        // Kiểm tra quyền global để tạo loại thu
+        if (!ProjectPermission::hasGlobalPermission('receipt-categories.create')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền tạo loại thu');
+        }
+        
         return Inertia::render('ReceiptCategories/Create');
     }
 
@@ -44,6 +55,11 @@ class ReceiptCategoryController extends Controller
      */
     public function store(Request $request)
     {
+        // Kiểm tra quyền global để tạo loại thu
+        if (!ProjectPermission::hasGlobalPermission('receipt-categories.create')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền tạo loại thu');
+        }
+        
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'note' => 'nullable|string',
@@ -59,6 +75,11 @@ class ReceiptCategoryController extends Controller
      */
     public function edit(ReceiptCategory $receiptCategory)
     {
+        // Kiểm tra quyền global để sửa loại thu
+        if (!ProjectPermission::hasGlobalPermission('receipt-categories.edit')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền sửa loại thu');
+        }
+        
         return Inertia::render('ReceiptCategories/Edit', [
             'receiptCategory' => $receiptCategory
         ]);
@@ -69,6 +90,11 @@ class ReceiptCategoryController extends Controller
      */
     public function update(Request $request, ReceiptCategory $receiptCategory)
     {
+        // Kiểm tra quyền global để sửa loại thu
+        if (!ProjectPermission::hasGlobalPermission('receipt-categories.edit')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền sửa loại thu');
+        }
+        
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'note' => 'nullable|string',
@@ -84,6 +110,11 @@ class ReceiptCategoryController extends Controller
      */
     public function destroy(ReceiptCategory $receiptCategory)
     {
+        // Kiểm tra quyền global để xóa loại thu
+        if (!ProjectPermission::hasGlobalPermission('receipt-categories.delete')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền xóa loại thu');
+        }
+        
         $receiptCategory->delete();
 
         return Redirect::route('receipt-categories.index')->with('success', 'Loại thu đã được xóa thành công.');

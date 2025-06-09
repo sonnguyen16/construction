@@ -8,7 +8,7 @@
         <div class="card">
           <div class="card-header">
             <div class="d-flex justify-content-between align-items-center">
-              <Link v-if="can('users.create')" href="/users/create" class="btn btn-primary"> <i class="fas fa-plus"></i> Thêm người dùng </Link>
+              <Link v-if="hasGlobalPermission('users.create')" href="/users/create" class="btn btn-primary"> <i class="fas fa-plus"></i> Thêm người dùng </Link>
               <div class="d-flex">
                 <div class="input-group mr-2" style="width: 200px">
                   <input
@@ -55,10 +55,10 @@
                   <td>{{ formatDate(user.created_at) }}</td>
                   <td>
                     <div class="btn-group">
-                      <Link v-if="can('users.edit')" :href="`/users/${user.id}/edit`" class="btn btn-sm btn-primary">
+                      <Link v-if="hasGlobalPermission('users.edit')" :href="`/users/${user.id}/edit`" class="btn btn-sm btn-primary">
                         <i class="fas fa-edit"></i> Sửa
                       </Link>
-                      <button v-if="can('users.delete')" @click="confirmDelete(user)" class="btn btn-sm btn-danger">
+                      <button v-if="hasGlobalPermission('users.delete')" @click="confirmDelete(user)" class="btn btn-sm btn-danger">
                         <i class="fas fa-trash"></i> Xóa
                       </button>
                     </div>
@@ -117,7 +117,7 @@ import Pagination from '@/Components/Pagination.vue'
 import { formatDate, showConfirm } from '@/utils'
 import { usePermission } from '@/Composables/usePermission'
 
-const { can } = usePermission()
+const { can, hasGlobalPermission } = usePermission()
 const props = defineProps({
   users: Object
 })

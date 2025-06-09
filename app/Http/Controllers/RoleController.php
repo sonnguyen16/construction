@@ -7,6 +7,7 @@ use Inertia\Inertia;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use App\Models\User;
+use App\Helpers\ProjectPermission;
 
 class RoleController extends Controller
 {
@@ -15,6 +16,11 @@ class RoleController extends Controller
      */
     public function index()
     {
+        // Kiểm tra quyền global để xem danh sách vai trò
+        if (!ProjectPermission::hasGlobalPermission('roles.view')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền xem danh sách vai trò');
+        }
+        
         $roles = Role::with('permissions')
             ->withCount('users')
             ->get();
@@ -29,6 +35,11 @@ class RoleController extends Controller
      */
     public function create()
     {
+        // Kiểm tra quyền global để tạo vai trò
+        if (!ProjectPermission::hasGlobalPermission('roles.create')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền tạo vai trò');
+        }
+        
         $permissions = Permission::all()->groupBy(function($permission) {
             return explode('.', $permission->name)[0];
         });
@@ -44,6 +55,11 @@ class RoleController extends Controller
      */
     public function store(Request $request)
     {
+        // Kiểm tra quyền global để tạo vai trò
+        if (!ProjectPermission::hasGlobalPermission('roles.create')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền tạo vai trò');
+        }
+        
         $request->validate([
             'name' => 'required|unique:roles,name',
             'permissions' => 'required|array'
@@ -66,6 +82,11 @@ class RoleController extends Controller
      */
     public function show(Role $role)
     {
+        // Kiểm tra quyền global để xem chi tiết vai trò
+        if (!ProjectPermission::hasGlobalPermission('roles.view')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền xem chi tiết vai trò');
+        }
+        
         $role->load('permissions');
         $users = User::role($role->name)->get();
 
@@ -80,6 +101,11 @@ class RoleController extends Controller
      */
     public function edit(Role $role)
     {
+        // Kiểm tra quyền global để sửa vai trò
+        if (!ProjectPermission::hasGlobalPermission('roles.edit')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền sửa vai trò');
+        }
+        
         $role->load('permissions');
 
         $permissions = Permission::all()->groupBy(function($permission) {
@@ -101,6 +127,11 @@ class RoleController extends Controller
      */
     public function update(Request $request, Role $role)
     {
+        // Kiểm tra quyền global để sửa vai trò
+        if (!ProjectPermission::hasGlobalPermission('roles.edit')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền sửa vai trò');
+        }
+        
         $request->validate([
             'name' => 'required|unique:roles,name,' . $role->id,
             'permissions' => 'required|array'
@@ -124,6 +155,11 @@ class RoleController extends Controller
      */
     public function destroy(Role $role)
     {
+        // Kiểm tra quyền global để xóa vai trò
+        if (!ProjectPermission::hasGlobalPermission('roles.delete')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền xóa vai trò');
+        }
+        
         // Không cho phép xóa vai trò Super Admin
         if ($role->name === 'Super Admin') {
             return redirect()->back()
@@ -149,6 +185,11 @@ class RoleController extends Controller
      */
     public function assignUsers(Request $request, Role $role)
     {
+        // Kiểm tra quyền global để gán vai trò cho người dùng
+        if (!ProjectPermission::hasGlobalPermission('roles.assign')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền gán vai trò cho người dùng');
+        }
+        
         $request->validate([
             'users' => 'required|array'
         ]);
@@ -169,6 +210,11 @@ class RoleController extends Controller
      */
     public function removeUser(Role $role, User $user)
     {
+        // Kiểm tra quyền global để xóa người dùng khỏi vai trò
+        if (!ProjectPermission::hasGlobalPermission('roles.assign')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền xóa người dùng khỏi vai trò');
+        }
+        
         // Không cho phép xóa Super Admin khỏi người dùng có ID = 1
         if ($role->name === 'Super Admin' && $user->id === 1) {
             return redirect()->route('roles.show', $role)

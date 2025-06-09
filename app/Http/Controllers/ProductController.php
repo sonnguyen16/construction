@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\Category;
 use App\Models\Unit;
+use App\Helpers\ProjectPermission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -17,6 +18,11 @@ class ProductController extends Controller
      */
     public function index(Request $request)
     {
+        // Kiểm tra quyền global để xem danh sách sản phẩm
+        if (!ProjectPermission::hasGlobalPermission('products.view')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền xem danh sách sản phẩm');
+        }
+        
         $query = Product::whereNull('deleted_at')->with(['category', 'unit', 'creator', 'updater']);
 
         // Áp dụng tìm kiếm nếu có
@@ -47,6 +53,11 @@ class ProductController extends Controller
      */
     public function create()
     {
+        // Kiểm tra quyền global để tạo sản phẩm
+        if (!ProjectPermission::hasGlobalPermission('products.create')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền tạo sản phẩm');
+        }
+        
         $categories = Category::all();
         $units = Unit::all();
 
@@ -61,6 +72,11 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
+        // Kiểm tra quyền global để tạo sản phẩm
+        if (!ProjectPermission::hasGlobalPermission('products.create')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền tạo sản phẩm');
+        }
+        
         $validated = $request->validate([
             'code' => 'required|string|max:255',
             'name' => 'required|string|max:255',
@@ -92,6 +108,11 @@ class ProductController extends Controller
      */
     public function show(Product $product)
     {
+        // Kiểm tra quyền global để xem chi tiết sản phẩm
+        if (!ProjectPermission::hasGlobalPermission('products.view')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền xem chi tiết sản phẩm');
+        }
+        
         $product->load(['category', 'unit', 'creator', 'updater']);
 
         return Inertia::render('Products/Show', [
@@ -104,6 +125,11 @@ class ProductController extends Controller
      */
     public function edit(Product $product)
     {
+        // Kiểm tra quyền global để sửa sản phẩm
+        if (!ProjectPermission::hasGlobalPermission('products.edit')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền sửa sản phẩm');
+        }
+        
         $product->load(['category', 'unit']);
         $categories = Category::all();
         $units = Unit::all();
@@ -120,6 +146,11 @@ class ProductController extends Controller
      */
     public function update(Request $request, Product $product)
     {
+        // Kiểm tra quyền global để sửa sản phẩm
+        if (!ProjectPermission::hasGlobalPermission('products.edit')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền sửa sản phẩm');
+        }
+        
         $validated = $request->validate([
             'code' => ['required', 'string', 'max:255'],
             'name' => 'required|string|max:255',
@@ -150,6 +181,11 @@ class ProductController extends Controller
      */
     public function destroy(Product $product)
     {
+        // Kiểm tra quyền global để xóa sản phẩm
+        if (!ProjectPermission::hasGlobalPermission('products.delete')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền xóa sản phẩm');
+        }
+        
         $product->deleted_at = now();
         $product->save();
 

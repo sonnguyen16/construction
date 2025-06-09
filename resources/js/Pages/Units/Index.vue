@@ -9,7 +9,7 @@
           <div class="card-header">
             <h3 class="card-title">Danh sách đơn vị</h3>
             <div class="card-tools">
-              <Link v-if="can('units.create')" :href="route('units.create')" class="btn btn-sm btn-primary">
+              <Link v-if="hasGlobalPermission('units.create')" :href="route('units.create')" class="btn btn-sm btn-primary">
                 <i class="fas fa-plus"></i> Thêm đơn vị mới
               </Link>
             </div>
@@ -50,10 +50,10 @@
                     <td>{{ truncateText(unit.note, 50) || '-' }}</td>
                     <td>
                       <div class="btn-group">
-                        <Link v-if="can('units.edit')" :href="route('units.edit', unit.id)" class="btn btn-xs btn-primary">
+                        <Link v-if="hasGlobalPermission('units.edit')" :href="route('units.edit', unit.id)" class="btn btn-xs btn-primary">
                           <i class="fas fa-edit"></i> Sửa
                         </Link>
-                        <button v-if="can('units.delete')" @click="confirmDelete(unit)" class="btn btn-xs btn-danger">
+                        <button v-if="hasGlobalPermission('units.delete')" @click="confirmDelete(unit)" class="btn btn-xs btn-danger">
                           <i class="fas fa-trash"></i> Xóa
                         </button>
                       </div>
@@ -89,7 +89,7 @@ const props = defineProps({
   filters: Object
 })
 
-const { can } = usePermission()
+const { can, hasGlobalPermission } = usePermission()
 
 const search = ref(props.filters?.search || '')
 

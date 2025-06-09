@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Contractor;
+use App\Helpers\ProjectPermission;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -13,6 +14,11 @@ class ContractorController extends Controller
      */
     public function index(Request $request)
     {
+        // Kiểm tra quyền global để xem danh sách nhà thầu
+        if (!ProjectPermission::hasGlobalPermission('contractors.view')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền xem danh sách nhà thầu');
+        }
+        
         $query = Contractor::query()->whereNull('deleted_at');
 
         // Tìm kiếm
@@ -40,6 +46,11 @@ class ContractorController extends Controller
      */
     public function create()
     {
+        // Kiểm tra quyền global để tạo nhà thầu
+        if (!ProjectPermission::hasGlobalPermission('contractors.create')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền tạo nhà thầu');
+        }
+        
         return Inertia::render('Contractors/Create');
     }
 
@@ -48,6 +59,11 @@ class ContractorController extends Controller
      */
     public function store(Request $request)
     {
+        // Kiểm tra quyền global để tạo nhà thầu
+        if (!ProjectPermission::hasGlobalPermission('contractors.create')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền tạo nhà thầu');
+        }
+        
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'phone' => 'nullable|string|max:20',
@@ -67,6 +83,11 @@ class ContractorController extends Controller
      */
     public function edit(Contractor $contractor)
     {
+        // Kiểm tra quyền global để sửa nhà thầu
+        if (!ProjectPermission::hasGlobalPermission('contractors.edit')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền sửa nhà thầu');
+        }
+        
         return Inertia::render('Contractors/Edit', [
             'contractor' => $contractor
         ]);
@@ -77,6 +98,11 @@ class ContractorController extends Controller
      */
     public function update(Request $request, Contractor $contractor)
     {
+        // Kiểm tra quyền global để sửa nhà thầu
+        if (!ProjectPermission::hasGlobalPermission('contractors.edit')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền sửa nhà thầu');
+        }
+        
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'phone' => 'nullable|string|max:20',
@@ -96,6 +122,11 @@ class ContractorController extends Controller
      */
     public function destroy(Contractor $contractor)
     {
+        // Kiểm tra quyền global để xóa nhà thầu
+        if (!ProjectPermission::hasGlobalPermission('contractors.delete')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền xóa nhà thầu');
+        }
+        
         $contractor->deleted_at = now();
         $contractor->save();
 

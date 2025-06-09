@@ -45,14 +45,63 @@
                       <i class="fas fa-check-double mr-1"></i> Chọn tất cả quyền
                     </label>
                   </div>
-                  <span class="badge badge-info p-2">
-                    <i class="fas fa-shield-alt mr-1"></i> Tổng số quyền: {{ getTotalPermissions() }}
-                  </span>
+                  <div>
+                    <span class="badge badge-info p-2 mr-1">
+                      <i class="fas fa-shield-alt mr-1"></i> Tổng số quyền: {{ getTotalPermissions() }}
+                    </span>
+                    <span class="badge badge-primary p-2 mr-1">
+                      <i class="fas fa-home mr-1"></i> Quyền cục bộ: {{ getPermissionCountByScope('global') }}
+                    </span>
+                    <span class="badge badge-success p-2">
+                      <i class="fas fa-project-diagram mr-1"></i> Quyền theo dự án:
+                      {{ getPermissionCountByScope('project') }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Tab điều hướng loại quyền -->
+                <div class="mt-2">
+                  <ul class="nav nav-tabs nav-sm">
+                    <li class="nav-item">
+                      <a
+                        class="nav-link"
+                        :class="{ active: activePermissionTab === 'all' }"
+                        href="#"
+                        @click.prevent="activePermissionTab = 'all'"
+                      >
+                        Tất cả quyền
+                      </a>
+                    </li>
+                    <li class="nav-item">
+                      <a
+                        class="nav-link"
+                        :class="{ active: activePermissionTab === 'global' }"
+                        href="#"
+                        @click.prevent="activePermissionTab = 'global'"
+                      >
+                        Quyền cục bộ
+                      </a>
+                    </li>
+                    <li class="nav-item">
+                      <a
+                        class="nav-link"
+                        :class="{ active: activePermissionTab === 'project' }"
+                        href="#"
+                        @click.prevent="activePermissionTab = 'project'"
+                      >
+                        Quyền theo dự án
+                      </a>
+                    </li>
+                  </ul>
                 </div>
               </div>
               <div class="card-body">
                 <div class="row">
-                  <div v-for="(modulePermissions, module) in permissions" :key="module" class="col-md-3 mb-3">
+                  <div
+                    v-for="(modulePermissions, module) in getFilteredPermissions()"
+                    :key="module"
+                    class="col-md-3 mb-3"
+                  >
                     <div class="card h-100 shadow-sm">
                       <div class="card-header bg-gradient-info text-white">
                         <div class="d-flex justify-content-between align-items-center">
@@ -68,9 +117,6 @@
                               <strong>{{ formatModuleName(module) }}</strong>
                             </label>
                           </div>
-                          <span class="badge badge-light">
-                            {{ modulePermissions.length }}
-                          </span>
                         </div>
                       </div>
                       <div class="card-body" style="max-height: 180px; overflow-y: auto">
@@ -88,7 +134,14 @@
                             @change="updateModuleSelection(module)"
                           />
                           <label class="custom-control-label" :for="'permission-' + permission.id">
-                            {{ formatPermissionName(permission.name) }}
+                            <span
+                              :class="{
+                                'text-primary': permission.scope === 'global',
+                                'text-success': permission.scope === 'project'
+                              }"
+                            >
+                              {{ formatPermissionName(permission.name) }}
+                            </span>
                           </label>
                         </div>
                       </div>
@@ -133,6 +186,7 @@ const processing = computed(() => form.processing)
 // Quản lý trạng thái chọn cho từng module
 const moduleSelections = ref({})
 const selectAllPermissions = ref(false)
+const activePermissionTab = ref('all') // 'all', 'global', 'project'
 
 // Khởi tạo trạng thái chọn cho từng module
 props.modules.forEach((module) => {
@@ -235,10 +289,45 @@ const updateSelectAllStatus = () => {
 // Đếm tổng số quyền
 const getTotalPermissions = () => {
   let total = 0
-  Object.values(props.permissions).forEach((modulePermissions) => {
-    total += modulePermissions.length
-  })
+  for (const module in props.permissions) {
+    total += props.permissions[module].length
+  }
   return total
+}
+
+// Lọc quyền theo phạm vi (scope)
+const getFilteredPermissions = () => {
+  if (activePermissionTab.value === 'all') {
+    return props.permissions
+  }
+
+  const filteredPermissions = {}
+
+  for (const module in props.permissions) {
+    const modulePermissions = props.permissions[module].filter(
+      (permission) => permission.scope === activePermissionTab.value
+    )
+
+    if (modulePermissions.length > 0) {
+      filteredPermissions[module] = modulePermissions
+    }
+  }
+
+  return filteredPermissions
+}
+
+// Đếm số lượng quyền theo phạm vi (scope)
+const getPermissionCountByScope = (scope) => {
+  let count = 0
+  for (const module in props.permissions) {
+    count += props.permissions[module].filter((permission) => permission.scope === scope).length
+  }
+  return count
+}
+
+// Đếm số lượng quyền theo phạm vi (scope) trong một module
+const getModulePermissionCountByScope = (modulePermissions, scope) => {
+  return modulePermissions.filter((permission) => permission.scope === scope).length
 }
 
 // Chọn/bỏ chọn tất cả quyền

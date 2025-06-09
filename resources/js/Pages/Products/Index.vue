@@ -9,7 +9,7 @@
           <div class="card-header">
             <h3 class="card-title">Danh sách sản phẩm</h3>
             <div class="card-tools">
-              <Link v-if="can('products.create')" :href="route('products.create')" class="btn btn-sm btn-primary">
+              <Link v-if="hasGlobalPermission('products.create')" :href="route('products.create')" class="btn btn-sm btn-primary">
                 <i class="fas fa-plus"></i> Thêm sản phẩm mới
               </Link>
             </div>
@@ -78,13 +78,13 @@
                     <td>{{ product.unit ? product.unit.name : '-' }}</td>
                     <td>
                       <div class="btn-group">
-                        <Link v-if="can('products.view')" :href="route('products.show', product.id)" class="btn btn-xs btn-info">
+                        <Link v-if="hasGlobalPermission('products.view')" :href="route('products.show', product.id)" class="btn btn-xs btn-info">
                           <i class="fas fa-eye"></i> Xem
                         </Link>
-                        <Link v-if="can('products.edit')" :href="route('products.edit', product.id)" class="btn btn-xs btn-primary">
+                        <Link v-if="hasGlobalPermission('products.edit')" :href="route('products.edit', product.id)" class="btn btn-xs btn-primary">
                           <i class="fas fa-edit"></i> Sửa
                         </Link>
-                        <button v-if="can('products.delete')" @click="confirmDelete(product)" class="btn btn-xs btn-danger">
+                        <button v-if="hasGlobalPermission('products.delete')" @click="confirmDelete(product)" class="btn btn-xs btn-danger">
                           <i class="fas fa-trash"></i> Xóa
                         </button>
                       </div>
@@ -115,7 +115,7 @@ import { showConfirm, showSuccess, showError, formatCurrency } from '@/utils'
 import debounce from 'lodash/debounce'
 import { usePermission } from '@/Composables/usePermission'
 
-const { can } = usePermission()
+const { can, hasGlobalPermission } = usePermission()
 
 const props = defineProps({
   products: Object,

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Helpers\ProjectPermission;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
@@ -14,6 +15,11 @@ class CustomerController extends Controller
      */
     public function index(Request $request)
     {
+        // Kiểm tra quyền global để xem danh sách khách hàng
+        if (!ProjectPermission::hasGlobalPermission('customers.view')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền xem danh sách khách hàng');
+        }
+        
         $query = Customer::query()->whereNull('deleted_at');
 
         // Tìm kiếm
@@ -42,6 +48,11 @@ class CustomerController extends Controller
      */
     public function create()
     {
+        // Kiểm tra quyền global để tạo khách hàng
+        if (!ProjectPermission::hasGlobalPermission('customers.create')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền tạo khách hàng');
+        }
+        
         return Inertia::render('Customers/Create');
     }
 
@@ -50,6 +61,11 @@ class CustomerController extends Controller
      */
     public function store(Request $request)
     {
+        // Kiểm tra quyền global để tạo khách hàng
+        if (!ProjectPermission::hasGlobalPermission('customers.create')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền tạo khách hàng');
+        }
+        
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'nullable|email|max:255',
@@ -69,6 +85,11 @@ class CustomerController extends Controller
      */
     public function show(Customer $customer)
     {
+        // Kiểm tra quyền global để xem chi tiết khách hàng
+        if (!ProjectPermission::hasGlobalPermission('customers.view')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền xem chi tiết khách hàng');
+        }
+        
         $customer->load(['creator', 'updater', 'receiptVouchers' => function ($query) {
             $query->with('project', 'bidPackage', 'creator')->orderBy('created_at', 'desc');
         }]);
@@ -83,6 +104,11 @@ class CustomerController extends Controller
      */
     public function edit(Customer $customer)
     {
+        // Kiểm tra quyền global để sửa khách hàng
+        if (!ProjectPermission::hasGlobalPermission('customers.edit')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền sửa khách hàng');
+        }
+        
         return Inertia::render('Customers/Edit', [
             'customer' => $customer
         ]);
@@ -93,6 +119,11 @@ class CustomerController extends Controller
      */
     public function update(Request $request, Customer $customer)
     {
+        // Kiểm tra quyền global để sửa khách hàng
+        if (!ProjectPermission::hasGlobalPermission('customers.edit')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền sửa khách hàng');
+        }
+        
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'nullable|email|max:255',
@@ -112,6 +143,11 @@ class CustomerController extends Controller
      */
     public function destroy(Customer $customer)
     {
+        // Kiểm tra quyền global để xóa khách hàng
+        if (!ProjectPermission::hasGlobalPermission('customers.delete')) {
+            return redirect()->back()->with('error', 'Bạn không có quyền xóa khách hàng');
+        }
+        
         // Kiểm tra xem khách hàng có phiếu thu không
         if ($customer->receiptVouchers()->count() > 0) {
             return back()->with('error', 'Không thể xóa khách hàng này vì đã có phiếu thu liên quan.');

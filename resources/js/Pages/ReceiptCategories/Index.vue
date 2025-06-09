@@ -10,7 +10,7 @@
             <h3 class="card-title">Danh sách loại thu</h3>
             <div class="card-tools">
               <Link
-                v-if="can('receipt-categories.create')"
+                v-if="hasGlobalPermission('receipt-categories.create')"
                 :href="route('receipt-categories.create')"
                 class="btn btn-sm btn-primary"
               >
@@ -55,14 +55,14 @@
                     <td>
                       <div class="btn-group">
                         <Link
-                          v-if="can('receipt-categories.edit')"
+                          v-if="hasGlobalPermission('receipt-categories.edit')"
                           :href="route('receipt-categories.edit', category.id)"
                           class="btn btn-xs btn-primary"
                         >
                           <i class="fas fa-edit"></i> Sửa
                         </Link>
                         <button
-                          v-if="can('receipt-categories.delete')"
+                          v-if="hasGlobalPermission('receipt-categories.delete')"
                           @click="confirmDelete(category)"
                           class="btn btn-xs btn-danger"
                         >
@@ -101,7 +101,7 @@ const props = defineProps({
   filters: Object
 })
 
-const { can } = usePermission()
+const { can, hasGlobalPermission } = usePermission()
 
 const search = ref(props.filters?.search || '')
 
