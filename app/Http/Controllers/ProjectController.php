@@ -33,7 +33,7 @@ class ProjectController extends Controller
         // Bắt đầu query
         $query = Project::query()
         ->leftJoin('bid_packages', 'projects.id', '=', 'bid_packages.project_id')
-        ->select('projects.*')
+        ->select('projects.id', 'projects.code', 'projects.name', 'projects.status', 'projects.customer_id', 'projects.created_at', 'projects.updated_at')
         ->selectRaw('
             COALESCE(SUM(bid_packages.client_price), 0) as total_client_price,
             COALESCE(SUM(bid_packages.estimated_price), 0) as total_estimated_price,
@@ -47,7 +47,6 @@ class ProjectController extends Controller
             'projects.customer_id',
             'projects.created_at',
             'projects.updated_at',
-            'projects.deleted_at',
         ])
         ->with('customer')
         ->whereNull('projects.deleted_at');
