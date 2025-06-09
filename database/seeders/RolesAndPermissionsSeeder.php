@@ -53,6 +53,7 @@ class RolesAndPermissionsSeeder extends Seeder
 
         // 1.4 Quyền cho module Quản lý dự án (chuyển sang scope project)
         $permissionModel::create(['name' => 'projects.view', 'guard_name' => 'web', 'scope' => 'project']);
+        $permissionModel::create(['name' => 'projects.create', 'guard_name' => 'web', 'scope' => 'global']);
         $permissionModel::create(['name' => 'projects.edit', 'guard_name' => 'web', 'scope' => 'project']);
         $permissionModel::create(['name' => 'projects.delete', 'guard_name' => 'web', 'scope' => 'project']);
         $permissionModel::create(['name' => 'projects.expenses', 'guard_name' => 'web', 'scope' => 'project']);
@@ -187,7 +188,7 @@ class RolesAndPermissionsSeeder extends Seeder
         $managerRole->givePermissionTo([
             'dashboard.view',
             'users.view',
-            'projects.view', 'projects.edit', 'projects.expenses', 'projects.profit',
+            'projects.view', 'projects.create', 'projects.edit', 'projects.expenses', 'projects.profit',
             'bid-packages.view', 'bid-packages.create', 'bid-packages.edit',
             'bids.view', 'bids.create', 'bids.edit', 'bids.select-contractor',
             'contractors.view', 'contractors.create', 'contractors.edit',

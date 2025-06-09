@@ -10,7 +10,11 @@
         <div class="card">
           <div class="card-header">
             <div class="d-flex justify-content-between align-items-center">
-              <Link v-if="user.id === 1" :href="route('projects.create')" class="btn btn-primary">
+              <Link
+                v-if="hasGlobalPermission('projects.create')"
+                :href="route('projects.create')"
+                class="btn btn-primary"
+              >
                 <i class="fas fa-plus mr-1"></i> Thêm dự án
               </Link>
               <div class="d-flex">
@@ -43,14 +47,49 @@
               <thead>
                 <tr>
                   <th width="5%">STT</th>
-                  <th width="10%">Mã dự án</th>
-                  <th>Tên dự án</th>
-                  <th>Khách hàng</th>
-                  <th>Tổng dự toán</th>
-                  <th>Tổng phát sinh</th>
-                  <th>Tổng giao thầu</th>
-                  <th>Trạng thái</th>
-                  <th>Ghi chú</th>
+                  <th width="10%" @click="sortBy('code')" class="sortable">
+                    Mã dự án
+                    <i v-if="sort.field === 'code'" :class="getSortIcon('code')"></i>
+                    <i v-else class="fas fa-sort text-muted"></i>
+                  </th>
+                  <th @click="sortBy('name')" class="sortable">
+                    Tên dự án
+                    <i v-if="sort.field === 'name'" :class="getSortIcon('name')"></i>
+                    <i v-else class="fas fa-sort text-muted"></i>
+                  </th>
+                  <th @click="sortBy('customer_id')" class="sortable">
+                    Khách hàng
+                    <i v-if="sort.field === 'customer_id'" :class="getSortIcon('customer_id')"></i>
+                    <i v-else class="fas fa-sort text-muted"></i>
+                  </th>
+                  <th @click="sortBy('total_estimated_price')" class="sortable">
+                    Tổng dự toán
+                    <i v-if="sort.field === 'total_estimated_price'" :class="getSortIcon('total_estimated_price')"></i>
+                    <i v-else class="fas fa-sort text-muted"></i>
+                  </th>
+                  <th @click="sortBy('total_additional_price')" class="sortable">
+                    Tổng phát sinh
+                    <i
+                      v-if="sort.field === 'total_additional_price'"
+                      :class="getSortIcon('total_additional_price')"
+                    ></i>
+                    <i v-else class="fas fa-sort text-muted"></i>
+                  </th>
+                  <th @click="sortBy('total_client_price')" class="sortable">
+                    Tổng giao thầu
+                    <i v-if="sort.field === 'total_client_price'" :class="getSortIcon('total_client_price')"></i>
+                    <i v-else class="fas fa-sort text-muted"></i>
+                  </th>
+                  <th @click="sortBy('status')" class="sortable">
+                    Trạng thái
+                    <i v-if="sort.field === 'status'" :class="getSortIcon('status')"></i>
+                    <i v-else class="fas fa-sort text-muted"></i>
+                  </th>
+                  <th @click="sortBy('description')" class="sortable">
+                    Ghi chú
+                    <i v-if="sort.field === 'description'" :class="getSortIcon('description')"></i>
+                    <i v-else class="fas fa-sort text-muted"></i>
+                  </th>
                   <th width="30%">Thao tác</th>
                 </tr>
               </thead>
@@ -60,9 +99,9 @@
                   <td>{{ project.code }}</td>
                   <td>{{ project.name }}</td>
                   <td>{{ project.customer ? project.customer.name : 'N/A' }}</td>
-                  <td class="text-right">{{ formatCurrency(getTotalEstimatedPrice(project)) }}</td>
-                  <td class="text-right">{{ formatCurrency(getTotalAdditionalPrice(project)) }}</td>
-                  <td class="text-right">{{ formatCurrency(getTotalClientPrice(project)) }}</td>
+                  <td class="text-right">{{ formatCurrency(project.total_estimated_price) }}</td>
+                  <td class="text-right">{{ formatCurrency(project.total_additional_price) }}</td>
+                  <td class="text-right">{{ formatCurrency(project.total_client_price) }}</td>
                   <td>
                     <span :class="getStatusClass(project.status)">
                       {{ getStatusLabel(project.status) }}
@@ -197,36 +236,17 @@ const props = defineProps({
 })
 
 // Sử dụng composable usePermission với các hàm kiểm tra quyền theo dự án
-const { page, canInProject } = usePermission()
-const user = page.props.auth.user
+const { canInProject, hasGlobalPermission } = usePermission()
 
 const search = ref(props.filters?.search || '')
 const status = ref(props.filters?.status || 'all')
 const selectedProject = ref(null)
 
-// Hàm tính tổng giá dự toán của dự án
-const getTotalEstimatedPrice = (project) => {
-  if (!project.bid_packages || project.bid_packages.length === 0) return 0
-  return project.bid_packages.reduce((total, pkg) => {
-    return total + (parseInt(pkg.display_estimated_price) || 0)
-  }, 0)
-}
-
-// Hàm tính tổng giá phát sinh của dự án
-const getTotalAdditionalPrice = (project) => {
-  if (!project.bid_packages || project.bid_packages.length === 0) return 0
-  return project.bid_packages.reduce((total, pkg) => {
-    return total + (parseInt(pkg.display_additional_price) || 0)
-  }, 0)
-}
-
-// Hàm tính tổng giá giao thầu của dự án
-const getTotalClientPrice = (project) => {
-  if (!project.bid_packages || project.bid_packages.length === 0) return 0
-  return project.bid_packages.reduce((total, pkg) => {
-    return total + (parseInt(pkg.display_client_price) || 0)
-  }, 0)
-}
+// Biến quản lý sắp xếp
+const sort = ref({
+  field: props.filters?.sort_field || 'id',
+  direction: props.filters?.sort_direction || 'desc'
+})
 
 // Tính số thứ tự dựa trên trang hiện tại và vị trí trong trang
 const getSerialNumber = (index) => {
@@ -276,12 +296,36 @@ const deleteProject = () => {
   }
 }
 
-const filterByStatus = () => {
+// Hàm xử lý sắp xếp
+const sortBy = (field) => {
+  if (sort.value.field === field) {
+    // Nếu đang sắp xếp theo field này rồi thì đổi hướng sắp xếp
+    sort.value.direction = sort.value.direction === 'asc' ? 'desc' : 'asc'
+  } else {
+    // Nếu chưa sắp xếp theo field này thì mặc định sắp xếp tăng dần
+    sort.value.field = field
+    sort.value.direction = 'asc'
+  }
+
+  // Gọi API để lấy dữ liệu mới
+  applyFilters()
+}
+
+// Lấy icon cho cột đang sắp xếp
+const getSortIcon = (field) => {
+  if (sort.value.field !== field) return ''
+  return sort.value.direction === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down'
+}
+
+// Hàm áp dụng tất cả các bộ lọc và sắp xếp
+const applyFilters = () => {
   router.get(
     route('projects.index'),
     {
       search: search.value,
-      status: status.value
+      status: status.value,
+      sort_field: sort.value.field,
+      sort_direction: sort.value.direction
     },
     {
       preserveState: true,
@@ -290,26 +334,76 @@ const filterByStatus = () => {
   )
 }
 
+const filterByStatus = () => {
+  applyFilters()
+}
+
 // Tìm kiếm dự án
-watch(search, (value) => {
-  router.get(
-    route('projects.index'),
-    {
-      search: value,
-      status: status.value
-    },
-    {
-      preserveState: true,
-      replace: true
-    }
-  )
-})
+watch(
+  search,
+  (value) => {
+    router.get(
+      route('projects.index'),
+      {
+        search: value,
+        status: status.value,
+        sort_field: sort.value.field,
+        sort_direction: sort.value.direction
+      },
+      {
+        preserveState: true,
+        replace: true
+      }
+    )
+  },
+  { debounce: 300 }
+)
 </script>
 
 <style scoped>
 .dropdown-item {
   cursor: pointer;
   padding: 5px 10px;
+}
+
+.sortable {
+  cursor: pointer;
+  position: relative;
+  user-select: none;
+}
+
+.sortable:hover {
+  background-color: #f8f9fa;
+}
+
+.sortable i {
+  margin-left: 5px;
+  font-size: 0.85em;
+  color: #007bff;
+}
+
+.sortable i.text-muted {
+  color: #adb5bd !important;
+  font-size: 0.75em;
+  opacity: 0.5;
+}
+
+.sortable:hover i.text-muted {
+  opacity: 0.8;
+}
+
+.sortable:hover i {
+  opacity: 1;
+}
+
+.sortable i.fas.fa-sort-up {
+  position: relative;
+  top: 2px;
+}
+
+.sortable i.fas.fa-sort-down {
+  position: relative;
+  top: -2px;
 }
 .dropdown-item i {
   width: 20px;

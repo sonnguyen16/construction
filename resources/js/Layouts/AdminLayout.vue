@@ -94,7 +94,11 @@
         <nav class="mt-2">
           <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
             <template v-for="item in menuItems">
-              <li class="nav-item" :class="{ 'menu-open': item && item.children && isMenuActive(item) }">
+              <li
+                v-if="!item.visible || item.visible()"
+                class="nav-item"
+                :class="{ 'menu-open': item && item.children && isMenuActive(item) }"
+              >
                 <!-- Menu có submenu -->
                 <template v-if="item.children">
                   <a href="#" class="nav-link" :class="{ active: isMenuActive(item) }">
@@ -106,7 +110,7 @@
                   </a>
                   <ul class="nav nav-treeview">
                     <template v-for="child in item.children">
-                      <li class="nav-item">
+                      <li v-if="!child.visible || child.visible()" class="nav-item">
                         <Link :href="child.href" class="nav-link" :class="{ active: child.isActive($page) }">
                           <i :class="[child.icon, 'nav-icon']"></i>
                           <p>{{ child.label }}</p>
@@ -188,7 +192,7 @@ import { usePermission } from '@/Composables/usePermission'
 import { showSuccess, showError, showWarning } from '@/utils'
 
 const $page = usePage()
-const { can } = usePermission()
+const { can, hasViewPermissionInAnyProject } = usePermission()
 
 // Kiểm tra xem menu có đang được kích hoạt không
 const isMenuActive = (item) => {
@@ -273,6 +277,9 @@ const menuItems = [
     label: 'Bảng điều khiển',
     isActive(page) {
       return page.component === 'Home'
+    },
+    visible() {
+      return hasViewPermissionInAnyProject('dashboard')
     }
   },
   {
@@ -281,6 +288,9 @@ const menuItems = [
     isActive(page) {
       return page.component.startsWith('Projects') || page.component.startsWith('ProjectCategories')
     },
+    visible() {
+      return hasViewPermissionInAnyProject('projects') || hasViewPermissionInAnyProject('project-categories')
+    },
     children: [
       {
         href: '/projects',
@@ -288,6 +298,9 @@ const menuItems = [
         label: 'Danh sách dự án',
         isActive(page) {
           return page.component.startsWith('Projects') && !page.component.includes('Categories')
+        },
+        visible() {
+          return hasViewPermissionInAnyProject('projects')
         }
       },
       {
@@ -296,6 +309,9 @@ const menuItems = [
         label: 'Danh mục dự án',
         isActive(page) {
           return page.component.startsWith('ProjectCategories')
+        },
+        visible() {
+          return hasViewPermissionInAnyProject('project-categories')
         }
       }
     ]
@@ -314,6 +330,16 @@ const menuItems = [
         page.component.startsWith('Loans')
       )
     },
+    visible() {
+      return (
+        hasViewPermissionInAnyProject('payment-vouchers') ||
+        hasViewPermissionInAnyProject('receipt-vouchers') ||
+        hasViewPermissionInAnyProject('payment-categories') ||
+        hasViewPermissionInAnyProject('receipt-categories') ||
+        hasViewPermissionInAnyProject('reports') ||
+        hasViewPermissionInAnyProject('loans')
+      )
+    },
     children: [
       {
         href: route('payment-vouchers.index'),
@@ -321,6 +347,9 @@ const menuItems = [
         label: 'Phiếu chi',
         isActive(page) {
           return page.component.startsWith('PaymentVouchers')
+        },
+        visible() {
+          return hasViewPermissionInAnyProject('payment-vouchers')
         }
       },
       {
@@ -329,6 +358,9 @@ const menuItems = [
         label: 'Phiếu thu',
         isActive(page) {
           return page.component.startsWith('ReceiptVouchers')
+        },
+        visible() {
+          return hasViewPermissionInAnyProject('receipt-vouchers')
         }
       },
       {
@@ -337,6 +369,9 @@ const menuItems = [
         label: 'Loại chi',
         isActive(page) {
           return page.component.startsWith('PaymentCategories')
+        },
+        visible() {
+          return hasViewPermissionInAnyProject('payment-categories')
         }
       },
       {
@@ -345,6 +380,9 @@ const menuItems = [
         label: 'Loại thu',
         isActive(page) {
           return page.component.startsWith('ReceiptCategories')
+        },
+        visible() {
+          return hasViewPermissionInAnyProject('receipt-categories')
         }
       },
       {
@@ -353,6 +391,9 @@ const menuItems = [
         label: 'Báo cáo thu chi',
         isActive(page) {
           return page.component === 'Reports/Financial'
+        },
+        visible() {
+          return hasViewPermissionInAnyProject('reports')
         }
       },
       {
@@ -361,6 +402,9 @@ const menuItems = [
         label: 'Công nợ nhà cung cấp',
         isActive(page) {
           return page.component === 'Reports/ContractorDebt'
+        },
+        visible() {
+          return hasViewPermissionInAnyProject('reports')
         }
       },
       {
@@ -369,6 +413,9 @@ const menuItems = [
         label: 'Công nợ khách hàng',
         isActive(page) {
           return page.component === 'Reports/CustomerDebt'
+        },
+        visible() {
+          return hasViewPermissionInAnyProject('reports')
         }
       },
       {
@@ -377,6 +424,9 @@ const menuItems = [
         label: 'Khoản vay',
         isActive(page) {
           return page.component.startsWith('Loans')
+        },
+        visible() {
+          return hasViewPermissionInAnyProject('loans')
         }
       }
     ]
@@ -393,6 +443,15 @@ const menuItems = [
         page.component.startsWith('ExportVouchers')
       )
     },
+    visible() {
+      return (
+        hasViewPermissionInAnyProject('products') ||
+        hasViewPermissionInAnyProject('categories') ||
+        hasViewPermissionInAnyProject('units') ||
+        hasViewPermissionInAnyProject('import-vouchers') ||
+        hasViewPermissionInAnyProject('export-vouchers')
+      )
+    },
     children: [
       {
         href: route('products.index'),
@@ -400,6 +459,9 @@ const menuItems = [
         label: 'Sản phẩm',
         isActive(page) {
           return page.component.startsWith('Products')
+        },
+        visible() {
+          return hasViewPermissionInAnyProject('products')
         }
       },
       {
@@ -408,6 +470,9 @@ const menuItems = [
         label: 'Loại sản phẩm',
         isActive(page) {
           return page.component.startsWith('Categories')
+        },
+        visible() {
+          return hasViewPermissionInAnyProject('categories')
         }
       },
       {
@@ -416,6 +481,9 @@ const menuItems = [
         label: 'Đơn vị tính',
         isActive(page) {
           return page.component.startsWith('Units')
+        },
+        visible() {
+          return hasViewPermissionInAnyProject('units')
         }
       },
       {
@@ -424,6 +492,9 @@ const menuItems = [
         label: 'Phiếu nhập kho',
         isActive(page) {
           return page.component.startsWith('ImportVouchers')
+        },
+        visible() {
+          return hasViewPermissionInAnyProject('import-vouchers')
         }
       },
       {
@@ -432,6 +503,9 @@ const menuItems = [
         label: 'Phiếu xuất kho',
         isActive(page) {
           return page.component.startsWith('ExportVouchers')
+        },
+        visible() {
+          return hasViewPermissionInAnyProject('export-vouchers')
         }
       }
     ]
@@ -442,7 +516,10 @@ const menuItems = [
     isActive(page) {
       return page.component.startsWith('Tasks')
     },
-    href: route('tasks.index')
+    href: route('tasks.index'),
+    visible() {
+      return hasViewPermissionInAnyProject('tasks')
+    }
   },
   {
     href: '/contractors',
@@ -450,6 +527,9 @@ const menuItems = [
     label: 'Quản lý nhà thầu',
     isActive(page) {
       return page.component.startsWith('Contractors')
+    },
+    visible() {
+      return hasViewPermissionInAnyProject('contractors')
     }
   },
   {
@@ -458,6 +538,9 @@ const menuItems = [
     label: 'Quản lý khách hàng',
     isActive(page) {
       return page.component.startsWith('Customers')
+    },
+    visible() {
+      return hasViewPermissionInAnyProject('customers')
     }
   },
   {
@@ -466,6 +549,9 @@ const menuItems = [
     isActive(page) {
       return page.component.startsWith('Users') || page.component.startsWith('Roles')
     },
+    visible() {
+      return hasViewPermissionInAnyProject('users') || hasViewPermissionInAnyProject('roles')
+    },
     children: [
       {
         href: '/users',
@@ -473,6 +559,9 @@ const menuItems = [
         label: 'Quản lý người dùng',
         isActive(page) {
           return page.component.startsWith('Users')
+        },
+        visible() {
+          return hasViewPermissionInAnyProject('users')
         }
       },
       {
@@ -481,6 +570,9 @@ const menuItems = [
         label: 'Vai trò & Phân quyền',
         isActive(page) {
           return page.component.startsWith('Roles')
+        },
+        visible() {
+          return hasViewPermissionInAnyProject('roles')
         }
       }
     ]

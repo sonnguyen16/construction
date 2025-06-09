@@ -93,6 +93,29 @@ export function usePermission() {
 
         return false;
     }
+    
+    /**
+     * Kiểm tra xem người dùng có quyền view trong ít nhất một dự án nào không
+     * Dùng cho AdminLayout để ẩn/hiện các menu
+     * @param {string} permissionBase - Tên quyền cơ sở, sẽ thêm '.view' để kiểm tra
+     * @returns {boolean} - Trả về true nếu có quyền view trong ít nhất một dự án, ngược lại false
+     */
+    function hasViewPermissionInAnyProject(permissionBase) {
+        const viewPermission = `${permissionBase}.view`;
+        
+        // Kiểm tra tất cả các dự án của người dùng
+        for (const projectRole of userProjectRoles.value) {
+            // Lấy danh sách quyền của vai trò trong dự án
+            const permissions = projectRole.permissions || [];
+
+            // Kiểm tra quyền view
+            if (permissions.includes(viewPermission)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     /**
      * Kiểm tra xem người dùng có phải là Super Admin trong dự án không
@@ -123,6 +146,7 @@ export function usePermission() {
         hasRoleInProject,
         canInProject,
         hasGlobalPermission,
+        hasViewPermissionInAnyProject,
         isSuperAdminInProject
     };
 }

@@ -12,7 +12,6 @@ use App\Models\Customer;
 use App\Models\Contractor;
 use App\Models\ProjectCategory;
 use Spatie\Permission\Models\Role;
-use Illuminate\Support\Facades\DB;
 use App\Helpers\ProjectPermission;
 class ProjectController extends Controller
 {
@@ -21,32 +20,74 @@ class ProjectController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Project::query()->with('bidPackages')->whereNull('deleted_at');
+        $sortField = $request->input('sort_field', 'id');
+        $sortDirection = $request->input('sort_direction', 'desc');
 
-        // Chỉ hiển thị các dự án mà người dùng có vai trò
+        // Các trường cho phép sắp xếp trong cơ sở dữ liệu
+        $allowedSortFields = [
+            'id', 'code', 'name', 'status', 'customer_id',
+            'created_at', 'updated_at', 'total_client_price',
+            'total_estimated_price', 'total_additional_price',
+        ];
+
+        // Bắt đầu query
+        $query = Project::query()
+        ->leftJoin('bid_packages', 'projects.id', '=', 'bid_packages.project_id')
+        ->select('projects.*')
+        ->selectRaw('
+            COALESCE(SUM(bid_packages.client_price), 0) as total_client_price,
+            COALESCE(SUM(bid_packages.estimated_price), 0) as total_estimated_price,
+            COALESCE(SUM(bid_packages.additional_price), 0) as total_additional_price
+        ')
+        ->groupBy([
+            'projects.id',
+            'projects.code',
+            'projects.name',
+            'projects.status',
+            'projects.customer_id',
+            'projects.created_at',
+            'projects.updated_at',
+            'projects.deleted_at',
+        ])
+        ->with('customer')
+        ->whereNull('projects.deleted_at');
+
+
+        // Lọc dự án theo quyền truy cập
         $projectIds = ProjectPermission::getAccessibleProjectIds();
-
-        $query->whereIn('id', $projectIds);
+        $query->whereIn('projects.id', $projectIds);
 
         // Tìm kiếm
-        if ($request->has('search')) {
+        if ($request->filled('search')) {
             $searchTerm = $request->search;
-            $query->where(function($q) use ($searchTerm) {
-                $q->where('code', 'like', "%{$searchTerm}%")
-                  ->orWhere('name', 'like', "%{$searchTerm}%");
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('projects.code', 'like', "%{$searchTerm}%")
+                ->orWhere('projects.name', 'like', "%{$searchTerm}%");
             });
         }
 
-        // Lọc theo trạng thái
-        if ($request->has('status') && $request->status !== 'all') {
-            $query->where('status', $request->status);
+        // Lọc trạng thái
+        if ($request->filled('status') && $request->status !== 'all') {
+            $query->where('projects.status', $request->status);
         }
 
-        $projects = $query->with('customer')->latest()->paginate(10)->withQueryString();
+        // Sắp xếp nếu hợp lệ
+        if (in_array($sortField, $allowedSortFields)) {
+            if (in_array($sortField, ['total_client_price', 'total_estimated_price', 'total_additional_price'])) {
+                $query->orderByRaw("{$sortField} {$sortDirection}");
+            } else {
+                $query->orderBy("projects.{$sortField}", $sortDirection);
+            }
+        } else {
+            $query->latest('projects.created_at');
+        }
+
+
+        $projects = $query->paginate(10)->withQueryString();
 
         return Inertia::render('Projects/Index', [
             'projects' => $projects,
-            'filters' => $request->only(['search', 'status']),
+            'filters' => $request->only(['search', 'status', 'sort_field', 'sort_direction']),
             'statuses' => [
                 'all' => 'Tất cả',
                 'active' => 'Đang hoạt động',
@@ -56,12 +97,13 @@ class ProjectController extends Controller
         ]);
     }
 
+
     /**
      * Hiển thị form tạo dự án mới
      */
     public function create()
     {
-        if (auth()->user()->id != 1) {
+        if (!ProjectPermission::hasGlobalPermission('projects.create')) {
             return redirect()->route('projects.index')
                 ->with('error', 'Bạn không có quyền tạo dự án.');
         }
@@ -79,10 +121,11 @@ class ProjectController extends Controller
      */
     public function store(Request $request)
     {
-        if (auth()->user()->id != 1) {
+        if (!ProjectPermission::hasGlobalPermission('projects.create')) {
             return redirect()->route('projects.index')
                 ->with('error', 'Bạn không có quyền tạo dự án.');
         }
+
         $validated = $request->validate([
             'code' => 'required|string|max:50',
             'name' => 'required|string|max:255',
