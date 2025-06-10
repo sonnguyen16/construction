@@ -13,6 +13,7 @@ use App\Models\Contractor;
 use App\Models\ProjectCategory;
 use Spatie\Permission\Models\Role;
 use App\Helpers\ProjectPermission;
+use Illuminate\Support\Facades\Auth;
 class ProjectController extends Controller
 {
     /**
@@ -152,9 +153,11 @@ class ProjectController extends Controller
         $adminUser = User::where('email', 'admin@example.com')->first();
         $superAdminRole = Role::where('name', 'Super Admin')->first();
 
-        if ($adminUser && $superAdminRole) {
+        // người tạo dự án nếu không phải admin@example.com
+        $user = Auth::user();
+        if ($user->email !== 'admin@example.com') {
             ProjectRole::create([
-                'user_id' => $adminUser->id,
+                'user_id' => $user->id,
                 'project_id' => $project->id,
                 'role_id' => $superAdminRole->id
             ]);
