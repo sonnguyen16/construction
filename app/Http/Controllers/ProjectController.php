@@ -153,7 +153,14 @@ class ProjectController extends Controller
         $adminUser = User::where('email', 'admin@example.com')->first();
         $superAdminRole = Role::where('name', 'Super Admin')->first();
 
-        // người tạo dự án nếu không phải admin@example.com
+        if ($adminUser && $superAdminRole) {
+            ProjectRole::create([
+                'user_id' => $adminUser->id,
+                'project_id' => $project->id,
+                'role_id' => $superAdminRole->id
+            ]);
+        }
+
         $user = Auth::user();
         if ($user->email !== 'admin@example.com') {
             ProjectRole::create([
