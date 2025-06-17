@@ -301,7 +301,11 @@ function initGantt() {
 
         // Hiển thị avatar và tên của người thực hiện
         displayUsers.forEach((user) => {
-          const avatarUrl = user.avatar.startsWith('http') ? user.avatar : `/storage/avatars/${user.avatar}`
+          const avatarUrl = user.avatar
+            ? user.avatar.startsWith('http')
+              ? user.avatar
+              : `/storage/avatars/${user.avatar}`
+            : '/images/default-avatar.jpg'
 
           html += `
             <div class="assignee-item" title="${user.name}">
