@@ -9,7 +9,7 @@ use Spatie\Permission\Models\Role;
 class ProjectRole extends Model
 {
     use HasFactory;
-    
+
     /**
      * Các thuộc tính có thể gán hàng loạt
      */
@@ -18,7 +18,7 @@ class ProjectRole extends Model
         'project_id',
         'role_id',
     ];
-    
+
     /**
      * Lấy người dùng sở hữu vai trò này
      */
@@ -26,15 +26,15 @@ class ProjectRole extends Model
     {
         return $this->belongsTo(User::class);
     }
-    
+
     /**
      * Lấy dự án mà vai trò này thuộc về
      */
     public function project()
     {
-        return $this->belongsTo(Project::class);
+        return $this->belongsTo(Project::class)->whereNull('deleted_at');
     }
-    
+
     /**
      * Lấy vai trò
      */

@@ -20,10 +20,8 @@ class ReceiptVoucherController extends Controller
     public function index(Request $request)
     {
         $query = ReceiptVoucher::query()->whereNull('deleted_at')
-            ->with(['customer', 'project', 'bidPackage', 'creator', 'receiptCategory'])
-            ->whereHas('bidPackage', function ($query) {
-                $query->whereNull('deleted_at');
-            });
+            ->with(['customer', 'project', 'bidPackage', 'creator', 'receiptCategory']);
+
 
         // Tạo một truy vấn cơ bản cho thống kê
         $statsQuery = ReceiptVoucher::query()->whereNull('deleted_at');

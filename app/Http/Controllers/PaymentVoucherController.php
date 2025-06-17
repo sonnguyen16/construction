@@ -19,10 +19,8 @@ class PaymentVoucherController extends Controller
     public function index(Request $request)
     {
         $query = PaymentVoucher::query()->whereNull('deleted_at')
-            ->with(['contractor', 'bidPackage.project', 'creator', 'paymentCategory'])
-            ->whereHas('bidPackage', function ($query) {
-                $query->whereNull('deleted_at');
-            });
+            ->with(['contractor', 'bidPackage.project', 'creator', 'paymentCategory']);
+
 
         // Tạo một truy vấn cơ bản cho thống kê
         $statsQuery = PaymentVoucher::query()->whereNull('deleted_at');
