@@ -32,7 +32,7 @@ class ProjectRole extends Model
      */
     public function project()
     {
-        return $this->belongsTo(Project::class)->whereNull('deleted_at');
+        return $this->belongsTo(Project::class);
     }
 
     /**

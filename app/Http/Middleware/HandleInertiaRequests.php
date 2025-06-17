@@ -43,7 +43,9 @@ class HandleInertiaRequests extends Middleware
                     'name' => $request->user()->name,
                     'email' => $request->user()->email,
                     'avatar' => $request->user()->avatar,
-                    'project_roles' => $request->user()->projectRoles()->with(['project', 'role'])->get()->map(function ($projectRole) use ($request) {
+                    'project_roles' => $request->user()->projectRoles()->with(['project', 'role'])->whereHas('project', function ($query) {
+                        $query->whereNull('deleted_at');
+                    })->get()->map(function ($projectRole) use ($request) {
                         // Lấy danh sách quyền của vai trò trong dự án
                         $permissions = $projectRole->role->permissions->pluck('name')->toArray();
 
