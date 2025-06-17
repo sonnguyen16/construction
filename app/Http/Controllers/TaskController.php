@@ -74,6 +74,7 @@ class TaskController extends Controller
                     'progress' => $task->progress,
                     'parent' => $task->parent_id,
                     'order' => $task->order,
+                    'users' => $task->users()->get(),
                     'open' => true
                 ];
             });

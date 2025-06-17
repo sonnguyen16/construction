@@ -10,7 +10,18 @@
           <div class="card-header">
             <div class="d-flex justify-content-between align-items-center">
               <div>
-                <h3 class="card-title mb-0">{{ task.name }}</h3>
+                <h3 class="card-title mb-0">
+                  <!-- Hiển thị breadcrumb các task cha -->
+                  <template v-if="parentTasks.length > 0">
+                    <span class="text-muted" style="font-size: 0.9em;">
+                      <template v-for="(parentTask, index) in parentTasks" :key="parentTask.id">
+                        {{ parentTask.name }}
+                        <i class="fas fa-angle-right mx-1"></i>
+                      </template>
+                    </span>
+                  </template>
+                  {{ task.name }}
+                </h3>
               </div>
               <div class="card-tools">
                 <Link :href="route('tasks.index', { project_id: task.project_id })" class="btn btn-sm btn-info">
@@ -96,6 +107,29 @@ import { usePermission } from '@/Composables/usePermission'
 const props = defineProps({
   task: Object,
   project: Object
+})
+
+// Danh sách các công việc cha để hiển thị breadcrumb
+const parentTasks = ref([])
+
+// Hàm đệ quy để lấy tất cả các công việc cha
+const getAllParentTasks = async (task) => {
+  const parents = []
+  let currentTask = task
+
+  while (currentTask?.parent) {
+    parents.unshift(currentTask.parent)
+    currentTask = currentTask.parent
+  }
+
+  return parents
+}
+
+// Khởi tạo danh sách công việc cha khi component được mount
+onMounted(async () => {
+  if (props.task?.parent) {
+    parentTasks.value = await getAllParentTasks(props.task)
+  }
 })
 
 const activeTab = ref('users')

@@ -201,10 +201,14 @@
 </template>
 
 <script setup>
-import { onMounted, onBeforeUnmount } from 'vue'
+import { onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { Link, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { parseCurrency, showSuccess, formatNumberInput, formatCurrency } from '@/utils'
+import { useCurrentProject } from '@/Composables/useCurrentProject'
+
+// Sử dụng composable dự án hiện tại
+const { currentProject } = useCurrentProject()
 
 const props = defineProps({
   contractors: Array,
@@ -215,7 +219,7 @@ const props = defineProps({
 const form = useForm({
   name: '',
   contractor_id: '',
-  project_id: '',
+  project_id: currentProject.value ? currentProject.value.id : '',
   amount: '',
   interest_rate: '',
   start_date: '',
@@ -277,6 +281,32 @@ onMounted(() => {
     autoOpen: true,
     width: '100%'
   })
+  
+  // Vô hiệu hóa InputPicker dự án nếu dùng currentProject
+  if (currentProject.value) {
+    window.$('#project_id').prop('disabled', true)
+  }
+  
+  // Theo dõi thay đổi của dự án hiện tại
+  watch(
+    () => currentProject.value,
+    (newProject) => {
+      if (newProject) {
+        // Cập nhật giá trị trong form
+        form.project_id = newProject.id
+        
+        // Vô hiệu hóa InputPicker dự án
+        window.$('#project_id').prop('disabled', true)
+        
+        // Cập nhật giao diện InputPicker
+        const selectedProject = props.projects.find((p) => p.id == newProject.id)
+        if (selectedProject && window.$('#project_id').length) {
+          window.$('#project_id').inputpicker('val', selectedProject.id)
+        }
+      }
+    },
+    { immediate: true }
+  )
 
   // Sự kiện thay đổi dự án
   window.$('#project_id').on('change', function () {

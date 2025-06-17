@@ -33,12 +33,19 @@
               <div class="col-md-3">
                 <div class="form-group">
                   <label for="project_id">Dự án:</label>
-                  <select class="form-control" id="project_id" v-model="selectedProject" @change="debouncedSearch">
+                  <select
+                    class="form-control"
+                    id="project_id"
+                    v-model="selectedProject"
+                    @change="debouncedSearch"
+                    disabled
+                  >
                     <option value="">Tất cả dự án</option>
                     <option v-for="project in projects" :key="project.id" :value="project.id">
                       {{ project.name }}
                     </option>
                   </select>
+                  <small class="form-text text-muted">Dự án được điều chỉnh từ dropdown chọn dự án chính</small>
                 </div>
               </div>
               <div class="col-md-2">
@@ -127,6 +134,7 @@ import Pagination from '@/Components/Pagination.vue'
 import { formatCurrency } from '@/utils'
 import debounce from 'lodash/debounce'
 import { usePermission } from '@/Composables/usePermission'
+import { useCurrentProject } from '@/Composables/useCurrentProject'
 
 const props = defineProps({
   importVouchers: Object,
@@ -136,8 +144,11 @@ const props = defineProps({
 
 const { canInProject } = usePermission()
 
+// Sử dụng composable dự án hiện tại
+const { currentProject } = useCurrentProject()
+
 const search = ref(props.filters?.search || '')
-const selectedProject = ref(props.filters?.project_id || '')
+const selectedProject = ref(props.filters?.project_id || (currentProject.value ? currentProject.value.id : ''))
 const dateFrom = ref(props.filters?.date_from || '')
 const dateTo = ref(props.filters?.date_to || '')
 
@@ -199,4 +210,17 @@ const debouncedSearch = debounce(() => {
     }
   )
 }, 300)
+
+// Theo dõi thay đổi của dự án hiện tại
+watch(
+  () => currentProject.value,
+  (newProject) => {
+    if (newProject) {
+      selectedProject.value = newProject.id
+      // Áp dụng bộ lọc ngay lập tức khi dự án thay đổi
+      debouncedSearch()
+    }
+  },
+  { immediate: true }
+)
 </script>

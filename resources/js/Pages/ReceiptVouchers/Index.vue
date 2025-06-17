@@ -85,13 +85,20 @@
               <div class="col-md-3">
                 <div class="form-group">
                   <label for="project_id">Dự án:</label>
-                  <select class="form-control" id="project_id" v-model="filters.project_id" @change="applyFilters">
+                  <select
+                    class="form-control"
+                    id="project_id"
+                    v-model="filters.project_id"
+                    @change="applyFilters"
+                    disabled
+                  >
                     <option value="">Tất cả dự án</option>
                     <option value="null">Ngoài dự án</option>
                     <option v-for="project in projects" :key="project.id" :value="project.id">
                       {{ project.name }}
                     </option>
                   </select>
+                  <small class="form-text text-muted">Dự án được điều chỉnh từ dropdown chọn dự án chính</small>
                 </div>
               </div>
               <div class="col-md-3">
@@ -254,9 +261,13 @@ import { formatCurrency, formatDate, showConfirm, showSuccess } from '@/utils'
 import Pagination from '@/Components/Pagination.vue'
 import debounce from 'lodash/debounce'
 import { usePermission } from '@/Composables/usePermission'
+import { useCurrentProject } from '@/Composables/useCurrentProject'
 
 // Sử dụng composable phân quyền
 const { canInProject } = usePermission()
+
+// Sử dụng composable dự án hiện tại
+const { currentProject } = useCurrentProject()
 
 const props = defineProps({
   receiptVouchers: Object,
@@ -274,7 +285,7 @@ const props = defineProps({
 const filters = ref({
   search: props.filters.search || '',
   customer_id: props.filters.customer_id || '',
-  project_id: props.filters.project_id || '',
+  project_id: props.filters.project_id || (currentProject.value ? currentProject.value.id : ''),
   bid_package_id: props.filters.bid_package_id || '',
   receipt_category_id: props.filters.receipt_category_id || '',
   status: props.filters.status || '',
@@ -337,4 +348,17 @@ const confirmDelete = (voucher) => {
     }
   )
 }
+
+// Theo dõi thay đổi của dự án hiện tại
+watch(
+  () => currentProject.value,
+  (newProject) => {
+    if (newProject) {
+      filters.value.project_id = newProject.id
+      // Áp dụng bộ lọc ngay lập tức khi dự án thay đổi
+      applyFilters()
+    }
+  },
+  { immediate: true }
+)
 </script>

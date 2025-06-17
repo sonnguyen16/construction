@@ -43,9 +43,14 @@ class HandleInertiaRequests extends Middleware
                     'name' => $request->user()->name,
                     'email' => $request->user()->email,
                     'avatar' => $request->user()->avatar,
-                    'project_roles' => $request->user()->projectRoles()->with(['project', 'role'])->get()->map(function ($projectRole) {
+                    'project_roles' => $request->user()->projectRoles()->with(['project', 'role'])->get()->map(function ($projectRole) use ($request) {
                         // Lấy danh sách quyền của vai trò trong dự án
                         $permissions = $projectRole->role->permissions->pluck('name')->toArray();
+                        
+                        // Kiểm tra xem đây có phải là dự án và vai trò hiện tại không
+                        $isCurrentProject = $request->session()->get('current_project_id') == $projectRole->project_id;
+                        $isCurrentRole = $request->session()->get('current_role_id') == $projectRole->role_id;
+                        $isActive = $isCurrentProject && $isCurrentRole;
                         
                         return [
                             'project_id' => $projectRole->project_id,
@@ -53,8 +58,14 @@ class HandleInertiaRequests extends Middleware
                             'role_id' => $projectRole->role_id,
                             'role_name' => $projectRole->role->name,
                             'permissions' => $permissions,
+                            'is_active' => $isActive,
                         ];
                     }),
+                    'current_project_role' => $request->user()->projectRoles()
+                        ->with(['project', 'role'])
+                        ->where('project_id', $request->session()->get('current_project_id'))
+                        ->where('role_id', $request->session()->get('current_role_id'))
+                        ->first(),
                 ] : null,
             ],
             'flash' => [

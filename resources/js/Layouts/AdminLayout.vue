@@ -90,6 +90,38 @@
           </div>
         </div>
 
+        <!-- Dự án và vai trò hiện tại -->
+        <div class="project-role-panel mt-1 pb-2" v-if="hasProjects">
+          <div class="d-flex align-items-center px-2">
+            <div class="dropdown w-100">
+              <button
+                class="btn btn-secondary btn-sm dropdown-toggle w-100 text-left"
+                type="button"
+                id="projectRoleDropdown"
+                data-toggle="dropdown"
+                aria-haspopup="true"
+                aria-expanded="false"
+              >
+                {{ currentProjectRole ? currentProjectRole.project_name : 'Chọn dự án' }}
+                <span class="badge badge-info ml-2">{{ currentProjectRole ? currentProjectRole.role_name : '' }}</span>
+              </button>
+              <div class="dropdown-menu w-100" aria-labelledby="projectRoleDropdown">
+                <template v-for="projectRole in projectRoles" :key="`${projectRole.project_id}-${projectRole.role_id}`">
+                  <a
+                    class="dropdown-item d-flex gap-3 align-items-center"
+                    href="#"
+                    @click.prevent="changeProjectRole(projectRole)"
+                  >
+                    <span>{{ projectRole.project_name }}</span>
+                    <span class="badge badge-info">{{ projectRole.role_name }}</span>
+                    <i v-if="projectRole.is_active" class="fas fa-check text-success"></i>
+                  </a>
+                </template>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Sidebar Menu -->
         <nav class="mt-2">
           <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
@@ -188,11 +220,16 @@
 <script setup>
 import { Link, router, usePage } from '@inertiajs/vue3'
 import { onMounted, watch, computed, ref } from 'vue'
+import { useCurrentProject } from '@/Composables/useCurrentProject'
 import { usePermission } from '@/Composables/usePermission'
 import { showSuccess, showError, showWarning } from '@/utils'
 
 const $page = usePage()
 const { can, hasViewPermissionInAnyProject } = usePermission()
+
+// Sử dụng composable useCurrentProject
+const { projectRoles, currentProjectRole, currentProject, currentRole, hasProjects, changeProjectRole, loading } =
+  useCurrentProject()
 
 // Kiểm tra xem menu có đang được kích hoạt không
 const isMenuActive = (item) => {
@@ -662,5 +699,10 @@ body {
 .btn-primary:hover {
   background-color: #d35400;
   border-color: #c0392b;
+}
+
+.dropdown-toggle::after {
+  float: right;
+  margin-top: 8px;
 }
 </style>

@@ -4,9 +4,12 @@
       <div class="flex align-items-center gap-4">
         <div class="flex align-items-center gap-2">
           <label class="text-md font-normal">Dự án:</label>
-          <select v-model="selectedProject" @change="loadTasks" class="select">
+          <select v-model="selectedProject" @change="loadTasks" class="select" disabled>
             <option v-for="project in props.projects" :key="project.id" :value="project.id">{{ project.name }}</option>
           </select>
+          <small v-if="currentProject.value" class="text-muted"
+            >Dự án được điều chỉnh từ dropdown chọn dự án chính</small
+          >
         </div>
         <div class="flex align-items-center gap-2">
           <label class="text-md font-normal">Chế độ xem:</label>
@@ -36,6 +39,7 @@ import axios from 'axios'
 import { Link } from '@inertiajs/vue3'
 import { usePermission } from '@/Composables/usePermission'
 import { showWarning } from '@/utils'
+import { useCurrentProject } from '@/Composables/useCurrentProject'
 
 const ganttContainer = ref(null)
 const currentView = ref(localStorage.getItem('gantt_view_mode') || 'day')
@@ -45,7 +49,7 @@ const props = defineProps({
   defaultProject: Object
 })
 
-const { canInProject } = usePermission()
+const { currentProject } = useCurrentProject()
 
 // Đổi chế độ xem
 function changeView() {
@@ -119,6 +123,10 @@ function initGantt() {
   gantt.config.order_branch = true // Cho phép sắp xếp lại thứ tự
   gantt.config.order_branch_free = true // Cho phép kéo task đến bất kỳ vị trí nào
   gantt.config.drag_move = true // Cho phép di chuyển task
+
+  // Tắt các warning và error mặc định của dhtmlx
+  gantt.config.show_errors = false
+  gantt.config.show_warnings = false
 
   // Định nghĩa loại task dựa trên cấp bậc
   gantt.templates.task_class = function (start, end, task) {
@@ -272,28 +280,33 @@ function initGantt() {
 }
 
 // Tải danh sách dự án
-async function loadProjects() {
+const loadProjects = async () => {
   try {
+    // Ưu tiên sử dụng dự án hiện tại từ composable nếu có
+    if (currentProject.value) {
+      selectedProject.value = currentProject.value.id
+      loadTasks()
+      return
+    }
+
+    // Nếu không có dự án hiện tại, thử lấy từ localStorage
     const project_id_from_storage = localStorage.getItem('gantt_project_id')
 
-    let selected_id = null
-
     if (project_id_from_storage) {
-      // Nếu không có trong URL nhưng có trong localStorage, kiểm tra xem dự án có tồn tại không
+      // Kiểm tra xem dự án có tồn tại không
       const project_exists = props.projects.some((project) => project.id == project_id_from_storage)
       if (project_exists) {
-        selected_id = project_id_from_storage
+        selectedProject.value = project_id_from_storage
+        loadTasks()
+        return
       }
     }
 
-    // Nếu không có hoặc dự án không tồn tại, sử dụng dự án đầu tiên
-    if (!selected_id && props.projects.length > 0) {
-      selected_id = props.defaultProject?.id || props.projects[0].id
-      localStorage.setItem('gantt_project_id', selected_id)
-    }
-
-    if (selected_id) {
-      selectedProject.value = selected_id
+    // Nếu không có dự án nào được lưu hoặc dự án không tồn tại, sử dụng dự án mặc định hoặc dự án đầu tiên
+    if (props.projects.length > 0) {
+      const defaultId = props.defaultProject?.id || props.projects[0].id
+      selectedProject.value = defaultId
+      localStorage.setItem('gantt_project_id', defaultId)
       loadTasks()
     }
   } catch (error) {
@@ -301,16 +314,42 @@ async function loadProjects() {
   }
 }
 
+// Theo dõi thay đổi của dự án hiện tại
+watch(
+  () => currentProject.value,
+  (newProject) => {
+    if (newProject) {
+      selectedProject.value = newProject.id
+      // Lưu vào localStorage
+      localStorage.setItem('gantt_project_id', newProject.id)
+      // Tải lại các công việc khi dự án thay đổi
+      loadTasks()
+    }
+  }
+)
+
+// Theo dõi thay đổi của selectedProject
+watch(
+  () => selectedProject.value,
+  (newValue) => {
+    if (newValue) {
+      localStorage.setItem('gantt_project_id', newValue)
+    }
+  }
+)
+
 onMounted(() => {
-  loadProjects()
   initGantt()
-})
+  gantt.init(ganttContainer.value)
 
-watch(selectedProject, () => {
-  localStorage.setItem('gantt_project_id', selectedProject.value)
-})
+  // Nếu có dự án mặc định, chọn dự án đó
+  if (props.defaultProject && !currentProject.value) {
+    selectedProject.value = props.defaultProject.id
+  }
 
-watch(currentView, () => {
+  loadProjects()
+
+  // Lưu chế độ xem vào localStorage
   localStorage.setItem('gantt_view_mode', currentView.value)
 })
 </script>

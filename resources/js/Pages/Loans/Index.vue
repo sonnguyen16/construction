@@ -89,12 +89,19 @@
               <div class="col-md-3">
                 <div class="form-group">
                   <label for="project_id">Dự án:</label>
-                  <select class="form-control" id="project_id" v-model="filters.project_id" @change="applyFilters">
+                  <select
+                    class="form-control"
+                    id="project_id"
+                    v-model="filters.project_id"
+                    @change="applyFilters"
+                    disabled
+                  >
                     <option value="">-- Tất cả dự án --</option>
                     <option v-for="project in projects" :key="project.id" :value="project.id">
                       {{ project.name }}
                     </option>
                   </select>
+                  <small class="form-text text-muted">Dự án được điều chỉnh từ dropdown chọn dự án chính</small>
                 </div>
               </div>
               <div class="col-md-3">
@@ -188,11 +195,12 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { Link, router } from '@inertiajs/vue3'
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { formatCurrency, formatDate, showConfirm, showSuccess } from '@/utils'
 import Pagination from '@/Components/Pagination.vue'
 import debounce from 'lodash/debounce'
 import { usePermission } from '@/Composables/usePermission'
+import { useCurrentProject } from '@/Composables/useCurrentProject'
 
 const props = defineProps({
   loans: Object,
@@ -204,6 +212,9 @@ const props = defineProps({
 })
 
 const { canInProject } = usePermission()
+
+// Sử dụng composable dự án hiện tại
+const { currentProject } = useCurrentProject()
 
 // Tính toán tổng số khoản vay
 const totalLoanCount = computed(() => props.loans.total || 0)
@@ -285,8 +296,21 @@ onMounted(() => {
   filters.value = {
     search: props.filters.search || '',
     contractor_id: props.filters.contractor_id || '',
-    project_id: props.filters.project_id || '',
+    project_id: props.filters.project_id || (currentProject.value ? currentProject.value.id : ''),
     status: props.filters.status || ''
   }
 })
+
+// Theo dõi thay đổi của dự án hiện tại
+watch(
+  () => currentProject.value,
+  (newProject) => {
+    if (newProject) {
+      filters.value.project_id = newProject.id
+      // Áp dụng bộ lọc ngay lập tức khi dự án thay đổi
+      applyFilters()
+    }
+  },
+  { immediate: true }
+)
 </script>

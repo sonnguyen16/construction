@@ -232,8 +232,12 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { Link, useForm } from '@inertiajs/vue3'
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { formatNumberInput, parseCurrency, formatCurrency, showSuccess } from '@/utils'
+import { useCurrentProject } from '@/Composables/useCurrentProject'
+
+// Sử dụng composable dự án hiện tại
+const { currentProject } = useCurrentProject()
 
 const props = defineProps({
   projects: Array,
@@ -244,7 +248,7 @@ const props = defineProps({
 
 const form = useForm({
   code: props.suggestedCode || '',
-  project_id: '',
+  project_id: currentProject.value ? currentProject.value.id : '',
   bid_package_id: '',
   import_date: new Date().toISOString().substr(0, 10),
   contractor_id: '',
@@ -438,20 +442,58 @@ onMounted(() => {
     autoOpen: true,
     width: '100%'
   })
+  
+  // Vô hiệu hóa InputPicker dự án nếu dùng currentProject
+  if (currentProject.value) {
+    window.$('#project_id').prop('disabled', true)
+    // Cập nhật giao diện InputPicker
+    const selectedProject = props.projects.find((p) => p.id == currentProject.value.id)
+    if (selectedProject) {
+      window.$('#project_id').inputpicker('val', selectedProject.id)
+      // Cập nhật InputPicker cho gói thầu
+      updateBidPackagePicker()
+    }
+  }
 
   // Sự kiện thay đổi dự án
   window.$('#project_id').on('change', function () {
-    const projectId = window.$(this).val()
-    form.project_id = projectId
-    form.bid_package_id = ''
+    form.project_id = window.$(this).val()
 
-    // Nếu đã chọn dự án, cập nhật InputPicker cho gói thầu
-    if (projectId) {
+    // Cập nhật InputPicker cho gói thầu
+    if (form.project_id) {
       updateBidPackagePicker()
     } else {
+      // Xóa gói thầu nếu không có dự án
+      form.bid_package_id = ''
       safeDestroyInputPicker('#bid_package_id')
     }
   })
+  
+  // Theo dõi thay đổi của dự án hiện tại
+  watch(
+    () => currentProject.value,
+    (newProject) => {
+      if (newProject) {
+        // Cập nhật giá trị trong form
+        form.project_id = newProject.id
+        
+        // Vô hiệu hóa InputPicker dự án
+        window.$('#project_id').prop('disabled', true)
+        
+        // Cập nhật giao diện InputPicker
+        const selectedProject = props.projects.find((p) => p.id == newProject.id)
+        if (selectedProject && window.$('#project_id').length) {
+          window.$('#project_id').inputpicker('val', selectedProject.id)
+          
+          // Cập nhật InputPicker cho gói thầu
+          nextTick(() => {
+            updateBidPackagePicker()
+          })
+        }
+      }
+    },
+    { immediate: true }
+  )
 
   // Khởi tạo InputPicker cho nhà thầu
   contractorPicker = window.$('#contractor_id').inputpicker({

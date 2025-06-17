@@ -49,8 +49,10 @@
                       placeholder="Chọn dự án hoặc để trống nếu là chi ngoài dự án"
                       data-role="inputpicker"
                       :class="{ 'is-invalid': form.errors.project_id }"
+                      disabled
                     />
                     <div class="invalid-feedback" v-if="form.errors.project_id">{{ form.errors.project_id }}</div>
+                    <small class="form-text text-muted">Dự án được điều chỉnh từ dropdown chọn dự án chính</small>
                   </div>
 
                   <!-- Select cho gói thầu -->
@@ -165,33 +167,36 @@
 
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue'
-import { Link, useForm } from '@inertiajs/vue3'
-import { parseCurrency, showSuccess, formatNumberInput, formatCurrency } from '@/utils'
-import { computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { useForm, Link } from '@inertiajs/vue3'
+import { ref, onMounted, computed, nextTick, onBeforeUnmount, watch } from 'vue'
+import { formatCurrency, showSuccess, showError } from '@/utils'
+import { useCurrentProject } from '@/Composables/useCurrentProject'
 
 const props = defineProps({
   contractors: Array,
   projects: Array,
   bidPackages: Array,
   paymentCategories: Array,
-  statuses: Object,
-  preselectedContractorId: [String, Number],
-  preselectedProjectId: [String, Number],
-  preselectedBidPackageId: [String, Number],
-  redirectToExpenses: Boolean
+  preselectedContractorId: String,
+  preselectedProjectId: String,
+  preselectedBidPackageId: String,
+  preselectedPaymentCategoryId: String
 })
 
+// Sử dụng composable dự án hiện tại
+const { currentProject } = useCurrentProject()
+
 const form = useForm({
-  code: '',
-  contractor_id: props.preselectedContractorId || '',
-  project_id: props.preselectedProjectId || '',
-  bid_package_id: props.preselectedBidPackageId || 1,
-  payment_category_id: 1,
+  contractor_id: '',
+  project_id: currentProject.value ? currentProject.value.id : '',
+  bid_package_id: '',
+  payment_category_id: '',
+  payment_date: new Date().toISOString().split('T')[0],
   amount: '',
-  status: 'proposed',
-  payment_date: null,
   description: '',
-  redirect_to_expenses: props.redirectToExpenses ? true : false
+  note: '',
+  attachments: [],
+  status: 'proposed'
 })
 
 // Lọc gói thầu theo dự án đã chọn
@@ -304,30 +309,66 @@ onMounted(() => {
     autoOpen: true,
     width: '100%'
   })
-
-  // Nếu có preselected value
-  if (props.preselectedProjectId) {
-    const selectedProject = props.projects.find((p) => p.id == props.preselectedProjectId)
-    if (selectedProject) {
-      window.$('#project_id').inputpicker('val', selectedProject.id)
-      form.project_id = props.preselectedProjectId
-    }
+  
+  // Vô hiệu hóa InputPicker dự án nếu dùng currentProject
+  if (currentProject.value) {
+    window.$('#project_id').prop('disabled', true)
   }
 
-  // Sự kiện thay đổi dự án
-  window.$('#project_id').on('change', async function () {
-    const newProjectId = window.$(this).val()
-    form.project_id = newProjectId
-    form.bid_package_id = ''
-
-    onProjectChange()
-
-    await nextTick()
-
-    if (newProjectId) {
-      updateBidPackagePicker()
+  // Sử dụng dự án hiện tại từ composable hoặc preselected value
+  const projectIdToUse = currentProject.value ? currentProject.value.id : props.preselectedProjectId
+  
+  if (projectIdToUse) {
+    const selectedProject = props.projects.find((p) => p.id == projectIdToUse)
+    if (selectedProject) {
+      window.$('#project_id').inputpicker('val', selectedProject.id)
+      form.project_id = projectIdToUse
     }
-  })
+  }
+  
+  // Theo dõi thay đổi của dự án hiện tại
+  watch(
+    () => currentProject.value,
+    (newProject) => {
+      if (newProject) {
+        // Cập nhật giá trị trong form
+        form.project_id = newProject.id
+        
+        // Cập nhật giao diện InputPicker
+        const selectedProject = props.projects.find((p) => p.id == newProject.id)
+        if (selectedProject && window.$('#project_id').length) {
+          // Vô hiệu hóa InputPicker dự án
+          window.$('#project_id').prop('disabled', true)
+          window.$('#project_id').inputpicker('val', selectedProject.id)
+          
+          // Cập nhật gói thầu
+          form.bid_package_id = ''
+          onProjectChange()
+          nextTick(() => {
+            if (newProject.id) {
+              updateBidPackagePicker()
+            }
+          })
+        }
+      }
+    },
+    { immediate: true }
+  )
+
+  // Sự kiện thay đổi dự án - đã vô hiệu hóa
+  // window.$('#project_id').on('change', async function () {
+  //   const newProjectId = window.$(this).val()
+  //   form.project_id = newProjectId
+  //   form.bid_package_id = ''
+
+  //   onProjectChange()
+
+  //   await nextTick()
+
+  //   if (newProjectId) {
+  //     updateBidPackagePicker()
+  //   }
+  // })
 
   // Nếu đã có dự án được chọn, khởi tạo InputPicker cho gói thầu
   if (form.project_id) {

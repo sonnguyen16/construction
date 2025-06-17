@@ -28,6 +28,7 @@ use App\Http\Controllers\TaskUserController;
 use App\Http\Controllers\TaskProductController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ProjectRoleController;
+use App\Http\Controllers\UserProjectRoleController;
 
 /*
 |--------------------------------------------------------------------------
@@ -48,6 +49,9 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::middleware('auth')->group(function () {
     // Trang chủ
     Route::get('/', [HomeController::class, 'index'])->name('home');
+    
+    // Thay đổi dự án và vai trò hiện tại
+    Route::post('/user/change-project-role', [UserProjectRoleController::class, 'changeProjectRole'])->name('user.change-project-role');
     // Quản lý người dùng
     Route::resource('users', UserController::class);
     // Quản lý nhà thầu
