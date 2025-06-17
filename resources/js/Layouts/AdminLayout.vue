@@ -102,19 +102,31 @@
                 aria-haspopup="true"
                 aria-expanded="false"
               >
-                {{ currentProjectRole ? currentProjectRole.project_name : 'Chọn dự án' }}
-                <span class="badge badge-info ml-2">{{ currentProjectRole ? currentProjectRole.role_name : '' }}</span>
+                {{
+                  currentProjectRole
+                    ? currentProjectRole.project_name.length > 12
+                      ? currentProjectRole.project_name.slice(0, 10) + '...'
+                      : currentProjectRole.project_name
+                    : 'Chọn dự án'
+                }}
+                <span class="badge badge-info ml-2">{{
+                  currentProjectRole
+                    ? currentProjectRole.role_name.length > 12
+                      ? currentProjectRole.role_name.slice(0, 12) + '...'
+                      : currentProjectRole.role_name
+                    : ''
+                }}</span>
               </button>
-              <div class="dropdown-menu w-100" aria-labelledby="projectRoleDropdown">
+              <div class="dropdown-menu" aria-labelledby="projectRoleDropdown">
                 <template v-for="projectRole in projectRoles" :key="`${projectRole.project_id}-${projectRole.role_id}`">
-                  <a
-                    class="dropdown-item d-flex gap-3 align-items-center"
-                    href="#"
-                    @click.prevent="changeProjectRole(projectRole)"
-                  >
-                    <span>{{ projectRole.project_name }}</span>
-                    <span class="badge badge-info">{{ projectRole.role_name }}</span>
-                    <i v-if="projectRole.is_active" class="fas fa-check text-success"></i>
+                  <a class="dropdown-item project-role-item" href="#" @click.prevent="changeProjectRole(projectRole)">
+                    <div class="d-flex justify-content-between align-items-center w-100">
+                      <div class="d-flex align-items-center flex-grow-1 overflow-hidden">
+                        <div class="project-name text-truncate">{{ projectRole.project_name }}</div>
+                        <span class="badge badge-info ml-2 flex-shrink-0">{{ projectRole.role_name }}</span>
+                      </div>
+                      <i v-if="projectRole.is_active" class="fas fa-check text-success ml-2 flex-shrink-0"></i>
+                    </div>
                   </a>
                 </template>
               </div>
@@ -660,6 +672,25 @@ body {
 /* Đảm bảo bảng có thanh cuộn ngang khi cần thiết */
 .table-responsive {
   overflow-x: auto;
+}
+
+/* CSS cho dropdown project role */
+.project-role-item {
+  padding: 10px 15px;
+  white-space: normal;
+  max-width: 230px;
+}
+
+.project-role-item .project-name {
+  font-weight: 600;
+  margin-right: 5px;
+  max-width: 60%;
+}
+
+.project-role-item .badge {
+  font-size: 0.8rem;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
 .main-sidebar .brand-text,
