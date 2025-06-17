@@ -9,3 +9,75 @@ th {
 h1 {
   font-size: 1.4rem !important;
 }
+
+/* CSS cho phần tiền nhiệm trong lightbox */
+.predecessors-wrapper {
+  width: 100%;
+  font-family: Arial, sans-serif;
+  margin-bottom: 10px;
+}
+
+.predecessors-header {
+  display: flex;
+  background-color: #f5f5f5;
+  padding: 8px;
+  font-weight: bold;
+  border-bottom: 1px solid #ddd;
+}
+
+.predecessors-list {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-top: none;
+}
+
+.predecessor-row {
+  display: flex;
+  padding: 8px;
+  border-bottom: 1px solid #eee;
+  align-items: center;
+}
+
+.predecessor-row:last-child {
+  border-bottom: none;
+}
+
+.predecessor-task {
+  flex: 2;
+  padding-right: 10px;
+}
+
+.predecessor-type {
+  flex: 2;
+}
+
+.predecessor-action {
+  flex: 0.5;
+  text-align: center;
+}
+
+/* Đã bỏ CSS cho nút thêm tiền nhiệm */
+
+.btn-delete-predecessor {
+  background: none;
+  border: none;
+  color: #f44336;
+  cursor: pointer;
+}
+
+.no-predecessors {
+  padding: 10px;
+  color: #666;
+  font-style: italic;
+  text-align: center;
+}
+
+.link-type-select {
+  width: 100%;
+  padding: 4px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+/* Đã bỏ CSS cho form thêm tiền nhiệm */

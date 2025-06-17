@@ -128,12 +128,120 @@ function initGantt() {
   gantt.config.show_errors = false
   gantt.config.show_warnings = false
 
+  //cho phép scroll gantt
+  gantt.config.autoscroll = true
+
   // Định nghĩa loại task dựa trên cấp bậc
   gantt.templates.task_class = function (start, end, task) {
     if (!task.parent || task.parent == 0) {
       return 'level-1-task'
     }
     return ''
+  }
+
+  // Tùy chỉnh lightbox
+  gantt.config.lightbox.sections = [
+    { name: 'description', height: 70, map_to: 'text', type: 'textarea', focus: true },
+    { name: 'time', type: 'duration', map_to: 'auto' },
+    { name: 'predecessors', type: 'predecessors', map_to: 'auto' }
+  ]
+
+  // Định nghĩa các nhãn cho lightbox
+  gantt.locale.labels.section_description = 'Tên công việc'
+  gantt.locale.labels.section_time = 'Thời gian'
+  gantt.locale.labels.section_predecessors = 'Công việc tiền nhiệm'
+
+  // Tạo control tùy chỉnh cho predecessors
+  gantt.form_blocks.predecessors = {
+    render: function (sns) {
+      return "<div class='predecessors-wrapper'><div class='predecessors-header'><div class='predecessor-task'>Công việc</div><div class='predecessor-type'>Loại liên kết</div><div class='predecessor-action'></div></div><div class='predecessors-list'></div></div>"
+    },
+    set_value: function (node, value, task) {
+      var listNode = node.querySelector('.predecessors-list')
+      listNode.innerHTML = ''
+
+      // Lấy tất cả các liên kết đến task hiện tại
+      var links = gantt.getLinks()
+      var predecessors = links.filter(function (link) {
+        return link.target == task.id
+      })
+
+      if (predecessors.length === 0) {
+        listNode.innerHTML = '<div class="no-predecessors">Không có công việc tiền nhiệm</div>'
+      } else {
+        predecessors.forEach(function (link) {
+          var sourceTask = gantt.getTask(link.source)
+          var row = document.createElement('div')
+          row.className = 'predecessor-row'
+          row.dataset.linkId = link.id
+
+          var linkTypes = [
+            { id: 0, text: 'Kết thúc - Bắt đầu (FS)' },
+            { id: 1, text: 'Bắt đầu - Bắt đầu (SS)' },
+            { id: 2, text: 'Kết thúc - Kết thúc (FF)' },
+            { id: 3, text: 'Bắt đầu - Kết thúc (SF)' }
+          ]
+
+          var typeSelect = '<select class="link-type-select" data-link-id="' + link.id + '">'
+          linkTypes.forEach(function (type) {
+            var selected = type.id == link.type ? 'selected' : ''
+            typeSelect += '<option value="' + type.id + '" ' + selected + '>' + type.text + '</option>'
+          })
+          typeSelect += '</select>'
+
+          row.innerHTML =
+            '<div class="predecessor-task">' +
+            sourceTask.text +
+            '</div>' +
+            '<div class="predecessor-type">' +
+            typeSelect +
+            '</div>' +
+            '<div class="predecessor-action"><button class="btn-delete-predecessor" data-link-id="' +
+            link.id +
+            '"><i class="fas fa-trash"></i></button></div>'
+
+          listNode.appendChild(row)
+        })
+
+        // Thêm sự kiện cho các nút xóa và thay đổi loại liên kết
+        var deleteButtons = node.querySelectorAll('.btn-delete-predecessor')
+        deleteButtons.forEach(function (btn) {
+          btn.onclick = function () {
+            var linkId = this.dataset.linkId
+            gantt.confirm({
+              text: 'Bạn có chắc chắn muốn xóa liên kết này?',
+              callback: function (result) {
+                if (result) {
+                  gantt.deleteLink(linkId)
+                }
+              }
+            })
+          }
+        })
+
+        var typeSelects = node.querySelectorAll('.link-type-select')
+        typeSelects.forEach(function (select) {
+          select.onchange = function () {
+            var linkId = this.dataset.linkId
+            var link = gantt.getLink(linkId)
+            var newType = parseInt(this.value)
+
+            if (link && link.type != newType) {
+              link.type = newType
+              gantt.updateLink(linkId)
+            }
+          }
+        })
+      }
+
+      // Không cần thêm sự kiện cho nút thêm tiền nhiệm vì đã bỏ nút này
+
+      return true
+    },
+    get_value: function (node, task) {
+      return task // Không cần trả về gì đặc biệt vì chúng ta quản lý liên kết riêng biệt
+    },
+    focus: function (node) {}
   }
 
   // Cột task + nút thêm task con và nút truy cập chi tiết
@@ -166,6 +274,51 @@ function initGantt() {
       width: 120,
       template: (task) => `${Math.round(task.progress * 100)}%`,
       editor: { type: 'number', map_to: 'progress' }
+    },
+    {
+      name: 'assignees',
+      label: 'Người thực hiện',
+      align: 'left',
+      width: 150,
+      template: (task) => {
+        if (!task.users || !Array.isArray(task.users) || task.users.length === 0) {
+          return '<span class="text-muted">Chưa phân công</span>'
+        }
+
+        // Lọc ra những người thực hiện (role = 0)
+        const assignees = task.users.filter((user) => user.pivot && user.pivot.role === 0)
+
+        if (assignees.length === 0) {
+          return '<span class="text-muted">Chưa phân công</span>'
+        }
+
+        // Hiển thị tối đa 3 người, nếu nhiều hơn thì hiển thị số còn lại
+        const maxDisplay = 2
+        const displayUsers = assignees.slice(0, maxDisplay)
+        const remainingCount = assignees.length - maxDisplay
+
+        let html = '<div class="assignee-list">'
+
+        // Hiển thị avatar và tên của người thực hiện
+        displayUsers.forEach((user) => {
+          const avatarUrl = user.avatar.startsWith('http') ? user.avatar : `/storage/avatars/${user.avatar}`
+
+          html += `
+            <div class="assignee-item" title="${user.name}">
+              <img src="${avatarUrl}" class="assignee-avatar" alt="${user.name}" />
+              <span class="assignee-name">${user.name}</span>
+            </div>
+          `
+        })
+
+        // Hiển thị số người còn lại
+        if (remainingCount > 0) {
+          html += `<div class="assignee-more">+${remainingCount}</div>`
+        }
+
+        html += '</div>'
+        return html
+      }
     },
     {
       name: 'add',
@@ -261,8 +414,23 @@ function initGantt() {
 
       // Cập nhật ID từ server
       gantt.changeLinkId(id, response.data.id)
+      loadTasks()
     } catch (error) {
       showWarning('Lỗi khi tạo liên kết: ' + error.response.data.error)
+      loadTasks()
+    }
+  })
+
+  // Xử lý sự kiện cập nhật liên kết (khi thay đổi loại liên kết)
+  gantt.attachEvent('onAfterLinkUpdate', async function (id, link) {
+    try {
+      await axios.put(`/task-links/${id}`, {
+        source_id: link.source,
+        target_id: link.target,
+        type: link.type
+      })
+    } catch (error) {
+      showWarning('Lỗi khi cập nhật liên kết: ' + error.response.data.error)
       loadTasks()
     }
   })
@@ -271,6 +439,7 @@ function initGantt() {
   gantt.attachEvent('onAfterLinkDelete', async function (id, link) {
     try {
       await axios.delete(`/task-links/${id}`)
+      loadTasks()
     } catch (error) {
       showWarning('Lỗi khi xóa liên kết: ' + error.response.data.error)
     }
@@ -409,6 +578,46 @@ onMounted(() => {
   box-shadow: none !important;
   height: 4px !important;
   margin-top: 12px !important;
+}
+
+/* CSS cho cột người thực hiện */
+:deep(.assignee-list) {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+:deep(.assignee-item) {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+}
+
+:deep(.assignee-avatar) {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #e0e0e0;
+}
+
+:deep(.assignee-name) {
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100px;
+}
+
+:deep(.assignee-more) {
+  font-size: 12px;
+  color: #666;
+  background-color: #f0f0f0;
+  border-radius: 10px;
+  padding: 1px 8px;
+  display: inline-block;
+  margin-top: 2px;
 }
 
 :deep(.level-1-task):before {

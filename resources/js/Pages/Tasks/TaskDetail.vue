@@ -13,9 +13,11 @@
                 <h3 class="card-title mb-0">
                   <!-- Hiển thị breadcrumb các task cha -->
                   <template v-if="parentTasks.length > 0">
-                    <span class="text-muted" style="font-size: 0.9em;">
+                    <span class="text-muted" style="font-size: 0.9em">
                       <template v-for="(parentTask, index) in parentTasks" :key="parentTask.id">
-                        {{ parentTask.name }}
+                        <Link :href="route('tasks.show', parentTask.id)" class="text-muted hover:text-primary">
+                          {{ parentTask.name }}
+                        </Link>
                         <i class="fas fa-angle-right mx-1"></i>
                       </template>
                     </span>
