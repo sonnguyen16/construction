@@ -74,7 +74,21 @@ export function useCurrentProject() {
     
     // Lấy vai trò dự án hiện tại được chọn
     const currentProjectRole = computed(() => {
-        return selectedProjectRole.value || (projectRoles.value.length > 0 ? projectRoles.value[0] : null)
+        // Nếu đã có selectedProjectRole thì trả về luôn
+        if (selectedProjectRole.value) {
+            return selectedProjectRole.value
+        }
+        
+        // Nếu chưa có selectedProjectRole nhưng có danh sách project roles
+        if (projectRoles.value.length > 0) {
+            // Tự động chọn project role đầu tiên
+            selectedProjectRole.value = projectRoles.value[0]
+            // Lưu vào local storage
+            saveToLocalStorage(projectRoles.value[0])
+            return projectRoles.value[0]
+        }
+        
+        return null
     })
     
     // Lấy dự án hiện tại
