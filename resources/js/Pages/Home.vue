@@ -196,10 +196,9 @@
         </div>
       </div>
 
-      <!-- Biểu đồ thu chi -->
       <div class="row">
         <!-- Thêm biểu đồ tổng thu theo khách hàng -->
-        <div class="col-md-6">
+        <!-- <div class="col-md-6">
           <div class="card">
             <div class="card-header">
               <h3 class="card-title">Tổng thu theo khách hàng</h3>
@@ -213,9 +212,9 @@
               </div>
             </div>
           </div>
-        </div>
+        </div> -->
         <!-- Thêm chi tiết thu theo khách hàng -->
-        <div class="col-md-6">
+        <!-- <div class="col-md-6">
           <div class="card">
             <div class="card-header">
               <h3 class="card-title">Chi tiết thu theo khách hàng</h3>
@@ -252,10 +251,10 @@
               </table>
             </div>
           </div>
-        </div>
+        </div> -->
       </div>
 
-      <div class="row">
+      <!-- <div class="row">
         <div class="col-md-6">
           <div class="card">
             <div class="card-header">
@@ -309,9 +308,16 @@
             </div>
           </div>
         </div>
-      </div>
+      </div> -->
 
       <!-- Biểu đồ thu chi theo tháng -->
+      <!-- Widget báo cáo tiến độ công việc -->
+      <div class="row mb-4">
+        <div class="col-md-12">
+          <TaskReportWidget />
+        </div>
+      </div>
+
       <div class="row">
         <div class="col-md-12">
           <div class="card">
@@ -389,6 +395,7 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { Link } from '@inertiajs/vue3'
+import TaskReportWidget from './Components/TaskReportWidget.vue'
 import { formatCurrency, formatDate } from '@/utils'
 import { onMounted, ref, computed } from 'vue'
 import { router } from '@inertiajs/vue3'
@@ -736,124 +743,124 @@ onMounted(() => {
   updateCashflowChart()
 
   // Biểu đồ tổng chi theo nhà thầu
-  if (props.paymentsByContractor && props.paymentsByContractor.length > 0) {
-    const ctx = document.getElementById('paymentsByContractorChart')
+  //   if (props.paymentsByContractor && props.paymentsByContractor.length > 0) {
+  //     const ctx = document.getElementById('paymentsByContractorChart')
 
-    // Tạo mảng màu ngẫu nhiên cho các cột
-    const backgroundColors = [
-      'rgba(54, 162, 235, 0.7)',
-      'rgba(255, 99, 132, 0.7)',
-      'rgba(255, 206, 86, 0.7)',
-      'rgba(75, 192, 192, 0.7)',
-      'rgba(153, 102, 255, 0.7)',
-      'rgba(255, 159, 64, 0.7)',
-      'rgba(199, 199, 199, 0.7)',
-      'rgba(83, 102, 255, 0.7)',
-      'rgba(40, 159, 64, 0.7)',
-      'rgba(210, 199, 199, 0.7)'
-    ]
+  //     // Tạo mảng màu ngẫu nhiên cho các cột
+  //     const backgroundColors = [
+  //       'rgba(54, 162, 235, 0.7)',
+  //       'rgba(255, 99, 132, 0.7)',
+  //       'rgba(255, 206, 86, 0.7)',
+  //       'rgba(75, 192, 192, 0.7)',
+  //       'rgba(153, 102, 255, 0.7)',
+  //       'rgba(255, 159, 64, 0.7)',
+  //       'rgba(199, 199, 199, 0.7)',
+  //       'rgba(83, 102, 255, 0.7)',
+  //       'rgba(40, 159, 64, 0.7)',
+  //       'rgba(210, 199, 199, 0.7)'
+  //     ]
 
-    new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: props.paymentsByContractor.map((item) => item.contractor.name),
-        datasets: [
-          {
-            label: 'Tổng chi (VNĐ)',
-            data: props.paymentsByContractor.map((item) => item.total_amount),
-            backgroundColor: backgroundColors.slice(0, props.paymentsByContractor.length),
-            borderColor: backgroundColors
-              .slice(0, props.paymentsByContractor.length)
-              .map((color) => color.replace('0.7', '1')),
-            borderWidth: 1
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: {
-              callback: function (value) {
-                return formatCurrency(value)
-              }
-            }
-          }
-        },
-        plugins: {
-          tooltip: {
-            callbacks: {
-              label: function (context) {
-                return formatCurrency(context.raw)
-              }
-            }
-          }
-        }
-      }
-    })
-  }
+  //     new Chart(ctx, {
+  //       type: 'bar',
+  //       data: {
+  //         labels: props.paymentsByContractor.map((item) => item.contractor.name),
+  //         datasets: [
+  //           {
+  //             label: 'Tổng chi (VNĐ)',
+  //             data: props.paymentsByContractor.map((item) => item.total_amount),
+  //             backgroundColor: backgroundColors.slice(0, props.paymentsByContractor.length),
+  //             borderColor: backgroundColors
+  //               .slice(0, props.paymentsByContractor.length)
+  //               .map((color) => color.replace('0.7', '1')),
+  //             borderWidth: 1
+  //           }
+  //         ]
+  //       },
+  //       options: {
+  //         responsive: true,
+  //         maintainAspectRatio: false,
+  //         scales: {
+  //           y: {
+  //             beginAtZero: true,
+  //             ticks: {
+  //               callback: function (value) {
+  //                 return formatCurrency(value)
+  //               }
+  //             }
+  //           }
+  //         },
+  //         plugins: {
+  //           tooltip: {
+  //             callbacks: {
+  //               label: function (context) {
+  //                 return formatCurrency(context.raw)
+  //               }
+  //             }
+  //           }
+  //         }
+  //       }
+  //     })
+  //   }
 
-  // Thêm biểu đồ tổng thu theo khách hàng
-  if (props.receiptsByCustomer && props.receiptsByCustomer.length > 0) {
-    const ctxReceipts = document.getElementById('receiptsByCustomerChart')
+  //   // Thêm biểu đồ tổng thu theo khách hàng
+  //   if (props.receiptsByCustomer && props.receiptsByCustomer.length > 0) {
+  //     const ctxReceipts = document.getElementById('receiptsByCustomerChart')
 
-    // Tạo mảng màu cho các cột
-    const backgroundColors = [
-      'rgba(40, 167, 69, 0.7)',
-      'rgba(23, 162, 184, 0.7)',
-      'rgba(108, 117, 125, 0.7)',
-      'rgba(255, 193, 7, 0.7)',
-      'rgba(220, 53, 69, 0.7)',
-      'rgba(111, 66, 193, 0.7)',
-      'rgba(253, 126, 20, 0.7)',
-      'rgba(32, 201, 151, 0.7)',
-      'rgba(102, 16, 242, 0.7)',
-      'rgba(0, 123, 255, 0.7)'
-    ]
+  //     // Tạo mảng màu cho các cột
+  //     const backgroundColors = [
+  //       'rgba(40, 167, 69, 0.7)',
+  //       'rgba(23, 162, 184, 0.7)',
+  //       'rgba(108, 117, 125, 0.7)',
+  //       'rgba(255, 193, 7, 0.7)',
+  //       'rgba(220, 53, 69, 0.7)',
+  //       'rgba(111, 66, 193, 0.7)',
+  //       'rgba(253, 126, 20, 0.7)',
+  //       'rgba(32, 201, 151, 0.7)',
+  //       'rgba(102, 16, 242, 0.7)',
+  //       'rgba(0, 123, 255, 0.7)'
+  //     ]
 
-    new Chart(ctxReceipts, {
-      type: 'bar',
-      data: {
-        labels: props.receiptsByCustomer.map((item) => item.customer.name),
-        datasets: [
-          {
-            label: 'Tổng thu (VNĐ)',
-            data: props.receiptsByCustomer.map((item) => item.total_amount),
-            backgroundColor: backgroundColors.slice(0, props.receiptsByCustomer.length),
-            borderColor: backgroundColors
-              .slice(0, props.receiptsByCustomer.length)
-              .map((color) => color.replace('0.7', '1')),
-            borderWidth: 1
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: {
-              callback: function (value) {
-                return formatCurrency(value)
-              }
-            }
-          }
-        },
-        plugins: {
-          tooltip: {
-            callbacks: {
-              label: function (context) {
-                return formatCurrency(context.raw)
-              }
-            }
-          }
-        }
-      }
-    })
-  }
+  //     new Chart(ctxReceipts, {
+  //       type: 'bar',
+  //       data: {
+  //         labels: props.receiptsByCustomer.map((item) => item.customer.name),
+  //         datasets: [
+  //           {
+  //             label: 'Tổng thu (VNĐ)',
+  //             data: props.receiptsByCustomer.map((item) => item.total_amount),
+  //             backgroundColor: backgroundColors.slice(0, props.receiptsByCustomer.length),
+  //             borderColor: backgroundColors
+  //               .slice(0, props.receiptsByCustomer.length)
+  //               .map((color) => color.replace('0.7', '1')),
+  //             borderWidth: 1
+  //           }
+  //         ]
+  //       },
+  //       options: {
+  //         responsive: true,
+  //         maintainAspectRatio: false,
+  //         scales: {
+  //           y: {
+  //             beginAtZero: true,
+  //             ticks: {
+  //               callback: function (value) {
+  //                 return formatCurrency(value)
+  //               }
+  //             }
+  //           }
+  //         },
+  //         plugins: {
+  //           tooltip: {
+  //             callbacks: {
+  //               label: function (context) {
+  //                 return formatCurrency(context.raw)
+  //               }
+  //             }
+  //           }
+  //         }
+  //       }
+  //     })
+  //   }
 
   // Biểu đồ thu chi theo tháng
   const incomeExpenseCtx = document.getElementById('incomeExpenseChart')

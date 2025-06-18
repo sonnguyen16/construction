@@ -166,4 +166,20 @@ class Task extends Model
     {
         return $this->users()->wherePivot('role', 2);
     }
+
+    /**
+     * Lấy danh sách báo cáo tiến độ của công việc
+     */
+    public function reports()
+    {
+        return $this->hasMany(TaskReport::class);
+    }
+
+    /**
+     * Lấy báo cáo tiến độ mới nhất
+     */
+    public function latestReport()
+    {
+        return $this->hasOne(TaskReport::class)->latest();
+    }
 }

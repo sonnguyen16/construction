@@ -38,6 +38,84 @@
           </div>
         </li>
 
+        <!-- Thông báo -->
+        <li class="nav-item dropdown">
+          <a
+            class="nav-link position-relative"
+            data-toggle="dropdown"
+            href="#"
+            @click="loadNotifications"
+            style="padding-right: 20px"
+          >
+            <i class="far fa-bell"></i>
+            <span
+              v-if="unreadNotificationsCount > 0"
+              class="badge badge-danger navbar-badge"
+              style="right: 5px; top: 5px; font-size: 0.6rem"
+              >{{ unreadNotificationsCount }}</span
+            >
+          </a>
+          <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right" style="min-width: 300px; max-width: 350px">
+            <span class="dropdown-header">{{ unreadNotificationsCount }} thông báo chưa đọc</span>
+            <div class="dropdown-divider"></div>
+
+            <div v-if="loadingNotifications" class="text-center p-3">
+              <div class="spinner-border spinner-border-sm" role="status">
+                <span class="sr-only">Loading...</span>
+              </div>
+            </div>
+
+            <div v-else-if="notifications.length === 0" class="dropdown-item text-center">
+              <p class="text-muted mb-0">Không có thông báo nào</p>
+            </div>
+
+            <template v-else>
+              <a
+                v-for="notification in notifications"
+                :key="notification.id"
+                :href="getNotificationUrl(notification)"
+                class="dropdown-item py-2"
+                :class="{ 'bg-light': !notification.read_at }"
+                @click.prevent="readNotification(notification)"
+              >
+                <div class="d-flex">
+                  <div class="mr-3 pt-1">
+                    <i :class="getNotificationIcon(notification)" class="text-primary fa-lg"></i>
+                  </div>
+                  <div style="width: calc(100% - 30px)">
+                    <p class="mb-1 font-weight-bold text-truncate">{{ notification.data.title }}</p>
+                    <p
+                      class="text-muted mb-1 small"
+                      style="
+                        line-height: 1.3;
+                        max-height: 2.6em;
+                        overflow: hidden;
+                        display: -webkit-box;
+                        -webkit-line-clamp: 2;
+                        line-clamp: 2;
+                        -webkit-box-orient: vertical;
+                      "
+                    >
+                      {{ notification.data.message }}
+                    </p>
+                    <small class="text-muted d-block text-right">{{ notification.created_at }}</small>
+                  </div>
+                </div>
+              </a>
+              <div class="dropdown-divider"></div>
+            </template>
+
+            <a
+              href="#"
+              class="dropdown-item dropdown-footer"
+              @click.prevent="markAllAsRead"
+              v-if="unreadNotificationsCount > 0"
+            >
+              Đánh dấu tất cả là đã đọc
+            </a>
+          </div>
+        </li>
+
         <li class="nav-item">
           <a class="nav-link" data-widget="fullscreen" href="#" role="button">
             <i class="fas fa-expand-arrows-alt"></i>
@@ -235,6 +313,7 @@ import { onMounted, watch, computed, ref } from 'vue'
 import { useCurrentProject } from '@/Composables/useCurrentProject'
 import { usePermission } from '@/Composables/usePermission'
 import { showSuccess, showError, showWarning } from '@/utils'
+import axios from 'axios'
 
 const $page = usePage()
 const { can, hasViewPermissionInAnyProject } = usePermission()
@@ -269,8 +348,103 @@ const showFlashMessages = () => {
   }
 }
 
-// Hiển thị flash messages khi component được tạo
+// Biến cho thông báo
+const notifications = ref([])
+const unreadNotificationsCount = ref(0)
+const loadingNotifications = ref(false)
+
+// Phương thức tải thông báo
+const loadNotifications = async () => {
+  loadingNotifications.value = true
+  try {
+    const response = await axios.get('/notifications')
+    notifications.value = response.data.notifications
+    unreadNotificationsCount.value = response.data.unread_count
+  } catch (error) {
+    console.error('Lỗi khi tải thông báo:', error)
+  } finally {
+    loadingNotifications.value = false
+  }
+}
+
+// Phương thức đánh dấu thông báo đã đọc
+const readNotification = async (notification) => {
+  try {
+    await axios.post(`/notifications/${notification.id}/read`)
+    notification.read_at = new Date()
+    unreadNotificationsCount.value = Math.max(0, unreadNotificationsCount.value - 1)
+
+    // Chuyển hướng đến URL của thông báo nếu có
+    const url = getNotificationUrl(notification)
+    if (url) {
+      router.visit(url)
+    }
+  } catch (error) {
+    console.error('Lỗi khi đánh dấu đã đọc:', error)
+  }
+}
+
+// Phương thức đánh dấu tất cả thông báo đã đọc
+const markAllAsRead = async () => {
+  try {
+    await axios.post('/notifications/read-all')
+    notifications.value.forEach((notification) => {
+      notification.read_at = new Date()
+    })
+    unreadNotificationsCount.value = 0
+  } catch (error) {
+    console.error('Lỗi khi đánh dấu tất cả đã đọc:', error)
+  }
+}
+
+// Phương thức lấy URL từ thông báo
+const getNotificationUrl = (notification) => {
+  // Xử lý URL dựa trên loại thông báo
+  if (notification.data && notification.data.url) {
+    return notification.data.url
+  }
+
+  if (notification.data) {
+    // Nếu là thông báo về báo cáo mới
+    if (notification.type === 'App\\Notifications\\TaskReportSubmitted' || notification.type === 'task_report') {
+      // Chuyển đến trang chi tiết task với tab reports
+      return `/tasks/${notification.data.task_id}?tab=reports`
+    }
+
+    // Nếu là thông báo về duyệt hoặc từ chối báo cáo
+    if (notification.type === 'App\\Notifications\\TaskReportReviewed' || notification.type === 'task_report_review') {
+      // Chuyển đến trang danh sách các báo cáo đã duyệt với task_id
+      return `/task-reports/reviewed?task_id=${notification.data.task_id}`
+    }
+  }
+
+  return '#'
+}
+
+// Phương thức lấy icon cho thông báo
+const getNotificationIcon = (notification) => {
+  // Xử lý icon dựa trên loại thông báo
+  if (notification.data && notification.data.type) {
+    switch (notification.data.type) {
+      case 'task_report':
+        return 'fas fa-tasks'
+      case 'task_report_review':
+        return 'fas fa-clipboard-check'
+      default:
+        return 'fas fa-bell'
+    }
+  }
+
+  return 'fas fa-bell'
+}
+
+// Tải thông báo ban đầu và thiết lập interval để cập nhật
 onMounted(() => {
+  loadNotifications()
+  // Cập nhật thông báo mỗi phút
+  const notificationInterval = setInterval(loadNotifications, 60000)
+
+  // Hiển thị flash messages khi component được tạo
   showFlashMessages()
 
   // Script hỗ trợ menu collapse

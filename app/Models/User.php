@@ -150,4 +150,31 @@ class User extends Authenticatable
 
         return $role->hasPermissionTo($permissions);
     }
+
+    /**
+     * Lấy danh sách báo cáo tiến độ do người dùng tạo
+     */
+    public function taskReports()
+    {
+        return $this->hasMany(TaskReport::class);
+    }
+
+    /**
+     * Lấy danh sách báo cáo tiến độ do người dùng duyệt
+     */
+    public function reviewedReports()
+    {
+        return $this->hasMany(TaskReport::class, 'reviewer_id');
+    }
+
+    /**
+     * Lấy danh sách công việc được giao cho người dùng
+     */
+    public function assignedTasks()
+    {
+        return $this->belongsToMany(Task::class, 'task_user')
+            ->wherePivot('role', 0)
+            ->withPivot('role', 'duration')
+            ->withTimestamps();
+    }
 }

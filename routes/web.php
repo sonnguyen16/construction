@@ -50,6 +50,20 @@ Route::middleware('auth')->group(function () {
     // Trang chủ
     Route::get('/', [HomeController::class, 'index'])->name('home');
     
+    // API thông báo
+    Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'getNotifications'])->name('notifications.get');
+    Route::post('/notifications/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.mark-as-read');
+    Route::post('/notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-as-read');
+    
+    // Báo cáo đã duyệt
+    Route::get('/task-reports/reviewed', [\App\Http\Controllers\ReviewedReportController::class, 'index'])->name('task-reports.reviewed');
+    
+    // API routes
+    Route::prefix('api')->name('api.')->group(function () {
+        Route::get('/projects/list', [\App\Http\Controllers\Api\ProjectController::class, 'list'])->name('projects.list');
+        Route::get('/users/list', [\App\Http\Controllers\Api\UserController::class, 'list'])->name('users.list');
+    });
+    
     // Thay đổi dự án và vai trò hiện tại
     Route::post('/user/change-project-role', [UserProjectRoleController::class, 'changeProjectRole'])->name('user.change-project-role');
     // Quản lý người dùng
@@ -174,6 +188,13 @@ Route::middleware('auth')->group(function () {
 
     // Di chuyển task
     Route::post('tasks/move', [TaskController::class, 'moveTask'])->name('tasks.move');
+    
+    // Quản lý báo cáo tiến độ công việc
+    Route::get('projects/{projectId}/tasks/{taskId}/reports', [App\Http\Controllers\TaskReportController::class, 'index'])->name('task-reports.index');
+    Route::post('projects/{projectId}/tasks/{taskId}/reports', [App\Http\Controllers\TaskReportController::class, 'store'])->name('task-reports.store');
+    Route::get('projects/{projectId}/tasks/{taskId}/reports/{reportId}', [App\Http\Controllers\TaskReportController::class, 'show'])->name('task-reports.show');
+    Route::post('projects/{projectId}/tasks/{taskId}/reports/{reportId}/review', [App\Http\Controllers\TaskReportController::class, 'review'])->name('task-reports.review');
+    Route::delete('projects/{projectId}/tasks/{taskId}/reports/{reportId}', [App\Http\Controllers\TaskReportController::class, 'destroy'])->name('task-reports.destroy');
 });
 
 // File Manager Routes

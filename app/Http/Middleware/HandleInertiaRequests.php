@@ -65,8 +65,8 @@ class HandleInertiaRequests extends Middleware
                     }),
                     'current_project_role' => $request->user()->projectRoles()
                         ->with(['project', 'role'])
-                        ->where('project_id', $request->session()->get('current_project_id') ?? $request->user()->projectRoles()->first()->project_id)
-                        ->where('role_id', $request->session()->get('current_role_id') ?? $request->user()->projectRoles()->first()->role_id)
+                        ->where('project_id', $request->session()->get('current_project_id') ?? $request->user()->projectRoles()->first()->project_id ?? null)
+                        ->where('role_id', $request->session()->get('current_role_id') ?? $request->user()->projectRoles()->first()->role_id ?? null)
                         ->first(),
                 ] : null,
             ],

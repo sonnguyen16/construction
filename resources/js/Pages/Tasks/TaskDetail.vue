@@ -64,6 +64,16 @@
                   <i class="fas fa-file mr-1"></i> Tài liệu
                 </a>
               </li>
+              <li class="nav-item">
+                <a
+                  class="nav-link"
+                  :class="{ active: activeTab === 'reports' }"
+                  href="#"
+                  @click.prevent="changeTab('reports')"
+                >
+                  <i class="fas fa-chart-line mr-1"></i> Báo cáo tiến độ
+                </a>
+              </li>
             </ul>
           </div>
           <div class="card-body">
@@ -86,6 +96,10 @@
                   ></iframe>
                 </div>
               </div>
+              <!-- Tab Báo cáo tiến độ -->
+              <div class="tab-pane" :class="{ active: activeTab === 'reports' }">
+                <TaskReports :task="task" :project-id="project.id" />
+              </div>
             </div>
           </div>
         </div>
@@ -104,6 +118,7 @@ import { ref, computed, onMounted } from 'vue'
 import { formatDate } from '@/utils'
 import TaskUsers from './Components/TaskUsers.vue'
 import TaskProducts from './Components/TaskProducts.vue'
+import TaskReports from './Components/TaskReports.vue'
 import { usePermission } from '@/Composables/usePermission'
 
 const props = defineProps({
@@ -154,6 +169,13 @@ onMounted(() => {
   // Kiểm tra nếu tab files được chọn mặc định
   if (activeTab.value === 'files') {
     initFileManager()
+  }
+
+  // search tab from url
+  const urlParams = new URLSearchParams(window.location.search)
+  const tab = urlParams.get('tab')
+  if (tab) {
+    activeTab.value = tab
   }
 })
 
