@@ -53,7 +53,6 @@
                       <div class="text-wrap" style="max-width: 200px">
                         {{ report.message }}
                       </div>
-                      
                     </td>
                     <td>
                       <span :class="getStatusBadgeClass(report.status)">
@@ -68,7 +67,7 @@
                     <td>
                       <div v-if="report.files && report.files.length > 0">
                         <div v-for="file in report.files" :key="file.id" class="mb-1">
-                          <a :href="file.file_path" target="_blank" class="text-decoration-none">
+                          <a :href="'/storage/' + file.file_path" target="_blank" class="text-decoration-none">
                             <i class="fas fa-file me-1"></i> {{ file.file_name }}
                           </a>
                         </div>

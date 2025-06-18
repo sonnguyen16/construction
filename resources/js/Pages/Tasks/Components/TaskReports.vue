@@ -125,7 +125,7 @@
             <a
               v-for="file in report.files"
               :key="file.id"
-              :href="file.path"
+              :href="'/storage/' + file.file_path"
               target="_blank"
               class="file-item me-2 mb-2 p-1 border rounded d-flex align-items-center"
             >
@@ -408,7 +408,7 @@ const submitReview = async (report) => {
 
     // Hiển thị thông báo thành công
     showSuccess(response.data.message)
-    
+
     // Cập nhật báo cáo trong danh sách
     const index = reports.value.findIndex((r) => r.id === report.id)
     if (index !== -1) {
@@ -427,12 +427,7 @@ const submitReview = async (report) => {
 }
 
 const deleteReport = (report) => {
-  showConfirm(
-    'Xóa báo cáo',
-    'Bạn có chắc chắn muốn xóa báo cáo này không?',
-    'Xóa',
-    'Hủy'
-  ).then((result) => {
+  showConfirm('Xóa báo cáo', 'Bạn có chắc chắn muốn xóa báo cáo này không?', 'Xóa', 'Hủy').then((result) => {
     if (result.isConfirmed) {
       deleteReportId.value = report.id
       confirmDelete()
