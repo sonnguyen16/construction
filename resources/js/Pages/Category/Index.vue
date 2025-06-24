@@ -9,14 +9,18 @@
           <div class="card-header">
             <h3 class="card-title">Danh sách danh mục</h3>
             <div class="card-tools">
-              <Link v-if="hasGlobalPermission('categories.create')" :href="route('categories.create')" class="btn btn-sm btn-primary">
+              <Link
+                v-if="hasGlobalPermission('categories.create')"
+                :href="route('categories.create')"
+                class="btn btn-sm btn-primary"
+              >
                 <i class="fas fa-plus"></i> Thêm danh mục mới
               </Link>
             </div>
           </div>
           <div class="card-body">
             <!-- Bộ lọc -->
-            <div class="row mb-3">
+            <div class="row">
               <div class="col-md-6">
                 <div class="form-group">
                   <label for="search">Tìm kiếm:</label>
@@ -37,7 +41,6 @@
               <table class="table table-hover">
                 <thead>
                   <tr>
-                    <th>ID</th>
                     <th>Tên danh mục</th>
                     <th>Ghi chú</th>
                     <th>Thao tác</th>
@@ -45,15 +48,22 @@
                 </thead>
                 <tbody>
                   <tr v-for="category in categories" :key="category.id">
-                    <td>{{ category.id }}</td>
                     <td>{{ category.name }}</td>
                     <td>{{ truncateText(category.note, 50) || '-' }}</td>
                     <td>
                       <div class="btn-group">
-                        <Link v-if="hasGlobalPermission('categories.edit')" :href="route('categories.edit', category.id)" class="btn btn-xs btn-primary">
+                        <Link
+                          v-if="hasGlobalPermission('categories.edit')"
+                          :href="route('categories.edit', category.id)"
+                          class="btn btn-xs btn-primary"
+                        >
                           <i class="fas fa-edit"></i> Sửa
                         </Link>
-                        <button v-if="hasGlobalPermission('categories.delete')" @click="confirmDelete(category)" class="btn btn-xs btn-danger">
+                        <button
+                          v-if="hasGlobalPermission('categories.delete')"
+                          @click="confirmDelete(category)"
+                          class="btn btn-xs btn-danger"
+                        >
                           <i class="fas fa-trash"></i> Xóa
                         </button>
                       </div>

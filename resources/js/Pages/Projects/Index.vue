@@ -1,8 +1,6 @@
 <template>
   <AdminLayout>
-    <template #header>
-      <h1 style="font-size: 1.4rem">Quản lý dự án</h1>
-    </template>
+    <template #header>Quản lý dự án</template>
     <template #breadcrumb>Danh sách dự án</template>
 
     <div class="row">
@@ -13,7 +11,7 @@
               <Link
                 v-if="hasGlobalPermission('projects.create')"
                 :href="route('projects.create')"
-                class="btn btn-primary"
+                class="btn btn-primary btn-sm"
               >
                 <i class="fas fa-plus mr-1"></i> Thêm dự án
               </Link>

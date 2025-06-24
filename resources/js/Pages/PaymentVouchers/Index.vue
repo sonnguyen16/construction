@@ -67,7 +67,7 @@
           </div>
           <div class="card-body">
             <!-- Bộ lọc -->
-            <div class="row mb-3">
+            <div class="row">
               <div class="col-md-3">
                 <div class="form-group">
                   <label for="search">Tìm kiếm:</label>
@@ -99,15 +99,20 @@
               </div>
               <div class="col-md-3">
                 <div class="form-group">
-                  <label for="project_id">Dự án:</label>
-                  <select class="form-control" id="project_id" v-model="filters.project_id" @change="applyFilters" disabled>
+                  <label for="project_id">Dự án: </label>
+                  <select
+                    class="form-control"
+                    id="project_id"
+                    v-model="filters.project_id"
+                    @change="applyFilters"
+                    disabled
+                  >
                     <option value="">Tất cả dự án</option>
                     <option value="null">Ngoài dự án</option>
                     <option v-for="project in projects" :key="project.id" :value="project.id">
                       {{ project.name }}
                     </option>
                   </select>
-                  <small class="form-text text-muted">Dự án được điều chỉnh từ dropdown chọn dự án chính</small>
                 </div>
               </div>
               <div class="col-md-3">
@@ -178,8 +183,8 @@
                   </select>
                 </div>
               </div>
-              <div class="col-md-6 d-flex align-items-end">
-                <button @click="resetFilters" class="btn btn-default mb-3">
+              <div class="col-md-3 d-flex align-items-center">
+                <button @click="resetFilters" class="btn btn-default">
                   <i class="fas fa-redo mr-1"></i> Đặt lại bộ lọc
                 </button>
               </div>

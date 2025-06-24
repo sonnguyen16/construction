@@ -56,7 +56,7 @@
           </div>
           <div class="card-body">
             <!-- Bộ lọc -->
-            <div class="row mb-3">
+            <div class="row">
               <div class="col-md-3">
                 <div class="form-group">
                   <label for="search">Tìm kiếm:</label>
@@ -101,7 +101,6 @@
                       {{ project.name }}
                     </option>
                   </select>
-                  <small class="form-text text-muted">Dự án được điều chỉnh từ dropdown chọn dự án chính</small>
                 </div>
               </div>
               <div class="col-md-3">
@@ -116,7 +115,7 @@
                 </div>
               </div>
               <div class="col-md-6 d-flex align-items-end">
-                <button @click="resetFilters" class="btn btn-default mb-3">
+                <button @click="resetFilters" class="btn btn-default">
                   <i class="fas fa-redo mr-1"></i> Đặt lại bộ lọc
                 </button>
               </div>

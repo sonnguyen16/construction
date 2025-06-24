@@ -93,7 +93,7 @@ export function usePermission() {
 
         return false;
     }
-    
+
     /**
      * Kiểm tra xem người dùng có quyền view trong ít nhất một dự án nào không
      * Dùng cho AdminLayout để ẩn/hiện các menu
@@ -102,7 +102,7 @@ export function usePermission() {
      */
     function hasViewPermissionInAnyProject(permissionBase) {
         const viewPermission = `${permissionBase}.view`;
-        
+
         // Kiểm tra tất cả các dự án của người dùng
         for (const projectRole of userProjectRoles.value) {
             // Lấy danh sách quyền của vai trò trong dự án
@@ -114,6 +114,17 @@ export function usePermission() {
             }
         }
 
+        return false;
+    }
+
+    function hasPermissionInAnyProject(permissionBase) {
+        const viewPermission = `${permissionBase}`;
+        for (const projectRole of userProjectRoles.value) {
+            const permissions = projectRole.permissions || [];
+            if (permissions.includes(viewPermission)) {
+                return true;
+            }
+        }
         return false;
     }
 
@@ -147,6 +158,7 @@ export function usePermission() {
         canInProject,
         hasGlobalPermission,
         hasViewPermissionInAnyProject,
+        hasPermissionInAnyProject,
         isSuperAdminInProject
     };
 }

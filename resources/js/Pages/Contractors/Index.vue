@@ -7,59 +7,78 @@
       <div class="col-12">
         <div class="card">
           <div class="card-header">
-            <div class="d-flex justify-content-between align-items-center">
-              <Link v-if="hasGlobalPermission('contractors.create')" :href="route('contractors.create')" class="btn btn-primary">
-                <i class="fas fa-plus mr-1"></i> Thêm nhà thầu
+            <h3 class="card-title">Danh sách nhà thầu</h3>
+            <div class="card-tools">
+              <Link
+                v-if="hasGlobalPermission('contractors.create')"
+                :href="route('contractors.create')"
+                class="btn btn-sm btn-primary"
+              >
+                <i class="fas fa-plus"></i> Thêm nhà thầu mới
               </Link>
-              <div class="input-group" style="width: 200px">
-                <input
-                  type="text"
-                  name="table_search"
-                  class="form-control float-right"
-                  placeholder="Tìm kiếm"
-                  v-model="search"
-                />
-                <div class="input-group-append">
-                  <button type="submit" class="btn btn-info">
-                    <i class="fas fa-search"></i>
-                  </button>
+            </div>
+          </div>
+          <div class="card-body">
+            <!-- Bộ lọc -->
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="search">Tìm kiếm:</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="search"
+                    placeholder="Tên, Email, Số điện thoại"
+                    v-model="search"
+                    @input="debouncedSearch"
+                  />
                 </div>
               </div>
             </div>
           </div>
-          <div class="card-body table-responsive p-0">
-            <table class="table table-hover text-nowrap">
-              <thead>
-                <tr>
-                  <th width="5%">STT</th>
-                  <th>Tên</th>
-                  <th>Số điện thoại</th>
-                  <th>Địa chỉ</th>
-                  <th width="15%">Thao tác</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(contractor, index) in contractors.data" :key="contractor.id">
-                  <td>{{ getSerialNumber(index) }}</td>
-                  <td>{{ contractor.name }}</td>
-                  <td>{{ contractor.phone || '-' }}</td>
-                  <td>{{ contractor.address || '-' }}</td>
-                  <td>
-                    <div class="btn-group">
-                      <Link v-if="hasGlobalPermission('contractors.edit')" :href="route('contractors.edit', contractor.id)" class="btn btn-sm btn-primary">
-                        <i class="fas fa-edit"></i> Sửa
-                      </Link>
-                      <button v-if="hasGlobalPermission('contractors.delete')" @click="confirmDelete(contractor)" class="btn btn-sm btn-danger">
-                        <i class="fas fa-trash"></i> Xóa
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-                <tr v-if="contractors.data.length === 0">
-                  <td colspan="6" class="text-center">Không có dữ liệu</td>
-                </tr>
-              </tbody>
-            </table>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover text-nowrap">
+                <thead>
+                  <tr>
+                    <th width="5%">STT</th>
+                    <th>Tên</th>
+                    <th>Số điện thoại</th>
+                    <th>Địa chỉ</th>
+                    <th width="15%">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(contractor, index) in contractors.data" :key="contractor.id">
+                    <td>{{ getSerialNumber(index) }}</td>
+                    <td>{{ contractor.name }}</td>
+                    <td>{{ contractor.phone || '-' }}</td>
+                    <td>{{ contractor.address || '-' }}</td>
+                    <td>
+                      <div class="btn-group">
+                        <Link
+                          v-if="hasGlobalPermission('contractors.edit')"
+                          :href="route('contractors.edit', contractor.id)"
+                          class="btn btn-sm btn-primary"
+                        >
+                          <i class="fas fa-edit"></i> Sửa
+                        </Link>
+                        <button
+                          v-if="hasGlobalPermission('contractors.delete')"
+                          @click="confirmDelete(contractor)"
+                          class="btn btn-sm btn-danger"
+                        >
+                          <i class="fas fa-trash"></i> Xóa
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr v-if="contractors.data.length === 0">
+                    <td colspan="6" class="text-center">Không có dữ liệu</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
           <div class="card-footer clearfix">
             <pagination :links="contractors.links" />

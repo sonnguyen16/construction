@@ -20,7 +20,7 @@
           </div>
           <div class="card-body">
             <!-- Bộ lọc -->
-            <div class="row mb-3">
+            <div class="row">
               <div class="col-md-6">
                 <div class="form-group">
                   <label for="search">Tìm kiếm:</label>
@@ -41,7 +41,6 @@
               <table class="table table-hover">
                 <thead>
                   <tr>
-                    <th>ID</th>
                     <th>Tên</th>
                     <th>Ghi chú</th>
                     <th>Thao tác</th>
@@ -49,7 +48,6 @@
                 </thead>
                 <tbody>
                   <tr v-for="category in receiptCategories.data" :key="category.id">
-                    <td>{{ category.id }}</td>
                     <td>{{ category.name }}</td>
                     <td>{{ truncateText(category.note, 50) || '-' }}</td>
                     <td>

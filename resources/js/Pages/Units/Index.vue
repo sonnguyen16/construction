@@ -9,14 +9,18 @@
           <div class="card-header">
             <h3 class="card-title">Danh sách đơn vị</h3>
             <div class="card-tools">
-              <Link v-if="hasGlobalPermission('units.create')" :href="route('units.create')" class="btn btn-sm btn-primary">
+              <Link
+                v-if="hasGlobalPermission('units.create')"
+                :href="route('units.create')"
+                class="btn btn-sm btn-primary"
+              >
                 <i class="fas fa-plus"></i> Thêm đơn vị mới
               </Link>
             </div>
           </div>
           <div class="card-body">
             <!-- Bộ lọc -->
-            <div class="row mb-3">
+            <div class="row">
               <div class="col-md-6">
                 <div class="form-group">
                   <label for="search">Tìm kiếm:</label>
@@ -37,7 +41,6 @@
               <table class="table table-hover">
                 <thead>
                   <tr>
-                    <th>ID</th>
                     <th>Tên</th>
                     <th>Ghi chú</th>
                     <th>Thao tác</th>
@@ -45,15 +48,22 @@
                 </thead>
                 <tbody>
                   <tr v-for="unit in units.data" :key="unit.id">
-                    <td>{{ unit.id }}</td>
                     <td>{{ unit.name }}</td>
                     <td>{{ truncateText(unit.note, 50) || '-' }}</td>
                     <td>
                       <div class="btn-group">
-                        <Link v-if="hasGlobalPermission('units.edit')" :href="route('units.edit', unit.id)" class="btn btn-xs btn-primary">
+                        <Link
+                          v-if="hasGlobalPermission('units.edit')"
+                          :href="route('units.edit', unit.id)"
+                          class="btn btn-xs btn-primary"
+                        >
                           <i class="fas fa-edit"></i> Sửa
                         </Link>
-                        <button v-if="hasGlobalPermission('units.delete')" @click="confirmDelete(unit)" class="btn btn-xs btn-danger">
+                        <button
+                          v-if="hasGlobalPermission('units.delete')"
+                          @click="confirmDelete(unit)"
+                          class="btn btn-xs btn-danger"
+                        >
                           <i class="fas fa-trash"></i> Xóa
                         </button>
                       </div>

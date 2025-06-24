@@ -312,7 +312,7 @@
 
       <!-- Biểu đồ thu chi theo tháng -->
       <!-- Widget báo cáo tiến độ công việc -->
-      <div class="row mb-4">
+      <div class="row">
         <div class="col-md-12">
           <TaskReportWidget />
         </div>

@@ -5,7 +5,10 @@
       <!-- Left navbar links -->
       <ul class="navbar-nav">
         <li class="nav-item">
-          <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
+          <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="ri-menu-line"></i></a>
+        </li>
+        <li class="nav-item d-flex align-items-center ps-2">
+          <slot name="header">Bảng điều khiển</slot>
         </li>
       </ul>
 
@@ -14,7 +17,7 @@
         <!-- Navbar Search -->
         <li class="nav-item">
           <a class="nav-link" data-widget="navbar-search" href="#" role="button">
-            <i class="fas fa-search"></i>
+            <i class="ri-search-line"></i>
           </a>
           <div class="navbar-search-block">
             <form class="form-inline">
@@ -27,10 +30,10 @@
                 />
                 <div class="input-group-append">
                   <button class="btn btn-navbar" type="submit">
-                    <i class="fas fa-search"></i>
+                    <i class="ri-search-line"></i>
                   </button>
                   <button class="btn btn-navbar" type="button" data-widget="navbar-search">
-                    <i class="fas fa-times"></i>
+                    <i class="ri-close-line"></i>
                   </button>
                 </div>
               </div>
@@ -47,7 +50,7 @@
             @click="loadNotifications"
             style="padding-right: 20px"
           >
-            <i class="far fa-bell"></i>
+            <i class="ri-notification-line"></i>
             <span
               v-if="unreadNotificationsCount > 0"
               class="badge badge-danger navbar-badge"
@@ -118,19 +121,19 @@
 
         <li class="nav-item">
           <a class="nav-link" data-widget="fullscreen" href="#" role="button">
-            <i class="fas fa-expand-arrows-alt"></i>
+            <i class="ri-fullscreen-line"></i>
           </a>
         </li>
 
         <li class="nav-item dropdown">
           <a class="nav-link" data-toggle="dropdown" href="#">
-            <i class="fas fa-user"></i>
+            <i class="ri-user-line"></i>
           </a>
           <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
-            <a href="#" class="dropdown-item"> <i class="fas fa-user-cog mr-2"></i> Hồ sơ </a>
+            <a href="#" class="dropdown-item"> <i class="ri-user-settings-line mr-2"></i> Hồ sơ </a>
             <div class="dropdown-divider"></div>
             <form @submit.prevent="logout" class="dropdown-item">
-              <button type="submit" class="btn p-0"><i class="fas fa-sign-out-alt mr-2"></i> Đăng xuất</button>
+              <button type="submit" class="btn p-0"><i class="ri-logout-box-line mr-2"></i> Đăng xuất</button>
             </form>
           </div>
         </li>
@@ -154,7 +157,7 @@
       <!-- Sidebar -->
       <div class="sidebar">
         <!-- Sidebar user panel (optional) -->
-        <div class="user-panel mt-3 pb-3 mb-3 d-flex" v-if="$page.props.auth.user">
+        <!-- <div class="user-panel mt-3 pb-3 mb-3 d-flex" v-if="$page.props.auth.user">
           <div class="image">
             <img
               :src="$page.props.auth.user.avatar || 'https://adminlte.io/themes/v3/dist/img/user2-160x160.jpg'"
@@ -166,10 +169,10 @@
           <div class="info">
             <a href="#" class="d-block">{{ $page.props.auth.user.name }}</a>
           </div>
-        </div>
+        </div> -->
 
         <!-- Dự án và vai trò hiện tại -->
-        <div class="project-role-panel mt-1 pb-2" v-if="hasProjects">
+        <div class="project-role-panel my-3" v-if="hasProjects">
           <div class="d-flex align-items-center px-2">
             <div class="dropdown w-100">
               <button
@@ -203,7 +206,7 @@
                         <div class="project-name text-truncate">{{ projectRole.project_name }}</div>
                         <span class="badge badge-info ml-2 flex-shrink-0">{{ projectRole.role_name }}</span>
                       </div>
-                      <i v-if="projectRole.is_active" class="fas fa-check text-success ml-2 flex-shrink-0"></i>
+                      <i v-if="projectRole.is_active" class="ri-check-line text-success ml-2 flex-shrink-0"></i>
                     </div>
                   </a>
                 </template>
@@ -223,12 +226,12 @@
               >
                 <!-- Menu có submenu -->
                 <template v-if="item.children">
-                  <a href="#" class="nav-link" :class="{ active: isMenuActive(item) }">
+                  <a href="#" class="nav-link d-flex align-items-center" :class="{ active: isMenuActive(item) }">
                     <i :class="[item.icon, 'nav-icon']"></i>
                     <p>
                       {{ item.label }}
-                      <i class="fas fa-angle-left right"></i>
                     </p>
+                    <i class="fas fa-angle-left right mt-1"></i>
                   </a>
                   <ul class="nav nav-treeview">
                     <template v-for="child in item.children">
@@ -261,7 +264,7 @@
     <!-- Content Wrapper. Contains page content -->
     <div class="content-wrapper">
       <!-- Content Header (Page header) -->
-      <div class="content-header">
+      <!-- <div class="content-header">
         <div class="container-fluid">
           <div class="row mb-2">
             <div class="col-sm-6">
@@ -269,7 +272,6 @@
                 <slot name="header">Bảng điều khiển</slot>
               </h1>
             </div>
-            <!-- /.col -->
             <div class="col-sm-6">
               <ol class="breadcrumb float-sm-right">
                 <li class="breadcrumb-item">
@@ -280,16 +282,13 @@
                 </li>
               </ol>
             </div>
-            <!-- /.col -->
           </div>
-          <!-- /.row -->
         </div>
-        <!-- /.container-fluid -->
-      </div>
+      </div> -->
       <!-- /.content-header -->
 
       <!-- Main content -->
-      <div class="content">
+      <div class="content pt-4">
         <div class="container-fluid">
           <slot />
         </div>
@@ -316,7 +315,7 @@ import { showSuccess, showError, showWarning } from '@/utils'
 import axios from 'axios'
 
 const $page = usePage()
-const { can, hasViewPermissionInAnyProject } = usePermission()
+const { can, hasViewPermissionInAnyProject, hasPermissionInAnyProject } = usePermission()
 
 // Sử dụng composable useCurrentProject
 const { projectRoles, currentProjectRole, currentProject, currentRole, hasProjects, changeProjectRole, loading } =
@@ -427,15 +426,15 @@ const getNotificationIcon = (notification) => {
   if (notification.data && notification.data.type) {
     switch (notification.data.type) {
       case 'task_report':
-        return 'fas fa-tasks'
+        return 'ri-task-line'
       case 'task_report_review':
-        return 'fas fa-clipboard-check'
+        return 'ri-clipboard-line'
       default:
-        return 'fas fa-bell'
+        return 'ri-notification-line'
     }
   }
 
-  return 'fas fa-bell'
+  return 'ri-notification-line'
 }
 
 // Tải thông báo ban đầu và thiết lập interval để cập nhật
@@ -496,7 +495,7 @@ watch(
 const menuItems = [
   {
     href: '/',
-    icon: 'fas fa-tachometer-alt',
+    icon: 'ri-dashboard-line',
     label: 'Bảng điều khiển',
     isActive(page) {
       return page.component === 'Home'
@@ -507,7 +506,7 @@ const menuItems = [
   },
   {
     label: 'Quản lý dự án',
-    icon: 'fas fa-project-diagram',
+    icon: 'ri-folder-line',
     isActive(page) {
       return page.component.startsWith('Projects') || page.component.startsWith('ProjectCategories')
     },
@@ -517,7 +516,7 @@ const menuItems = [
     children: [
       {
         href: '/projects',
-        icon: 'fas fa-list',
+        icon: 'ri-folder-2-line',
         label: 'Danh sách dự án',
         isActive(page) {
           return page.component.startsWith('Projects') && !page.component.includes('Categories')
@@ -528,7 +527,7 @@ const menuItems = [
       },
       {
         href: route('project-categories.index'),
-        icon: 'fas fa-tags',
+        icon: 'ri-list-check',
         label: 'Danh mục dự án',
         isActive(page) {
           return page.component.startsWith('ProjectCategories')
@@ -542,7 +541,7 @@ const menuItems = [
 
   {
     label: 'Quản lý tài chính',
-    icon: 'fas fa-money-bill-wave',
+    icon: 'ri-bank-card-line',
     isActive(page) {
       return (
         page.component.startsWith('PaymentVouchers') ||
@@ -566,7 +565,7 @@ const menuItems = [
     children: [
       {
         href: route('payment-vouchers.index'),
-        icon: 'fas fa-money-check-alt',
+        icon: 'ri-file-list-line',
         label: 'Phiếu chi',
         isActive(page) {
           return page.component.startsWith('PaymentVouchers')
@@ -577,7 +576,7 @@ const menuItems = [
       },
       {
         href: route('receipt-vouchers.index'),
-        icon: 'fas fa-money-bill-wave',
+        icon: 'ri-money-dollar-box-line',
         label: 'Phiếu thu',
         isActive(page) {
           return page.component.startsWith('ReceiptVouchers')
@@ -588,7 +587,7 @@ const menuItems = [
       },
       {
         href: route('payment-categories.index'),
-        icon: 'fas fa-tags',
+        icon: 'ri-newspaper-line',
         label: 'Loại chi',
         isActive(page) {
           return page.component.startsWith('PaymentCategories')
@@ -599,7 +598,7 @@ const menuItems = [
       },
       {
         href: route('receipt-categories.index'),
-        icon: 'fas fa-tags',
+        icon: 'ri-list-check',
         label: 'Loại thu',
         isActive(page) {
           return page.component.startsWith('ReceiptCategories')
@@ -610,40 +609,40 @@ const menuItems = [
       },
       {
         href: route('reports.financial'),
-        icon: 'fas fa-chart-pie',
+        icon: 'ri-pie-chart-line',
         label: 'Báo cáo thu chi',
         isActive(page) {
           return page.component === 'Reports/Financial'
         },
         visible() {
-          return hasViewPermissionInAnyProject('reports')
+          return hasPermissionInAnyProject('reports.financial')
         }
       },
       {
         href: route('reports.contractor-debt'),
-        icon: 'fas fa-file-invoice-dollar',
-        label: 'Công nợ nhà cung cấp',
+        icon: 'ri-bill-line',
+        label: 'Công nợ ncc',
         isActive(page) {
           return page.component === 'Reports/ContractorDebt'
         },
         visible() {
-          return hasViewPermissionInAnyProject('reports')
+          return hasPermissionInAnyProject('reports.contractor-debt')
         }
       },
       {
         href: route('reports.customer-debt'),
-        icon: 'fas fa-hand-holding-usd',
+        icon: 'ri-hand-coin-line',
         label: 'Công nợ khách hàng',
         isActive(page) {
           return page.component === 'Reports/CustomerDebt'
         },
         visible() {
-          return hasViewPermissionInAnyProject('reports')
+          return hasPermissionInAnyProject('reports.customer-debt')
         }
       },
       {
         href: route('loans.index'),
-        icon: 'fas fa-money-bill-wave',
+        icon: 'ri-bank-card-line',
         label: 'Khoản vay',
         isActive(page) {
           return page.component.startsWith('Loans')
@@ -656,7 +655,7 @@ const menuItems = [
   },
   {
     label: 'Quản lý kho',
-    icon: 'fas fa-warehouse',
+    icon: 'ri-store-2-line',
     isActive(page) {
       return (
         page.component.startsWith('Products') ||
@@ -678,7 +677,7 @@ const menuItems = [
     children: [
       {
         href: route('products.index'),
-        icon: 'fas fa-boxes',
+        icon: 'ri-archive-line',
         label: 'Sản phẩm',
         isActive(page) {
           return page.component.startsWith('Products')
@@ -689,10 +688,10 @@ const menuItems = [
       },
       {
         href: route('categories.index'),
-        icon: 'fas fa-tags',
+        icon: 'ri-price-tag-3-line',
         label: 'Loại sản phẩm',
         isActive(page) {
-          return page.component.startsWith('Categories')
+          return page.component.startsWith('Category')
         },
         visible() {
           return hasViewPermissionInAnyProject('categories')
@@ -700,7 +699,7 @@ const menuItems = [
       },
       {
         href: route('units.index'),
-        icon: 'fas fa-ruler',
+        icon: 'ri-ruler-line',
         label: 'Đơn vị tính',
         isActive(page) {
           return page.component.startsWith('Units')
@@ -711,7 +710,7 @@ const menuItems = [
       },
       {
         href: route('import-vouchers.index'),
-        icon: 'fas fa-file-import',
+        icon: 'ri-download-line',
         label: 'Phiếu nhập kho',
         isActive(page) {
           return page.component.startsWith('ImportVouchers')
@@ -722,7 +721,7 @@ const menuItems = [
       },
       {
         href: route('export-vouchers.index'),
-        icon: 'fas fa-file-export',
+        icon: 'ri-upload-line',
         label: 'Phiếu xuất kho',
         isActive(page) {
           return page.component.startsWith('ExportVouchers')
@@ -735,7 +734,7 @@ const menuItems = [
   },
   {
     label: 'Quản lý công việc',
-    icon: 'fas fa-tasks',
+    icon: 'ri-task-line',
     isActive(page) {
       return page.component.startsWith('Tasks')
     },
@@ -746,7 +745,7 @@ const menuItems = [
   },
   {
     href: '/contractors',
-    icon: 'fas fa-hard-hat',
+    icon: 'ri-user-settings-line',
     label: 'Quản lý nhà thầu',
     isActive(page) {
       return page.component.startsWith('Contractors')
@@ -757,7 +756,7 @@ const menuItems = [
   },
   {
     href: route('customers.index'),
-    icon: 'fas fa-users',
+    icon: 'ri-user-star-line',
     label: 'Quản lý khách hàng',
     isActive(page) {
       return page.component.startsWith('Customers')
@@ -768,7 +767,7 @@ const menuItems = [
   },
   {
     label: 'Quản lý hệ thống',
-    icon: 'fas fa-cogs',
+    icon: 'ri-settings-line',
     isActive(page) {
       return page.component.startsWith('Users') || page.component.startsWith('Roles')
     },
@@ -778,7 +777,7 @@ const menuItems = [
     children: [
       {
         href: '/users',
-        icon: 'fas fa-users',
+        icon: 'ri-team-line',
         label: 'Quản lý người dùng',
         isActive(page) {
           return page.component.startsWith('Users')
@@ -789,7 +788,7 @@ const menuItems = [
       },
       {
         href: route('roles.index'),
-        icon: 'fas fa-user-tag',
+        icon: 'ri-shield-user-line',
         label: 'Vai trò & Phân quyền',
         isActive(page) {
           return page.component.startsWith('Roles')
@@ -892,22 +891,35 @@ body {
   background-color: #2c3e50;
 }
 
-.sidebar-dark-primary .nav-sidebar > .nav-item > .nav-link.active {
-  background-color: #e67e22;
-}
-
-.btn-primary {
-  background-color: #e67e22;
-  border-color: #d35400;
-}
-
-.btn-primary:hover {
-  background-color: #d35400;
-  border-color: #c0392b;
-}
-
 .dropdown-toggle::after {
   float: right;
   margin-top: 8px;
+}
+
+.nav-link p {
+  margin-left: 0.5rem !important;
+  font-weight: 400 !important;
+  font-size: 1rem !important;
+}
+
+.card-title {
+  margin-bottom: 0;
+}
+
+.card-body {
+  padding: 0.8rem 1rem;
+}
+
+.info-box {
+  margin-bottom: 0;
+}
+
+.nav-icon {
+  font-size: 1.4rem !important;
+}
+
+.nav-link {
+  padding-top: 0.3rem;
+  padding-bottom: 0.3rem;
 }
 </style>

@@ -9,14 +9,18 @@
           <div class="card-header">
             <h3 class="card-title">Danh sách sản phẩm</h3>
             <div class="card-tools">
-              <Link v-if="hasGlobalPermission('products.create')" :href="route('products.create')" class="btn btn-sm btn-primary">
+              <Link
+                v-if="hasGlobalPermission('products.create')"
+                :href="route('products.create')"
+                class="btn btn-sm btn-primary"
+              >
                 <i class="fas fa-plus"></i> Thêm sản phẩm mới
               </Link>
             </div>
           </div>
           <div class="card-body">
             <!-- Bộ lọc -->
-            <div class="row mb-3">
+            <div class="row">
               <div class="col-md-6">
                 <div class="form-group">
                   <label for="search">Tìm kiếm:</label>
@@ -68,23 +72,38 @@
                     <td>{{ product.initial_stock }}</td>
                     <td>
                       <span
-                        :class="{'text-danger font-weight-bold': product.initial_stock <= product.warning_threshold}"
+                        :class="{ 'text-danger font-weight-bold': product.initial_stock <= product.warning_threshold }"
                       >
                         {{ product.warning_threshold }}
-                        <i v-if="product.initial_stock <= product.warning_threshold" class="fas fa-exclamation-triangle text-warning"></i>
+                        <i
+                          v-if="product.initial_stock <= product.warning_threshold"
+                          class="fas fa-exclamation-triangle text-warning"
+                        ></i>
                       </span>
                     </td>
                     <td>{{ product.category ? product.category.name : '-' }}</td>
                     <td>{{ product.unit ? product.unit.name : '-' }}</td>
                     <td>
                       <div class="btn-group">
-                        <Link v-if="hasGlobalPermission('products.view')" :href="route('products.show', product.id)" class="btn btn-xs btn-info">
+                        <Link
+                          v-if="hasGlobalPermission('products.view')"
+                          :href="route('products.show', product.id)"
+                          class="btn btn-xs btn-info"
+                        >
                           <i class="fas fa-eye"></i> Xem
                         </Link>
-                        <Link v-if="hasGlobalPermission('products.edit')" :href="route('products.edit', product.id)" class="btn btn-xs btn-primary">
+                        <Link
+                          v-if="hasGlobalPermission('products.edit')"
+                          :href="route('products.edit', product.id)"
+                          class="btn btn-xs btn-primary"
+                        >
                           <i class="fas fa-edit"></i> Sửa
                         </Link>
-                        <button v-if="hasGlobalPermission('products.delete')" @click="confirmDelete(product)" class="btn btn-xs btn-danger">
+                        <button
+                          v-if="hasGlobalPermission('products.delete')"
+                          @click="confirmDelete(product)"
+                          class="btn btn-xs btn-danger"
+                        >
                           <i class="fas fa-trash"></i> Xóa
                         </button>
                       </div>

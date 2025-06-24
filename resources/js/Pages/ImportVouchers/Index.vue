@@ -16,7 +16,7 @@
           </div>
           <div class="card-body">
             <!-- Bộ lọc -->
-            <div class="row mb-3">
+            <div class="row">
               <div class="col-md-4">
                 <div class="form-group">
                   <label for="search">Tìm kiếm:</label>
@@ -45,7 +45,6 @@
                       {{ project.name }}
                     </option>
                   </select>
-                  <small class="form-text text-muted">Dự án được điều chỉnh từ dropdown chọn dự án chính</small>
                 </div>
               </div>
               <div class="col-md-2">
