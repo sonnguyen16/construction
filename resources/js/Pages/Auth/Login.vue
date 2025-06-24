@@ -64,16 +64,6 @@ const submit = () => {
 </script>
 
 <style>
-.btn-primary {
-  background-color: #e67e22;
-  border-color: #d35400;
-}
-
-.btn-primary:hover {
-  background-color: #d35400;
-  border-color: #c0392b;
-}
-
 .login-page {
   height: 100vh;
   display: flex;
