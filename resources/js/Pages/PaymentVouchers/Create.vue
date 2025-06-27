@@ -169,7 +169,7 @@
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { useForm, Link } from '@inertiajs/vue3'
 import { ref, onMounted, computed, nextTick, onBeforeUnmount, watch } from 'vue'
-import { formatCurrency, showSuccess, showError } from '@/utils'
+import { formatCurrency, showSuccess, showError, formatNumberInput, parseCurrency, formatDate } from '@/utils'
 import { useCurrentProject } from '@/Composables/useCurrentProject'
 
 const props = defineProps({
@@ -309,7 +309,7 @@ onMounted(() => {
     autoOpen: true,
     width: '100%'
   })
-  
+
   // Vô hiệu hóa InputPicker dự án nếu dùng currentProject
   if (currentProject.value) {
     window.$('#project_id').prop('disabled', true)
@@ -317,7 +317,7 @@ onMounted(() => {
 
   // Sử dụng dự án hiện tại từ composable hoặc preselected value
   const projectIdToUse = currentProject.value ? currentProject.value.id : props.preselectedProjectId
-  
+
   if (projectIdToUse) {
     const selectedProject = props.projects.find((p) => p.id == projectIdToUse)
     if (selectedProject) {
@@ -325,7 +325,7 @@ onMounted(() => {
       form.project_id = projectIdToUse
     }
   }
-  
+
   // Theo dõi thay đổi của dự án hiện tại
   watch(
     () => currentProject.value,
@@ -333,14 +333,14 @@ onMounted(() => {
       if (newProject) {
         // Cập nhật giá trị trong form
         form.project_id = newProject.id
-        
+
         // Cập nhật giao diện InputPicker
         const selectedProject = props.projects.find((p) => p.id == newProject.id)
         if (selectedProject && window.$('#project_id').length) {
           // Vô hiệu hóa InputPicker dự án
           window.$('#project_id').prop('disabled', true)
           window.$('#project_id').inputpicker('val', selectedProject.id)
-          
+
           // Cập nhật gói thầu
           form.bid_package_id = ''
           onProjectChange()
