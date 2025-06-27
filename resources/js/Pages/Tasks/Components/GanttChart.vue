@@ -58,21 +58,25 @@ function changeView() {
       gantt.config.scale_unit = 'day'
       gantt.config.date_scale = '%d %M'
       gantt.config.subscales = []
+      localStorage.setItem('gantt_view_mode', 'day')
       break
     case 'week':
       gantt.config.scale_unit = 'week'
       gantt.config.date_scale = 'Week #%W'
       gantt.config.subscales = [{ unit: 'day', step: 1, date: '%D' }]
+      localStorage.setItem('gantt_view_mode', 'week')
       break
     case 'month':
       gantt.config.scale_unit = 'month'
       gantt.config.date_scale = '%F, %Y '
       gantt.config.subscales = [{ unit: 'week', step: 1, date: 'Week %W' }]
+      localStorage.setItem('gantt_view_mode', 'month')
       break
     case 'year':
       gantt.config.scale_unit = 'year'
       gantt.config.date_scale = '%Y'
       gantt.config.subscales = [{ unit: 'month', step: 1, date: '%M' }]
+      localStorage.setItem('gantt_view_mode', 'year')
       break
   }
 
@@ -530,9 +534,7 @@ onMounted(() => {
   }
 
   loadProjects()
-
-  // Lưu chế độ xem vào localStorage
-  localStorage.setItem('gantt_view_mode', currentView.value)
+  changeView()
 })
 </script>
 
