@@ -96,15 +96,25 @@ async function loadTasks() {
 }
 
 // Xử lý kéo thả task
-async function handleTaskDrag(id, parent, order) {
+async function handleTaskDrag() {
   try {
-    await axios.post('/tasks/move', {
-      id: id,
-      parent_id: parent > 0 ? parent : null,
-      order: order
+    // Lấy tất cả các task từ gantt
+    const allTasks = []
+    gantt.eachTask(function (task) {
+      allTasks.push({
+        id: task.id,
+        parent_id: task.parent > 0 ? task.parent : null,
+        order: gantt.getGlobalTaskIndex(task.id)
+      })
+    })
+
+    // Gửi tất cả thông tin task lên server
+    await axios.post('/tasks/update-all-positions', {
+      tasks: allTasks
     })
   } catch (error) {
-    console.error('Lỗi khi di chuyển công việc:', error)
+    console.error('Lỗi khi cập nhật vị trí công việc:', error)
+    loadTasks() // Tải lại task nếu có lỗi
   }
 }
 
@@ -357,8 +367,7 @@ function initGantt() {
 
   // Xử lý sự kiện sau khi hoàn tất việc sắp xếp lại hàng
   gantt.attachEvent('onRowDragEnd', function (id, target) {
-    const task = gantt.getTask(id)
-    handleTaskDrag(id, task.parent, gantt.getTaskIndex(id))
+    handleTaskDrag()
   })
 
   gantt.attachEvent('onAfterTaskAdd', async function (id, task) {

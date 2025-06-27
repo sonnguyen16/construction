@@ -49,21 +49,21 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::middleware('auth')->group(function () {
     // Trang chủ
     Route::get('/', [HomeController::class, 'index'])->name('home');
-    
+
     // API thông báo
     Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'getNotifications'])->name('notifications.get');
     Route::post('/notifications/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.mark-as-read');
     Route::post('/notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-as-read');
-    
+
     // Báo cáo đã duyệt
     Route::get('/task-reports/reviewed', [\App\Http\Controllers\ReviewedReportController::class, 'index'])->name('task-reports.reviewed');
-    
+
     // API routes
     Route::prefix('api')->name('api.')->group(function () {
         Route::get('/projects/list', [\App\Http\Controllers\Api\ProjectController::class, 'list'])->name('projects.list');
         Route::get('/users/list', [\App\Http\Controllers\Api\UserController::class, 'list'])->name('users.list');
     });
-    
+
     // Thay đổi dự án và vai trò hiện tại
     Route::post('/user/change-project-role', [UserProjectRoleController::class, 'changeProjectRole'])->name('user.change-project-role');
     // Quản lý người dùng
@@ -72,7 +72,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('contractors', ContractorController::class);
     // Quản lý dự án
     Route::resource('projects', ProjectController::class);
-    
+
     // Quản lý phân quyền theo dự án
     Route::get('projects/{project}/roles', [ProjectRoleController::class, 'index'])->name('projects.roles.index');
     Route::post('projects/{project}/roles', [ProjectRoleController::class, 'store'])->name('projects.roles.store');
@@ -147,7 +147,7 @@ Route::middleware('auth')->group(function () {
     // Báo cáo công nợ
     Route::get('/reports/contractor-debt', [ReportController::class, 'contractorDebtReport'])->name('reports.contractor-debt');
     Route::get('/reports/customer-debt', [ReportController::class, 'customerDebtReport'])->name('reports.customer-debt');
-    
+
     // Quản lý vai trò và phân quyền
     Route::resource('roles', RoleController::class);
     Route::post('roles/{role}/assign-users', [RoleController::class, 'assignUsers'])->name('roles.assign-users');
@@ -160,7 +160,7 @@ Route::middleware('auth')->group(function () {
     Route::post('tasks', [TaskController::class, 'store'])->name('tasks.store');
     Route::put('tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');
     Route::delete('tasks/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
-    
+
     // Thùng rác công việc
     Route::get('tasks-trash', [TaskController::class, 'trash'])->name('tasks.trash');
     Route::get('projects/{project}/deleted-tasks', [TaskController::class, 'getDeletedTasksByProject'])->name('projects.deleted-tasks');
@@ -187,8 +187,8 @@ Route::middleware('auth')->group(function () {
     Route::delete('tasks/{task}/products/{product}', [TaskProductController::class, 'destroy'])->name('tasks.products.destroy');
 
     // Di chuyển task
-    Route::post('tasks/move', [TaskController::class, 'moveTask'])->name('tasks.move');
-    
+    Route::post('tasks/update-all-positions', [TaskController::class, 'updateAllPositions'])->name('tasks.update-all-positions');
+
     // Quản lý báo cáo tiến độ công việc
     Route::get('projects/{projectId}/tasks/{taskId}/reports', [App\Http\Controllers\TaskReportController::class, 'index'])->name('task-reports.index');
     Route::post('projects/{projectId}/tasks/{taskId}/reports', [App\Http\Controllers\TaskReportController::class, 'store'])->name('task-reports.store');

@@ -7,6 +7,7 @@ use App\Models\Project;
 use App\Helpers\ProjectPermission;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\DB;
 
 class TaskController extends Controller
 {
@@ -406,80 +407,73 @@ class TaskController extends Controller
     }
 
     /**
-     * Xử lý việc di chuyển task (kéo thả)
+     * Cập nhật vị trí của tất cả các task
      */
-    public function moveTask(Request $request)
+    public function updateAllPositions(Request $request)
     {
         $validated = $request->validate([
-            'id' => 'required|exists:tasks,id',
-            'parent_id' => 'nullable|exists:tasks,id',
-            'order' => 'required|integer|min:0',
+            'tasks' => 'required|array',
+            'tasks.*.id' => 'required|exists:tasks,id',
+            'tasks.*.parent_id' => 'nullable|exists:tasks,id',
+            'tasks.*.order' => 'required|integer',
         ]);
 
-        $task = Task::findOrFail($validated['id']);
+        // Lấy task đầu tiên để kiểm tra quyền
+        if (count($validated['tasks']) > 0) {
+            $firstTask = Task::find($validated['tasks'][0]['id']);
 
-        // Kiểm tra nếu người dùng có quyền di chuyển công việc trong dự án
-        if (!ProjectPermission::hasPermissionInProject('tasks.edit', $task->project_id)) {
-            return response()->json(['error' => 'Bạn không có quyền di chuyển công việc trong dự án này!'], 403);
-        }
-        $oldParentId = $task->parent_id;
-        $oldOrder = $task->order;
-        $newParentId = $validated['parent_id'];
-        $newOrder = $validated['order'];
-
-        // Kiểm tra các trường hợp không hợp lệ
-        if ($newParentId == $task->id) {
-            return response()->json(['message' => 'Công việc không thể là công việc cha của chính nó'], 422);
-        }
-
-        // Kiểm tra nếu parent_id mới là con hoặc cháu của task hiện tại
-        if ($newParentId) {
-            $currentParentId = $newParentId;
-            while ($currentParentId) {
-                if ($currentParentId == $task->id) {
-                    return response()->json(['message' => 'Không thể chuyển công việc thành con của công việc con'], 422);
-                }
-
-                $parentTask = Task::find($currentParentId);
-                if (!$parentTask) break;
-                $currentParentId = $parentTask->parent_id;
+            // Kiểm tra nếu người dùng có quyền di chuyển công việc trong dự án
+            if (!ProjectPermission::hasPermissionInProject('tasks.edit', $firstTask->project_id)) {
+                return response()->json(['error' => 'Bạn không có quyền di chuyển công việc trong dự án này!'], 403);
             }
-        }
 
-        // Xử lý xung đột order nếu có
-        if ($oldParentId == $newParentId && $oldOrder == $newOrder) {
-            // Không có gì thay đổi
+            // Lưu project_id để kiểm tra các task khác
+            $projectId = $firstTask->project_id;
+        } else {
             return response()->json(['success' => true]);
         }
 
-        // Tìm task có thể xung đột order
-        $conflictTask = Task::where('parent_id', $newParentId)
-            ->where('project_id', $task->project_id)
-            ->where('id', '!=', $task->id)
-            ->where('order', $newOrder)
-            ->whereNull('deleted_at')
-            ->first();
+        // Bắt đầu transaction để đảm bảo tính toàn vẹn dữ liệu
+        DB::beginTransaction();
 
-        // Cập nhật task
-        $task->parent_id = $newParentId;
-        $task->order = $newOrder;
-        $task->save();
+        try {
+            // Mảng lưu các parent_id cần cập nhật duration
+            $parentsToUpdate = [];
 
-        // Nếu có task xung đột, hoán đổi order
-        if ($conflictTask) {
-            $conflictTask->order = $oldOrder;
-            $conflictTask->save();
+            foreach ($validated['tasks'] as $taskData) {
+                $task = Task::find($taskData['id']);
+
+                // Kiểm tra xem task có thuộc cùng dự án không
+                if ($task->project_id != $projectId) {
+                    continue;
+                }
+
+                // Lưu parent_id cũ để cập nhật duration sau
+                if ($task->parent_id != $taskData['parent_id'] && $task->parent_id) {
+                    $parentsToUpdate[$task->parent_id] = true;
+                }
+
+                // Lưu parent_id mới để cập nhật duration sau
+                if ($taskData['parent_id']) {
+                    $parentsToUpdate[$taskData['parent_id']] = true;
+                }
+
+                // Cập nhật task
+                $task->parent_id = $taskData['parent_id'];
+                $task->order = $taskData['order'];
+                $task->save();
+            }
+
+            // Cập nhật duration cho tất cả các task cha bị ảnh hưởng
+            foreach (array_keys($parentsToUpdate) as $parentId) {
+                $this->updateParentTaskDuration($parentId);
+            }
+
+            DB::commit();
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['error' => 'Lỗi khi cập nhật vị trí công việc: ' . $e->getMessage()], 500);
         }
-
-        // Cập nhật duration của các task cha
-        if ($newParentId) {
-            $this->updateParentTaskDuration($newParentId);
-        }
-
-        if ($oldParentId && $oldParentId != $newParentId) {
-            $this->updateParentTaskDuration($oldParentId);
-        }
-
-        return response()->json(['success' => true]);
     }
 }
