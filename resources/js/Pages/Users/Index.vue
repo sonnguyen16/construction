@@ -54,7 +54,7 @@
                     <td>{{ getSerialNumber(index) }}</td>
                     <td>
                       <img
-                        :src="user.avatar || 'https://adminlte.io/themes/v3/dist/img/user2-160x160.jpg'"
+                        :src="user.avatar || '/images/default-avatar.jpg'"
                         class="img-circle elevation-2"
                         alt="User Avatar"
                         style="width: 40px; height: 40px; object-fit: cover"

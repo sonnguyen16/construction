@@ -24,7 +24,7 @@
             <td class="text-center">{{ index + 1 }}</td>
             <td class="text-center">
               <img
-                :src="user.avatar ? user.avatar : '/img/default-avatar.png'"
+                :src="user.avatar ? user.avatar : '/images/default-avatar.jpg'"
                 alt="Avatar"
                 class="img-circle"
                 style="width: 40px; height: 40px"
