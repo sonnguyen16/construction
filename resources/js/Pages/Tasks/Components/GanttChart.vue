@@ -570,8 +570,6 @@ function initGantt() {
     }
   })
 
-  gantt.init(ganttContainer.value)
-
   // Thêm event listener cho nút thêm task con
   gantt.attachEvent('onGanttRender', function () {
     const addButtons = document.querySelectorAll('.add-subtask-btn')
@@ -600,6 +598,8 @@ function initGantt() {
       }
     })
   })
+
+  gantt.init(ganttContainer.value)
 }
 
 // Tải danh sách dự án
@@ -674,7 +674,6 @@ function handleClickOutside(event) {
 onMounted(() => {
   loadColumnConfig() // Tải cấu hình cột từ localStorage
   initGantt()
-  gantt.init(ganttContainer.value)
 
   // Nếu có dự án mặc định, chọn dự án đó
   if (props.defaultProject && !currentProject.value) {
