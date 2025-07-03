@@ -28,7 +28,7 @@
             v-model="gridWidth"
             @change="updateGridWidth"
             type="range"
-            min="550"
+            min="580"
             max="800"
             step="10"
             class="grid-width-slider"
