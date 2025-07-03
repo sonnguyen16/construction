@@ -76,7 +76,7 @@ import { useCurrentProject } from '@/Composables/useCurrentProject'
 const ganttContainer = ref(null)
 const currentView = ref(localStorage.getItem('gantt_view_mode') || 'day')
 const selectedProject = ref(localStorage.getItem('gantt_project_id') || null)
-const gridWidth = ref(parseInt(localStorage.getItem('gantt_grid_width')) || 400)
+const gridWidth = ref(parseInt(localStorage.getItem('gantt_grid_width')) || 580)
 const showColumnConfig = ref(false)
 
 // Định nghĩa tất cả các cột có thể hiển thị
