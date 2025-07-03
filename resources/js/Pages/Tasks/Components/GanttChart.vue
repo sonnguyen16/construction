@@ -21,7 +21,39 @@
           </select>
         </div>
       </div>
-      <div>
+      <div class="flex align-items-center gap-2">
+        <div class="flex align-items-center gap-2">
+          <label class="text-md font-normal">Độ rộng bảng:</label>
+          <input
+            v-model="gridWidth"
+            @change="updateGridWidth"
+            type="range"
+            min="200"
+            max="800"
+            step="10"
+            class="grid-width-slider"
+          />
+          <span class="text-sm">{{ gridWidth }}px</span>
+        </div>
+        <div class="relative">
+          <button @click="showColumnConfig = !showColumnConfig" class="btn btn-sm btn-secondary column-config-button">
+            <i class="fas fa-columns mr-1"></i> Cấu hình cột
+          </button>
+          <div v-if="showColumnConfig" class="column-config-dropdown">
+            <div class="column-config-header">
+              <span>Hiển thị cột</span>
+              <button @click="showColumnConfig = false" class="close-btn">×</button>
+            </div>
+            <div class="column-config-body">
+              <div v-for="column in availableColumns" :key="column.name" class="column-config-item">
+                <label class="column-checkbox" @click.stop>
+                  <input type="checkbox" :checked="column.visible" @change="toggleColumn(column.name)" />
+                  <span>{{ column.label }}</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
         <Link :href="route('tasks.trash')" class="btn btn-sm btn-secondary">
           <i class="fas fa-trash mr-1"></i> Công việc đã xóa
         </Link>
@@ -32,7 +64,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref, watch } from 'vue'
+import { onMounted, onUnmounted, ref, watch } from 'vue'
 import 'dhtmlx-gantt/codebase/dhtmlxgantt.css'
 import gantt from 'dhtmlx-gantt'
 import axios from 'axios'
@@ -44,12 +76,184 @@ import { useCurrentProject } from '@/Composables/useCurrentProject'
 const ganttContainer = ref(null)
 const currentView = ref(localStorage.getItem('gantt_view_mode') || 'day')
 const selectedProject = ref(localStorage.getItem('gantt_project_id') || null)
+const gridWidth = ref(parseInt(localStorage.getItem('gantt_grid_width')) || 400)
+const showColumnConfig = ref(false)
+
+// Định nghĩa tất cả các cột có thể hiển thị
+const availableColumns = ref([
+  { name: 'wbs', label: 'WBS', visible: true },
+  { name: 'text', label: 'Tên công việc', visible: true },
+  { name: 'start_date', label: 'Bắt đầu', visible: true },
+  { name: 'duration', label: 'Số ngày', visible: true },
+  { name: 'progress', label: '% Hoàn thành', visible: true },
+  { name: 'assignees', label: 'Người thực hiện', visible: true },
+  { name: 'add', label: 'Thêm', visible: true },
+  { name: 'users&products', label: 'Quản lý', visible: true }
+])
+
 const props = defineProps({
   projects: Array,
   defaultProject: Object
 })
 
 const { currentProject } = useCurrentProject()
+
+// Tải cấu hình cột từ localStorage
+function loadColumnConfig() {
+  const savedConfig = localStorage.getItem('gantt_column_config')
+  if (savedConfig) {
+    const config = JSON.parse(savedConfig)
+    availableColumns.value.forEach((column) => {
+      const savedColumn = config.find((c) => c.name === column.name)
+      if (savedColumn) {
+        column.visible = savedColumn.visible
+      }
+    })
+  }
+}
+
+// Lưu cấu hình cột vào localStorage
+function saveColumnConfig() {
+  localStorage.setItem('gantt_column_config', JSON.stringify(availableColumns.value))
+}
+
+// Bật/tắt hiển thị cột
+function toggleColumn(columnName) {
+  const column = availableColumns.value.find((c) => c.name === columnName)
+  if (column) {
+    column.visible = !column.visible
+    saveColumnConfig()
+    updateGanttColumns()
+  }
+}
+
+// Cập nhật độ rộng bảng
+function updateGridWidth() {
+  gantt.config.grid_width = gridWidth.value
+  localStorage.setItem('gantt_grid_width', gridWidth.value.toString())
+  gantt.render()
+}
+
+// Cập nhật cấu hình cột trong Gantt
+function updateGanttColumns() {
+  const visibleColumns = getVisibleColumns()
+  gantt.config.columns = visibleColumns
+  gantt.render()
+}
+
+// Lấy danh sách cột hiển thị
+function getVisibleColumns() {
+  const allColumns = [
+    {
+      name: 'wbs',
+      label: 'WBS',
+      width: 60,
+      template: gantt.getWBSCode
+    },
+    { name: 'text', label: 'Tên công việc', tree: true, width: 200, editor: { type: 'text', map_to: 'text' } },
+    {
+      name: 'start_date',
+      label: 'Bắt đầu',
+      align: 'center',
+      width: 100,
+      editor: { type: 'date', map_to: 'start_date' }
+    },
+    {
+      name: 'duration',
+      label: 'Số ngày',
+      align: 'center',
+      width: 90,
+      editor: { type: 'number', map_to: 'duration', max: 1000 }
+    },
+    {
+      name: 'progress',
+      label: '% Hoàn thành',
+      align: 'center',
+      width: 120,
+      template: (task) => `${Math.round(task.progress * 100)}%`,
+      editor: { type: 'number', map_to: 'progress' }
+    },
+    {
+      name: 'assignees',
+      label: 'Người thực hiện',
+      align: 'left',
+      width: 150,
+      template: (task) => {
+        if (!task.users || !Array.isArray(task.users) || task.users.length === 0) {
+          return '<span class="text-muted">Chưa phân công</span>'
+        }
+
+        // Lọc ra những người thực hiện (role = 0)
+        const assignees = task.users.filter((user) => user.pivot && user.pivot.role === 0)
+
+        if (assignees.length === 0) {
+          return '<span class="text-muted">Chưa phân công</span>'
+        }
+
+        // Hiển thị tối đa 3 người, nếu nhiều hơn thì hiển thị số còn lại
+        const maxDisplay = 2
+        const displayUsers = assignees.slice(0, maxDisplay)
+        const remainingCount = assignees.length - maxDisplay
+
+        let html = '<div class="assignee-list">'
+
+        // Hiển thị avatar và tên của người thực hiện
+        displayUsers.forEach((user) => {
+          const avatarUrl = user.avatar
+            ? user.avatar.startsWith('http')
+              ? user.avatar
+              : `/storage/avatars/${user.avatar}`
+            : '/images/default-avatar.jpg'
+
+          html += `
+            <div class="assignee-item" title="${user.name}">
+              <img src="${avatarUrl}" class="assignee-avatar" alt="${user.name}" />
+              <span class="assignee-name">${user.name}</span>
+            </div>
+          `
+        })
+
+        // Hiển thị số người còn lại
+        if (remainingCount > 0) {
+          html += `<div class="assignee-more">+${remainingCount}</div>`
+        }
+
+        html += '</div>'
+        return html
+      }
+    },
+    {
+      name: 'add',
+      label: '',
+      width: 100,
+      align: 'center',
+      template: (task) => {
+        let html = ''
+        // Nút thêm task con - chỉ hiển thị khi có quyền tạo công việc trong dự án
+        html += `<button class='add-subtask-btn gantt-action-btn' title='Thêm công việc con' data-taskid='${task.id}'>➕</button>`
+        return html
+      }
+    },
+    {
+      name: 'users&products',
+      label: 'Quản lý',
+      width: 100,
+      align: 'center',
+      template: (task) => {
+        let html = ''
+        // Nút quản lý vật tư và nhân sự - chỉ hiển thị khi có quyền xem chi tiết trong dự án
+        html += `<a href='/tasks/${task.id}' class='gantt-action-btn' title='Quản lý vật tư và nhân sự'><i class='fas fa-cog'></i></a>`
+        return html
+      }
+    }
+  ]
+
+  // Lọc các cột được hiển thị
+  return allColumns.filter((column) => {
+    const columnConfig = availableColumns.value.find((c) => c.name === column.name)
+    return columnConfig ? columnConfig.visible : true
+  })
+}
 
 // Đổi chế độ xem
 function changeView() {
@@ -128,6 +332,13 @@ function initGantt() {
   gantt.config.date_format = '%d/%m/%Y'
   gantt.config.date_grid = '%d/%m/%Y'
   gantt.config.autoscroll = true
+
+  // Cấu hình kéo dãn cột và bảng
+  gantt.config.grid_resize = true // Cho phép kéo dãn cột
+  gantt.config.grid_width = gridWidth.value // Độ rộng bảng
+  gantt.config.reorder_grid_columns = true // Cho phép kéo thả sắp xếp cột
+  gantt.config.min_column_width = 50 // Độ rộng tối thiểu của cột
+  gantt.config.grid_elastic_columns = true // Làm cho cột co dãn linh hoạt
 
   // Cấu hình hiển thị công việc cha dưới dạng đường line
   gantt.config.open_tree_initially = true
@@ -258,111 +469,8 @@ function initGantt() {
     focus: function (node) {}
   }
 
-  // Cột task + nút thêm task con và nút truy cập chi tiết
-  gantt.config.columns = [
-    {
-      name: 'wbs',
-      label: 'WBS',
-      width: 60,
-      template: gantt.getWBSCode
-    },
-    { name: 'text', label: 'Tên công việc', tree: true, width: 200, editor: { type: 'text', map_to: 'text' } },
-    {
-      name: 'start_date',
-      label: 'Bắt đầu',
-      align: 'center',
-      width: 100,
-      editor: { type: 'date', map_to: 'start_date' }
-    },
-    {
-      name: 'duration',
-      label: 'Số ngày',
-      align: 'center',
-      width: 90,
-      editor: { type: 'number', map_to: 'duration', max: 1000 }
-    },
-    {
-      name: 'progress',
-      label: '% Hoàn thành',
-      align: 'center',
-      width: 120,
-      template: (task) => `${Math.round(task.progress * 100)}%`,
-      editor: { type: 'number', map_to: 'progress' }
-    },
-    {
-      name: 'assignees',
-      label: 'Người thực hiện',
-      align: 'left',
-      width: 150,
-      template: (task) => {
-        if (!task.users || !Array.isArray(task.users) || task.users.length === 0) {
-          return '<span class="text-muted">Chưa phân công</span>'
-        }
-
-        // Lọc ra những người thực hiện (role = 0)
-        const assignees = task.users.filter((user) => user.pivot && user.pivot.role === 0)
-
-        if (assignees.length === 0) {
-          return '<span class="text-muted">Chưa phân công</span>'
-        }
-
-        // Hiển thị tối đa 3 người, nếu nhiều hơn thì hiển thị số còn lại
-        const maxDisplay = 2
-        const displayUsers = assignees.slice(0, maxDisplay)
-        const remainingCount = assignees.length - maxDisplay
-
-        let html = '<div class="assignee-list">'
-
-        // Hiển thị avatar và tên của người thực hiện
-        displayUsers.forEach((user) => {
-          const avatarUrl = user.avatar
-            ? user.avatar.startsWith('http')
-              ? user.avatar
-              : `/storage/avatars/${user.avatar}`
-            : '/images/default-avatar.jpg'
-
-          html += `
-            <div class="assignee-item" title="${user.name}">
-              <img src="${avatarUrl}" class="assignee-avatar" alt="${user.name}" />
-              <span class="assignee-name">${user.name}</span>
-            </div>
-          `
-        })
-
-        // Hiển thị số người còn lại
-        if (remainingCount > 0) {
-          html += `<div class="assignee-more">+${remainingCount}</div>`
-        }
-
-        html += '</div>'
-        return html
-      }
-    },
-    {
-      name: 'add',
-      label: '',
-      width: 100,
-      align: 'center',
-      template: (task) => {
-        let html = ''
-        // Nút thêm task con - chỉ hiển thị khi có quyền tạo công việc trong dự án
-        html += `<button class='add-subtask-btn gantt-action-btn' title='Thêm công việc con' data-taskid='${task.id}'>➕</button>`
-        return html
-      }
-    },
-    {
-      name: 'users&products',
-      label: 'Quản lý',
-      width: 100,
-      align: 'center',
-      template: (task) => {
-        let html = ''
-        // Nút quản lý vật tư và nhân sự - chỉ hiển thị khi có quyền xem chi tiết trong dự án
-        html += `<a href='/tasks/${task.id}' class='gantt-action-btn' title='Quản lý vật tư và nhân sự'><i class='fas fa-cog'></i></a>`
-        return html
-      }
-    }
-  ]
+  // Cập nhật cấu hình cột
+  gantt.config.columns = getVisibleColumns()
 
   // Khởi tạo thang thời gian mặc định
   gantt.config.scale_unit = 'day'
@@ -463,6 +571,35 @@ function initGantt() {
   })
 
   gantt.init(ganttContainer.value)
+
+  // Thêm event listener cho nút thêm task con
+  gantt.attachEvent('onGanttRender', function () {
+    const addButtons = document.querySelectorAll('.add-subtask-btn')
+    addButtons.forEach((button) => {
+      button.onclick = function (e) {
+        e.preventDefault()
+        const parentId = this.dataset.taskid
+        const newTaskId = gantt.uid()
+
+        gantt.addTask(
+          {
+            id: newTaskId,
+            text: 'Công việc mới',
+            start_date: new Date(),
+            duration: 1,
+            parent: parentId,
+            progress: 0
+          },
+          parentId
+        )
+
+        // Mở form chỉnh sửa ngay lập tức
+        setTimeout(() => {
+          gantt.showLightbox(newTaskId)
+        }, 100)
+      }
+    })
+  })
 }
 
 // Tải danh sách dự án
@@ -524,7 +661,18 @@ watch(
   }
 )
 
+// Xử lý click outside để đóng dropdown
+function handleClickOutside(event) {
+  const dropdown = document.querySelector('.column-config-dropdown')
+  const button = document.querySelector('.column-config-button')
+
+  if (dropdown && !dropdown.contains(event.target) && !button.contains(event.target)) {
+    showColumnConfig.value = false
+  }
+}
+
 onMounted(() => {
+  loadColumnConfig() // Tải cấu hình cột từ localStorage
   initGantt()
   gantt.init(ganttContainer.value)
 
@@ -535,6 +683,14 @@ onMounted(() => {
 
   loadProjects()
   changeView()
+
+  // Thêm event listener cho click outside
+  document.addEventListener('click', handleClickOutside)
+})
+
+// Cleanup event listener khi component unmount
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
 })
 </script>
 
@@ -661,5 +817,92 @@ onMounted(() => {
 
 :deep(.level-1-task) .gantt_task_content {
   display: none !important;
+}
+
+/* CSS cho slider độ rộng bảng */
+.grid-width-slider {
+  width: 100px;
+  margin: 0 8px;
+}
+
+/* CSS cho dropdown cấu hình cột */
+.column-config-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 1000;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  min-width: 250px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.column-config-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+  font-weight: 600;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6c757d;
+}
+
+.close-btn:hover {
+  color: #495057;
+}
+
+.column-config-body {
+  padding: 8px 0;
+}
+
+.column-config-item {
+  padding: 8px 16px;
+  border-bottom: 1px solid #f1f3f4;
+}
+
+.column-config-item:last-child {
+  border-bottom: none;
+}
+
+.column-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333;
+}
+
+.column-checkbox input[type='checkbox'] {
+  margin: 0;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.column-checkbox:hover {
+  background-color: #f8f9fa;
+}
+
+.column-checkbox span {
+  flex: 1;
+  user-select: none;
 }
 </style>
