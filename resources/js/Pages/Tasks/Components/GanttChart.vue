@@ -29,7 +29,7 @@
             @change="updateGridWidth"
             type="range"
             min="580"
-            max="800"
+            max="1000"
             step="10"
             class="grid-width-slider"
           />
@@ -336,9 +336,7 @@ function initGantt() {
   // Cấu hình kéo dãn cột và bảng
   gantt.config.grid_resize = true // Cho phép kéo dãn cột
   gantt.config.grid_width = gridWidth.value // Độ rộng bảng
-  gantt.config.reorder_grid_columns = true // Cho phép kéo thả sắp xếp cột
-  gantt.config.min_column_width = 50 // Độ rộng tối thiểu của cột
-  gantt.config.grid_elastic_columns = true // Làm cho cột co dãn linh hoạt
+  gantt.config.reorder_grid_columns = true
 
   // Cấu hình hiển thị công việc cha dưới dạng đường line
   gantt.config.open_tree_initially = true
@@ -682,6 +680,9 @@ onMounted(() => {
 
   loadProjects()
   changeView()
+
+  gantt.config.grid_width = gridWidth.value
+  gantt.render()
 
   // Thêm event listener cho click outside
   document.addEventListener('click', handleClickOutside)
