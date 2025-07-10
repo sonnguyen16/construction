@@ -191,29 +191,23 @@ class ProjectController extends Controller
                 ->with('error', 'Dự án không tồn tại.');
         }
 
-        // Lấy các gói thầu gốc (không phải hạng mục con)
-        $bidPackages = $project->bidPackages()
-            ->whereNull('deleted_at')
-            ->with([
-                'bids.contractor',
-                'selectedContractor',
-                'payment_vouchers.contractor',
-                'children' => function ($query) {  // Load hạng mục con
-                    $query->whereNull('deleted_at')
-                        ->with([
-                            'bids.contractor',
-                            'selectedContractor',
-                        ]);
-                }
-            ])
-            ->orderBy('order', 'asc')
-            ->get();
-
-        // Đặt các gói thầu đã lấy vào project
-        $project->setRelation('bid_packages', $bidPackages);
-
-        // Load các mối quan hệ khác
+        // Load tất cả relationships cùng lúc để tránh conflict
         $project->load([
+            'bidPackages' => function ($query) {
+                $query->with([
+                        'bids.contractor',
+                        'selectedContractor',
+                        'payment_vouchers.contractor',
+                        'children' => function ($childQuery) {
+                            $childQuery->whereNull('deleted_at')
+                                ->with([
+                                    'bids.contractor',
+                                    'selectedContractor',
+                                ]);
+                        }
+                    ])
+                    ->orderBy('order', 'asc');
+            },
             'receipt_vouchers.customer',
         ]);
 
@@ -222,7 +216,7 @@ class ProjectController extends Controller
         return Inertia::render('Projects/Show', [
             'project' => $project,
             'bidPackageStatuses' => BidPackage::STATUSES,
-            'contractors' => $contractors
+            'contractors' => $contractors,
         ]);
     }
 
