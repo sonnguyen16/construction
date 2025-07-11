@@ -86,6 +86,8 @@ class BidPackageController extends Controller
         if ($bidPackage->status === 'open') {
             $bidPackage->bids()->update(['is_selected' => false]);
             $bidPackage->selected_contractor_id = null;
+            $bidPackage->client_price = null;
+            $bidPackage->estimated_price = null;
             $bidPackage->save();
         }
 
