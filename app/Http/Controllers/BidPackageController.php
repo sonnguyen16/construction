@@ -88,7 +88,6 @@ class BidPackageController extends Controller
             $bidPackage->bids()->update(['is_selected' => false]);
             $bidPackage->selected_contractor_id = null;
             $bidPackage->client_price = null;
-            $bidPackage->estimated_price = null;
             $bidPackage->save();
         }
 
