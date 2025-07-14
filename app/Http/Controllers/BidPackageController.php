@@ -7,6 +7,7 @@ use App\Models\BidPackage;
 use App\Models\Project;
 use Illuminate\Http\Request;
 use App\Helpers\ProjectPermission;
+use App\Http\Controllers\TaskController;
 
 class BidPackageController extends Controller
 {
@@ -109,7 +110,8 @@ class BidPackageController extends Controller
 
             // Nếu task có parent_id, cập nhật duration của task cha
             if ($task->parent_id) {
-                app(\App\Http\Controllers\TaskController::class)->updateParentTaskDuration($task->parent_id);
+                $taskController = new TaskController();
+                $taskController->updateParentTaskDuration($task->parent_id);
             }
         } else {
             // Nếu không tìm thấy task, tạo mới

@@ -362,7 +362,7 @@ class TaskController extends Controller
      * Cập nhật tổng số ngày của task cha dựa trên các task con
      * Tính toán dựa trên mốc thời gian bắt đầu sớm nhất và kết thúc muộn nhất
      */
-    private function updateParentTaskDuration($parentId)
+    public function updateParentTaskDuration($parentId)
     {
         $parentTask = Task::findOrFail($parentId);
 
